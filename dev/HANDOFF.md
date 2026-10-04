@@ -50,5 +50,6 @@ python3 test_site.py                              # playwright 전체 흐름 시
   - 설명서 원본 `share/manual.html` (그림 `share/img/`), PDF 는 playwright page.pdf 로 만듦
 
 ## 관련
+- 통합 프로그램(pe-assistant)도 같은 현황판에 보고하기로 함 → 작업 설명서 `dev/통합프로그램_현황판_연동.md` (작업은 사용자 채팅에서). 수집기 보고 형식을 바꾸면 통합판도 깨지니 주의
 - 줄넘기 판정기: MusicalPE/jump-rope-checker (현재 v0.7.4, ?app= 서버 연동 + mode=post 오프라인 연동)
 - 오프라인판 v1.6 은 별도 HTML(폴더 data/ 저장), 판정기와 postMessage 로 연동
