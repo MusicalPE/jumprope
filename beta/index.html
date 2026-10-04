@@ -1210,7 +1210,9 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
       <div class="form-row">
         <label>학교 이름 <input id="certSchool" maxlength="40" placeholder="예: 햇살초등학교"></label>
-        <label>선생님 <input id="certTeacher" maxlength="30" placeholder="예: 홍길동"></label>
+        <label>직함 <select id="certRole"><option value="담임">담임</option><option value="체육 교사">체육 교사</option><option value="__custom">직접 입력</option></select></label>
+        <label id="certRoleCustomRow" style="display:none;">직함 직접 입력 <input id="certRoleCustom" maxlength="20" placeholder="예: 교장, 방과후 강사"></label>
+        <label>선생님 이름 <input id="certTeacher" maxlength="30" placeholder="예: 홍길동"></label>
         <label>주는 날짜 <input type="date" id="certDate"></label>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;"><button type="button" id="certMake">미리 보기</button><button type="button" class="btn-outline" id="certPrint">인쇄 · PDF 저장</button><span id="certMsg" class="hint"></span></div>
@@ -2697,6 +2699,15 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
   const dateKo = function(d){ const p = String(d || '').split('-'); return p.length === 3 ? Number(p[0]) + '년 ' + Number(p[1]) + '월 ' + Number(p[2]) + '일' : ''; };
   const mLabel = function(m){ return Number(m.slice(0, 4)) + '년 ' + Number(m.slice(5, 7)) + '월'; };
   let students = [], hall = null;
+  // 직함: 담임 / 체육 교사 / 직접 입력 (이 기기에 기억)
+  function role(){ return $('certRole').value === '__custom' ? $('certRoleCustom').value.trim() : $('certRole').value; }
+  function showRole(){ $('certRoleCustomRow').style.display = $('certRole').value === '__custom' ? '' : 'none'; }
+  try { const r = JSON.parse(localStorage.getItem('jr_cert_role') || 'null'); if (r) { $('certRole').value = r.sel || '담임'; $('certRoleCustom').value = r.custom || ''; } } catch (e) {}
+  showRole();
+  function saveRole(){ try { localStorage.setItem('jr_cert_role', JSON.stringify({ sel: $('certRole').value, custom: $('certRoleCustom').value })); } catch (e) {} }
+  $('certRole').addEventListener('change', function(){ showRole(); saveRole(); if ($('certRole').value === '__custom') $('certRoleCustom').focus(); if (document.querySelector('#certPreview .cert')) make(); });
+  $('certRoleCustom').addEventListener('input', saveRole);
+  $('certRoleCustom').addEventListener('change', function(){ if (document.querySelector('#certPreview .cert')) make(); });
   NAT.load().then(function(){
     const c = NAT.cfg || {}, ct = NAT.contact();
     if (!$('certSchool').value) $('certSchool').value = c.name || '';
@@ -2709,7 +2720,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
       '<div class="cert-who">' + o.who + '</div>' +
       '<div class="cert-body">' + o.body + '</div>' +
       '<div class="cert-date">' + esc(dateKo($('certDate').value)) + '</div>' +
-      '<div class="cert-from">' + esc($('certSchool').value || '') + (($('certTeacher').value || '') ? '<br>담임 ' + esc($('certTeacher').value) : '') + '</div>' +
+      '<div class="cert-from">' + esc($('certSchool').value || '') + (($('certTeacher').value || '') ? '<br>' + (role() ? esc(role()) + ' ' : '') + esc($('certTeacher').value) : '') + '</div>' +
       '</div></div>';
   }
   function classOpts(){
