@@ -496,17 +496,27 @@ function updateStudentOrder(token, orderedIds) {
 
 function deleteStudent(token, id) {
   if (!checkAdminToken_(token)) throw new Error('권한이 없습니다.');
+  const sid = String(id).trim();
   const sh = getStudentsSheet_();
   const data = sh.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === id) { sh.deleteRow(i + 1); break; }
+    if (String(data[i][0]).trim() === sid) { sh.deleteRow(i + 1); break; }
   }
-  const rsh = getRecordsSheet_();
-  const rdata = rsh.getDataRange().getValues();
-  for (let i = rdata.length - 1; i >= 1; i--) {
-    if (rdata[i][1] === id) rsh.deleteRow(i + 1);
-  }
+  // 그 학생의 기록도 함께 지움 (StudentID 는 Records 의 3번째 칸)
+  deleteRowsWhere_(getRecordsSheet_(), function (r) { return String(r[2]).trim() === sid; });
   return { ok: true };
+}
+
+// 조건에 맞는 줄을 아래에서부터, 이어진 줄끼리 묶어서 지운다 (한 줄씩 지우는 것보다 빠름). 첫 줄(머리줄)은 건드리지 않음
+function deleteRowsWhere_(sh, pred) {
+  const v = sh.getDataRange().getValues();
+  let removed = 0, end = -1;
+  for (let i = v.length - 1; i >= 0; i--) {
+    const hit = i >= 1 && pred(v[i]);
+    if (hit && end < 0) end = i;
+    if (!hit && end >= 0) { sh.deleteRows(i + 2, end - i); removed += end - i; end = -1; }
+  }
+  return removed;
 }
 
 /************ 입력 폼용 학생 목록 (누구나 조회 가능, 비밀번호 제외) ************/
@@ -796,7 +806,8 @@ function getPendingRecordsPublic() {
     const status = records[i][5] || 'approved';
     if (status !== 'pending') continue;
     const sid = String(records[i][2]).trim();
-    const s = studentMap[sid] || {};
+    if (!studentMap[sid]) continue;   // 삭제된 학생의 기록
+    const s = studentMap[sid];
     list.push({
       grade: s.grade || '', cls: s.cls || '', number: s.number || '', name: s.name || '(알 수 없음)',
       date: formatDate_(records[i][3]), count: Number(records[i][4]) || 0, time: formatTime_(records[i][6]),
@@ -841,7 +852,8 @@ function getPendingRecords(token) {
     const status = records[i][5] || 'approved';
     if (status !== 'pending') continue;
     const sid = String(records[i][2]).trim();
-    const s = studentMap[sid] || {};
+    if (!studentMap[sid]) continue;   // 삭제된 학생의 기록
+    const s = studentMap[sid];
     list.push({
       recordId: records[i][0],
       grade: s.grade || '', cls: s.cls || '', number: s.number || '', name: s.name || '(알 수 없음)',

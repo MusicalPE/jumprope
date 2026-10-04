@@ -10,6 +10,7 @@ function makeSheet(name){
     getDataRange: () => sh.getRange(1, 1, Math.max(rows.length, 1), Math.max(sh.getLastColumn(), 1)),
     insertColumnBefore: (c) => { rows.forEach(r => r.splice(c - 1, 0, '')); },
     deleteRow: (r) => { rows.splice(r - 1, 1); },
+    deleteRows: (r, n) => { rows.splice(r - 1, n); },
     getRange: (r, c, nr, nc) => {
       nr = nr || 1; nc = nc || 1;
       const get = (i, j) => { const row = rows[r - 1 + i]; const v = row ? row[c - 1 + j] : undefined; return v === undefined || v === null ? '' : v; };

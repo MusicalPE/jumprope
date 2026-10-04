@@ -55,6 +55,9 @@ python3 test_site.py                              # playwright 전체 흐름 시
 - 우리 반 여행: JOURNEY 모듈, EXTRA_SETTINGS.journey = { on, course, base }, 관리자 "우리 반 여행" 탭, 메인 진행 막대 (1회=1m, 승인 누적 - base)
 - 수집기 4판(정식판과 공유, 예전 응답 유지): ?api=board&grade=, 응답에 grade·grades·allTime, 학교별 noReg, report 의 registeredByGrade → Schools RegByGrade 칸, 기록실 학생에 k·pid
 - 시험: `SEED=1 SHELL_PATH=../beta/Shell.gs node devserver.js` 후 `python3 test_v22.py`
+- 학생 삭제 버그 고침(루트 Shell.gs 2판·beta 3판 모두): 예전엔 Records 의 Timestamp 칸과 비교해 기록이 안 지워졌음 → StudentID(3번째 칸)로, deleteRowsWhere_ 로 묶어서 삭제. 승인 목록은 없는 학생 기록 숨김.
+  루트 Shell.gs 는 SHELL_VERSION 2 그대로 고친 것이라 share/ zip 은 아직 예전 껍데기 → 베타를 정식판으로 옮길 때 zip 도 다시 묶을 것
+- 껍데기 단위 시험: `node test_shell.js` (서버 필요 없음)
 
 ## 다음 할 일
 - 수집기 주소 넣음 → 실제 학교 화면에서 참여 켜고 보고·현황판 확인, main 반영
