@@ -68,6 +68,8 @@
 </style>
 <style>
   .month { margin-bottom: 18px; }
+  .hero-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .hero select { font: inherit; font-weight: 700; border: 0; border-radius: 999px; padding: 8px 14px; color: var(--ink); background: #fff; }
   .month-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
   .month-head h2 { margin: 0; font-size: 1.3em; }
   .podiums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
@@ -98,8 +100,13 @@
   </header>
 
   <div class="hero">
-    <h1>🏅 기록실</h1>
-    <p>지난 달들의 1~3등 학교와 학생을 모아 두었어요. 이번 달 순위는 다음 달 1일에 이곳에 올라옵니다.</p>
+    <div class="hero-row">
+      <div>
+        <h1>🏅 기록실</h1>
+        <p>최근 12개월의 1~3등 학교와 학생을 모아 두었어요. 이번 달 순위는 다음 달 1일에 이곳에 올라옵니다.</p>
+      </div>
+      <select id="monthSel" aria-label="달 고르기" style="display:none;"></select>
+    </div>
   </div>
 
   <div id="body"><div class="loading">기록실을 불러오는 중…</div></div>
@@ -124,9 +131,22 @@
     }).join('') : '<p class="hint" style="margin:0;">해당 학교 없음</p>') + '</div>';
   }
 
+  let collector = '';
   function draw(data){
-    const months = data.months || [];
-    if (!months.length) { $('body').innerHTML = '<div class="card empty">아직 기록실에 오른 달이 없어요.<br>' + mLabel(data.current) + ' 순위는 다음 달 1일에 이곳에 올라와요!</div>'; return; }
+    // 새 수집기(판 3 이상): list + month(고른 달 하나). 예전 수집기: months(모든 달 상세)
+    let list = data.list, months;
+    if (Array.isArray(list)) months = data.month ? [data.month] : [];
+    else {
+      const all = data.months || [];
+      list = all.map(function(m){ return m.month; });
+      const pick = all.filter(function(m){ return m.month === q.month; })[0] || all[0];
+      months = pick ? [pick] : [];
+    }
+    if (!list.length) { $('monthSel').style.display = 'none'; $('body').innerHTML = '<div class="card empty">아직 기록실에 오른 달이 없어요.<br>' + mLabel(data.current) + ' 순위는 다음 달 1일에 이곳에 올라와요!</div>'; return; }
+    const sel = $('monthSel');
+    sel.innerHTML = list.map(function(m, i){ return '<option value="' + m + '">' + mLabel(m) + (i === 0 ? ' (지난 달)' : '') + '</option>'; }).join('');
+    if (months[0]) sel.value = months[0].month;
+    sel.style.display = '';
     $('body').innerHTML = months.map(function(m){
       const st = m.students || [];
       return '<div class="card month"><div class="month-head"><h2>' + mLabel(m.month) + '</h2><span class="hint">참여 ' + m.schoolCount + '개 학교 · 전체 ' + n(m.total) + '회 · <a href="board.html?month=' + m.month + (me ? '&me=' + encodeURIComponent(me) : '') + '">그 달 현황판 →</a></span></div>' +
@@ -150,13 +170,24 @@
     }).join('') + '<p class="hint" style="text-align:center;">1인당 평균·참여율은 등록 학생 ' + (data.minRegistered || 5) + '명 이상인 학교만 순위를 매겨요.</p>';
   }
 
-  fetch('national.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return {}; }).then(function(cfg){
-    const collector = q.c || (cfg && cfg.collector) || '';
-    if (!collector) { $('body').innerHTML = '<div class="err">기록실이 아직 준비 중이에요. 곧 열립니다!</div>'; return; }
-    return fetch(collector + '?api=hall', { cache: 'no-store' })
+  function load(month){
+    $('body').innerHTML = '<div class="loading">기록실을 불러오는 중…</div>';
+    return fetch(collector + '?api=hall' + (month ? '&month=' + encodeURIComponent(month) : ''), { cache: 'no-store' })
       .then(function(r){ if (!r.ok) throw new Error('응답 오류 ' + r.status); return r.json(); })
-      .then(function(j){ if (!j.ok) throw new Error(j.error || '불러오기 실패'); draw(j.result); });
-  }).catch(function(err){ $('body').innerHTML = '<div class="err">기록실을 불러오지 못했어요: ' + esc(err.message || err) + '</div>'; });
+      .then(function(j){ if (!j.ok) throw new Error(j.error || '불러오기 실패'); draw(j.result); })
+      .catch(function(err){ $('body').innerHTML = '<div class="err">기록실을 불러오지 못했어요: ' + esc(err.message || err) + '</div>'; });
+  }
+  $('monthSel').addEventListener('change', function(){
+    q.month = this.value;
+    try { const u = new URL(location.href); u.searchParams.set('month', this.value); history.replaceState(null, '', u); } catch (e) {}
+    load(this.value);
+  });
+
+  fetch('national.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return {}; }).then(function(cfg){
+    collector = q.c || (cfg && cfg.collector) || '';
+    if (!collector) { $('body').innerHTML = '<div class="err">기록실이 아직 준비 중이에요. 곧 열립니다!</div>'; return; }
+    return load(q.month || '');
+  });
 })();
 </script>
 </body>

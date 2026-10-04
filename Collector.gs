@@ -10,6 +10,8 @@
  * 현황판(board.html)·기록실(hall.html)은 여기서 한 달 단위로 묶은 결과를 받아 갑니다.
  *
  * 시트
+ *  기록실(hall)은 최근 HALL_MONTHS(12)개 달을 고를 수 있음. Hidden 을 바꾼 뒤 바로 반영하려면 refreshCache 실행
+ *
  *  - Schools : PublicId, Name, ShowName, Registered, FirstSeen, LastSeen, Hidden, SchoolName, Teacher, Contact
  *              (Hidden 칸에 1 을 넣으면 그 학교는 현황판·기록실에서 빠집니다)
  *              Name 은 현황판에 보이는 이름(공개한 학교만), SchoolName·Teacher·Contact 는 운영자만 보는 칸
@@ -18,7 +20,7 @@
  *              Students = [[학생키, 가린이름, 학년, 횟수, 카메라횟수], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 2;
+const COLLECTOR_VERSION = 3;
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -26,6 +28,8 @@ const MAX_STUDENTS_PER_DAY = 1200;
 const MAX_COUNT_PER_STUDENT_DAY = 30000;
 const MIN_REGISTERED_FOR_RATIO = 5;  // 1인당 평균·참여율 순위는 등록 학생 5명 이상 학교만
 const BOARD_CACHE_SEC = 300;
+const HALL_MONTHS = 12;          // 기록실에 고를 수 있는 지난 달 수 (시트 자료는 지우지 않음)
+const HALL_CACHE_SEC = 21600;    // 끝난 달 기록실 저장 시간(6시간, 최대값). 지난 달은 늦은 입력이 있어 1시간
 
 /************ 입구 ************/
 function doGet(e) {
@@ -33,7 +37,7 @@ function doGet(e) {
   let out;
   try {
     if (q.api === 'board') out = getBoard_(q.month);
-    else if (q.api === 'hall') out = getHall_();
+    else if (q.api === 'hall') out = getHall_(q.month);
     else out = { collector: COLLECTOR_VERSION, today: today_() };
     out = { ok: true, result: out };
   } catch (err) {
@@ -205,8 +209,8 @@ function fmtDate_(v) {
 /************ 현황판 · 기록실 ************/
 function clearCache_() {
   const c = CacheService.getScriptCache();
-  c.remove('hall');
   const m = month_(today_());
+  c.remove('hall|list|' + m); c.remove('hall|' + prevMonth_(m));
   c.remove('board|' + m); c.remove('board|' + prevMonth_(m));
 }
 
@@ -322,41 +326,69 @@ function getBoard_(month) {
 }
 
 // 지난 달들(이번 달 제외)의 1~3등
-function getHall_() {
+// 기록실: 고를 수 있는 달 목록(최근 HALL_MONTHS 개) + 고른 달 하나의 1~3등
+// 달마다 따로 계산해서 저장해 두므로 몇 년이 쌓여도 매번 전체를 다시 계산하지 않는다.
+// (Schools 시트 Hidden 을 바꾼 뒤 기록실에 바로 반영하려면 편집기에서 refreshCache 실행)
+function getHall_(month) {
   const cache = CacheService.getScriptCache();
-  const hit = cache.get('hall');
-  if (hit) return JSON.parse(hit);
   const cur = month_(today_());
-  const dv = dailySheet_().getDataRange().getValues();
-  const schoolsInfo = loadSchools_();
+  let dv = null;
+  const rows = function () { return dv || (dv = dailySheet_().getDataRange().getValues()); };
+  let list = null;
+  const hitL = cache.get('hall|list|' + cur);
+  if (hitL) list = JSON.parse(hitL);
+  else {
+    list = monthsIn_(rows()).filter(function (m) { return m < cur; }).slice(0, HALL_MONTHS);
+    cache.put('hall|list|' + cur, JSON.stringify(list), 3600);
+  }
+  const want = list.indexOf(String(month || '')) >= 0 ? String(month) : (list[0] || '');
+  let detail = null;
+  if (want) {
+    const hit = cache.get('hall|' + want);
+    if (hit) detail = JSON.parse(hit);
+    else {
+      detail = hallMonth_(want, loadSchools_(), rows());
+      const text = JSON.stringify(detail);
+      if (text.length < 95000) cache.put('hall|' + want, text, want === prevMonth_(cur) ? 3600 : HALL_CACHE_SEC);
+    }
+  }
+  return { current: cur, updated: new Date().toISOString(), minRegistered: MIN_REGISTERED_FOR_RATIO, list: list, month: detail };
+}
+
+function hallMonth_(m, schoolsInfo, dv) {
   const top3 = function (list, field) {
     return list.filter(function (s) { return s.rank[field] && s.rank[field] <= 3; })
       .sort(function (a, b) { return a.rank[field] - b.rank[field]; })
       .map(function (s) { return { rank: s.rank[field], label: s.label, named: s.named, pid: s.pid, total: s.total, avg: s.avg, rate: s.rate, participants: s.participants, registered: s.registered, camera: s.camera }; });
   };
-  const months = monthsIn_(dv).filter(function (m) { return m < cur; }).map(function (m) {
-    const schools = aggregateMonth_(m, schoolsInfo, dv);
-    const studs = nationalStudents_(schools, 50);
-    const st3 = [];
-    let r = 0;
-    studs.forEach(function (x, i) {
-      r = (i > 0 && studs[i - 1].c === x.c) ? r : i + 1;
-      if (r <= 3) st3.push({ rank: r, n: x.n, g: x.g, c: x.c, cam: x.cam, school: x.school });
-    });
-    return {
-      month: m,
-      schoolCount: schools.length,
-      total: schools.reduce(function (a, s) { return a + s.total; }, 0),
-      schools: { total: top3(schools, 'total'), avg: top3(schools, 'avg'), rate: top3(schools, 'rate') },
-      students: st3,
-      // 학교별 학생 1~3등 (학교 안 순위)
-      inSchool: schools.slice(0, 30).map(function (s) {
-        return { label: s.label, named: s.named, pid: s.pid, top: s.students.slice(0, 3).map(function (x) { return { n: x.n, g: x.g, c: x.c }; }) };
-      })
-    };
+  const schools = aggregateMonth_(m, schoolsInfo, dv);
+  const studs = nationalStudents_(schools, 50);
+  const st3 = [];
+  let r = 0;
+  studs.forEach(function (x, i) {
+    r = (i > 0 && studs[i - 1].c === x.c) ? r : i + 1;
+    if (r <= 3) st3.push({ rank: r, n: x.n, g: x.g, c: x.c, cam: x.cam, school: x.school });
   });
-  const out = { current: cur, updated: new Date().toISOString(), minRegistered: MIN_REGISTERED_FOR_RATIO, months: months };
-  const text = JSON.stringify(out);
-  if (text.length < 90000) cache.put('hall', text, 3600);
-  return out;
+  return {
+    month: m,
+    schoolCount: schools.length,
+    total: schools.reduce(function (a, s) { return a + s.total; }, 0),
+    schools: { total: top3(schools, 'total'), avg: top3(schools, 'avg'), rate: top3(schools, 'rate') },
+    students: st3,
+    // 학교별 학생 1~3등 (학교 안 순위)
+    inSchool: schools.slice(0, 30).map(function (s) {
+      return { label: s.label, named: s.named, pid: s.pid, top: s.students.slice(0, 3).map(function (x) { return { n: x.n, g: x.g, c: x.c }; }) };
+    })
+  };
+}
+
+// 운영자용: 현황판·기록실 저장본을 모두 지움 (Hidden 을 바꾼 뒤 바로 반영하고 싶을 때 편집기에서 실행)
+function refreshCache() {
+  const c = CacheService.getScriptCache();
+  const months = monthsIn_(dailySheet_().getDataRange().getValues());
+  const cur = month_(today_());
+  const keys = ['hall|list|' + cur, 'board|' + cur];
+  months.forEach(function (m) { keys.push('hall|' + m, 'board|' + m); });
+  c.removeAll(keys);
+  return keys.length;
 }

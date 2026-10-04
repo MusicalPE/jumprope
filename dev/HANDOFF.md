@@ -31,6 +31,9 @@ python3 test_site.py                              # playwright 전체 흐름 시
   - 2.1.1: Schools 에 SchoolName·Teacher·Contact 칸(운영자만, 현황판 응답에 안 나감). 참여하려면 학교 이름·담당 교사 필수, 연락처 선택.
     교사·연락처는 EXTRA_SETTINGS(공개)에 두지 않고 관리자 기기 localStorage(`jr_nat_contact|<껍데기주소>`)에만, 관리자 화면 동기화(syncAll) 때만 보냄.
     수집기는 teacher 가 있을 때만 교사·연락처를 덮어씀 → 학생 화면 자동 보고가 지우지 않음. 예전 7칸 시트는 머리줄 자동 확장. COLLECTOR_VERSION = 2
+  - 2.1.2: 기록실 `?api=hall&month=` → { list: 최근 HALL_MONTHS(12)개 지난 달, month: 고른 달 상세 }. 달마다 캐시 'hall|YYYY-MM'(지난 달 1시간, 그 전 6시간),
+    목록 캐시 'hall|list|<이번 달>'. Hidden 바꾼 뒤 바로 반영은 편집기에서 refreshCache 실행. hall.html 은 예전 응답(months 배열)도 읽음. COLLECTOR_VERSION = 3
+  - 수집기 주소는 2026-10-04 에 한 번 바뀜(실수로 새 배포). 수정은 꼭 '배포 관리 → 수정 → 새 버전'
   - 1인당 평균·참여율 순위는 등록 학생 5명 이상 학교만 (MIN_REGISTERED_FOR_RATIO)
 - `national.json`·`beta/national.json` 의 `collector` 에 수집기 주소 (2026-10-04 운영자 배포 주소 넣음)
 - `beta/index.html`: `NAT` 모듈

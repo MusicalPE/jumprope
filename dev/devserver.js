@@ -46,7 +46,9 @@ function seedCollector(o) {
   schools.forEach(([key, name, show, reg, k], si) => {
     c.report_({ key, name, showName: show, registered: reg, days: [] });
     const pid = c.publicId_(key);
-    [[pm, 20], [m, Math.min(Number(today.slice(8)), 3)]].forEach(([mm, nd]) => {
+    // 지난 달 20일치 + 이번 달 + 더 오래된 달 13개(각 2일, 기록실 12개월 제한 시험용)
+    const older = []; let om = pm; for (let k = 0; k < 13; k++) { om = c.prevMonth_(om); older.push([om, 2]); }
+    [[pm, 20], [m, Math.min(Number(today.slice(8)), 3)]].concat(older).forEach(([mm, nd]) => {
       for (let d = 1; d <= nd; d++) {
         const st = names.slice(0, 4 + si * 2).map((n, i) => ['s' + si + 'x' + i, c.maskName_(n), String(4 + (i % 3)), Math.round((60 + i * 17 + d * 3) * k), i % 3 === 0 ? 30 : 0]);
         const total = st.reduce((a, s) => a + s[3], 0), cam = st.reduce((a, s) => a + s[4], 0);

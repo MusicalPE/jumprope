@@ -80,6 +80,16 @@ with sync_playwright() as p:
     check('학생 1~3등', pg.locator('.podium.stars .pl').count()>=3)
     pg.click('details.ins summary'); pg.wait_for_timeout(200)
     pg.screenshot(path=OUT+'/nat_hall.png', full_page=True)
+    hopts=pg.eval_on_selector_all('#monthSel option','e=>e.map(x=>x.value)')
+    check('기록실 달 고르기 최근 12개월', len(hopts)==12 and hopts==sorted(hopts, reverse=True), str(hopts))
+    pg.select_option('#monthSel', hopts[5]); pg.wait_for_timeout(1200)
+    h2=pg.text_content('.month-head h2')
+    check('다른 달 고르면 그 달만 표시', pg.locator('.month').count()==1 and h2==f'{int(hopts[5][:4])}년 {int(hopts[5][5:])}월', h2)
+    check('주소에 달 남김', 'month='+hopts[5] in pg.url, pg.url)
+    pg.reload(); pg.wait_for_timeout(1500)
+    check('새로고침해도 고른 달 유지', pg.input_value('#monthSel')==hopts[5])
+    hall=get(H+'/collector?api=hall')['result']
+    check('수집기 기록실 응답: 목록 12개 + 한 달 상세', len(hall['list'])==12 and hall['month']['month']==hall['list'][0], str(hall['list'][:3]))
     # 휴대폰 폭
     m=b.new_context(viewport={'width':390,'height':844}, device_scale_factor=2); m.route(re.compile(r'https://cdn\.jsdelivr\.net/.*'), route)
     mp=m.new_page(); mp.goto(H+'/jumprope/'+CH+'board.html?me='+pid); mp.wait_for_timeout(1500)
