@@ -28,6 +28,9 @@ python3 test_site.py                              # playwright 전체 흐름 시
   - 학교 공개 번호 = sha256('jr-school|'+key) 앞 10자리, 학생 키 = sha256('jr-student|'+key+'|'+학생ID) 앞 10자리
   - 이번 달·지난 달 날짜만 받음(늦은 입력 반영), 같은 학교·같은 날은 덮어씀. 이름은 서버에서도 다시 가림
   - Schools 시트 Hidden 칸에 1 → 그 학교 숨김(장난 보고 대응)
+  - 2.1.1: Schools 에 SchoolName·Teacher·Contact 칸(운영자만, 현황판 응답에 안 나감). 참여하려면 학교 이름·담당 교사 필수, 연락처 선택.
+    교사·연락처는 EXTRA_SETTINGS(공개)에 두지 않고 관리자 기기 localStorage(`jr_nat_contact|<껍데기주소>`)에만, 관리자 화면 동기화(syncAll) 때만 보냄.
+    수집기는 teacher 가 있을 때만 교사·연락처를 덮어씀 → 학생 화면 자동 보고가 지우지 않음. 예전 7칸 시트는 머리줄 자동 확장. COLLECTOR_VERSION = 2
   - 1인당 평균·참여율 순위는 등록 학생 5명 이상 학교만 (MIN_REGISTERED_FOR_RATIO)
 - `national.json`·`beta/national.json` 의 `collector` 에 수집기 주소 (2026-10-04 운영자 배포 주소 넣음)
 - `beta/index.html`: `NAT` 모듈

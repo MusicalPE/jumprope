@@ -31,8 +31,11 @@ with sync_playwright() as p:
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
     pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
     pg.click('#adminNav button[data-tab="national"]'); pg.wait_for_timeout(500)
-    check('이름 칸 처음엔 숨김', not pg.is_visible('#natName'))
-    pg.check('#natOn'); pg.check('#natShowName'); pg.fill('#natName', '우리초등학교')
+    pg.check('#natOn'); pg.click('#saveNatBtn'); pg.wait_for_timeout(300)
+    check('학교 이름 없으면 저장 막힘', '학교 이름' in pg.text_content('#natMsg'), pg.text_content('#natMsg'))
+    pg.fill('#natName', '우리초등학교'); pg.click('#saveNatBtn'); pg.wait_for_timeout(300)
+    check('담당 교사 없으면 저장 막힘', '담당 교사' in pg.text_content('#natMsg'), pg.text_content('#natMsg'))
+    pg.fill('#natTeacher', '홍길동'); pg.fill('#natContact', 'hong@school.kr'); pg.check('#natShowName')
     pg.click('#saveNatBtn'); pg.wait_for_timeout(2500)
     check('저장·보내기 메시지', '보냈어요' in pg.text_content('#natMsg'), pg.text_content('#natMsg'))
     check('미리보기 표시', pg.is_visible('#natPreview table'), pg.text_content('#natPreview .nat-kpis'))
@@ -40,6 +43,9 @@ with sync_playwright() as p:
     ours=[r for r in st['schools'] if r[1]=='우리초등학교']
     check('수집기에 학교 등록', len(ours)==1, str(ours))
     pid=ours[0][0]
+    check('운영자 칸: 학교·교사·연락처', ours[0][7:10]==['우리초등학교','홍길동','hong@school.kr'], str(ours[0][7:10]))
+    b_=get(H+'/collector?api=board')
+    check('현황판 응답에 교사·연락처 없음', '홍길동' not in json.dumps(b_, ensure_ascii=False) and 'hong@' not in json.dumps(b_))
     rows=[r for r in st['daily'] if r[0]==pid]
     names=[s[1] for r in rows for s in json.loads(r[5])]
     check('이름 가림만 전송', all('*' in n for n in names) and '김하늘' not in json.dumps(st, ensure_ascii=False), str(sorted(set(names))))
@@ -79,6 +85,9 @@ with sync_playwright() as p:
     mp=m.new_page(); mp.goto(H+'/jumprope/'+CH+'board.html?me='+pid); mp.wait_for_timeout(1500)
     check('휴대폰 가로 넘침 없음', mp.evaluate('document.documentElement.scrollWidth<=window.innerWidth'))
     mp.screenshot(path=OUT+'/nat_board_phone.png', full_page=True)
+    # 학생 화면 자동 보고에는 교사 정보가 안 실림 (관리자 기기 기억값 지우고 새 맥락)
+    sc=get(H+'/__state')
+    check('학교 시트 설정에 교사 정보 없음', '홍길동' not in json.dumps(sc['props'], ensure_ascii=False))
     # 참여 끄기 → 기록 삭제
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
     if pg.is_visible('#pw'):

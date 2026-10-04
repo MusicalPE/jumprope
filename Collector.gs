@@ -10,13 +10,15 @@
  * 현황판(board.html)·기록실(hall.html)은 여기서 한 달 단위로 묶은 결과를 받아 갑니다.
  *
  * 시트
- *  - Schools : PublicId, Name, ShowName, Registered, FirstSeen, LastSeen, Hidden
+ *  - Schools : PublicId, Name, ShowName, Registered, FirstSeen, LastSeen, Hidden, SchoolName, Teacher, Contact
  *              (Hidden 칸에 1 을 넣으면 그 학교는 현황판·기록실에서 빠집니다)
+ *              Name 은 현황판에 보이는 이름(공개한 학교만), SchoolName·Teacher·Contact 는 운영자만 보는 칸
+ *              (현황판·기록실 응답에는 절대 나가지 않음. 담당 교사·연락처는 관리자 화면에서 보낼 때만 옴)
  *  - Daily   : PublicId, Date, Total, Participants, Camera, Students(JSON), UpdatedAt
  *              Students = [[학생키, 가린이름, 학년, 횟수, 카메라횟수], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 1;
+const COLLECTOR_VERSION = 2;
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -90,11 +92,17 @@ function sheet_(name, header) {
   if (!sh) { sh = ss.insertSheet(name); sh.appendRow(header); }
   return sh;
 }
-function schoolsSheet_() { return sheet_(SH_SCHOOLS, ['PublicId', 'Name', 'ShowName', 'Registered', 'FirstSeen', 'LastSeen', 'Hidden']); }
+const SCHOOLS_HEADER_ = ['PublicId', 'Name', 'ShowName', 'Registered', 'FirstSeen', 'LastSeen', 'Hidden', 'SchoolName', 'Teacher', 'Contact'];
+function schoolsSheet_() {
+  const sh = sheet_(SH_SCHOOLS, SCHOOLS_HEADER_);
+  // 예전(7칸) 시트면 머리줄에 새 칸 이름을 붙인다
+  if (sh.getLastColumn() < SCHOOLS_HEADER_.length) sh.getRange(1, 1, 1, SCHOOLS_HEADER_.length).setValues([SCHOOLS_HEADER_]);
+  return sh;
+}
 function dailySheet_() { return sheet_(SH_DAILY, ['PublicId', 'Date', 'Total', 'Participants', 'Camera', 'Students', 'UpdatedAt']); }
 
 /************ 보고 받기 ************/
-// p = { key, name, showName, registered, camPartial, days: [{ date, students: [[sk, name, grade, count, cam], ...] }] }
+// p = { key, name, showName, schoolName, teacher?, contact?, registered, camPartial, days: [{ date, students: [[sk, name, grade, count, cam], ...] }] }
 function report_(p) {
   const key = cleanText_(p.key, 80);
   if (key.length < 16) throw new Error('학교 키가 올바르지 않습니다.');
@@ -106,6 +114,7 @@ function report_(p) {
     return /^\d{4}-\d{2}-\d{2}$/.test(ds) && ds <= today && (month_(ds) === curM || month_(ds) === prevM);
   });
 
+  let contactSet = false;
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
@@ -117,12 +126,21 @@ function report_(p) {
     const showName = !!p.showName;
     const name = showName ? cleanText_(p.name, 40) : '';
     const reg = int_(p.registered, 5000);
+    const schoolName = cleanText_(p.schoolName, 40);
+    // 담당 교사·연락처는 관리자 화면에서 보낼 때만 들어온다 (teacher 가 있을 때만 바꿈)
+    const teacher = cleanText_(p.teacher, 30);
+    const contact = cleanText_(p.contact, 80);
     const now = new Date();
-    if (srow === -1) ssh.appendRow([pid, name, showName ? 1 : 0, reg, now, now, '']);
-    else {
+    if (srow === -1) {
+      ssh.appendRow([pid, name, showName ? 1 : 0, reg, now, now, '', schoolName, teacher, teacher ? contact : '']);
+      srow = ssh.getLastRow();
+    } else {
       ssh.getRange(srow, 2, 1, 3).setValues([[name, showName ? 1 : 0, reg]]);
       ssh.getRange(srow, 6).setValue(now);
+      if (schoolName) ssh.getRange(srow, 8).setValue(schoolName);
+      if (teacher) ssh.getRange(srow, 9, 1, 2).setValues([[teacher, contact]]);
     }
+    contactSet = !!(teacher || (sv[srow - 1] && String(sv[srow - 1][8] || '').trim()));
 
     // 날짜별 집계 (같은 학교·같은 날은 새 값으로 덮어씀)
     const dsh = dailySheet_();
@@ -156,7 +174,7 @@ function report_(p) {
     lock.releaseLock();
   }
   clearCache_();
-  return { publicId: pid, days: days.length };
+  return { publicId: pid, days: days.length, contactSet: contactSet };
 }
 
 // 참여를 끄면 그 학교 자료를 지운다
