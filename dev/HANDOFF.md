@@ -21,7 +21,7 @@ python3 test_site.py                              # playwright 전체 흐름 시
 ```
 `gas-emu.js` 는 Apps Script 흉내(SpreadsheetApp/Properties/Cache/ContentService 등)로 `../Shell.gs` 를 그대로 실행.
 
-## 2.1 — 전국 현황판 (beta 에만 올라감, 정식판 아직)
+## 2.1 — 전국 현황판 (정식판·beta 모두 반영)
 - 껍데기(Shell.gs)는 **그대로 1판**. 참여 설정은 `EXTRA_SETTINGS.nat = { on, key, name, showName }`
 - `Collector.gs` (루트): 운영자 소유 **중앙 수집 시트**용 별도 Apps Script. 시트 Schools / Daily
   - POST `{fn:'report'|'leave', args:[payload]}`, GET `?api=board&month=YYYY-MM` · `?api=hall`
@@ -29,7 +29,7 @@ python3 test_site.py                              # playwright 전체 흐름 시
   - 이번 달·지난 달 날짜만 받음(늦은 입력 반영), 같은 학교·같은 날은 덮어씀. 이름은 서버에서도 다시 가림
   - Schools 시트 Hidden 칸에 1 → 그 학교 숨김(장난 보고 대응)
   - 1인당 평균·참여율 순위는 등록 학생 5명 이상 학교만 (MIN_REGISTERED_FOR_RATIO)
-- `beta/national.json` 의 `collector` 에 수집기 주소 (**지금은 비어 있음 → 화면에 "준비 중"**)
+- `national.json`·`beta/national.json` 의 `collector` 에 수집기 주소 (**지금은 비어 있음 → 화면에 "준비 중"**)
 - `beta/index.html`: `NAT` 모듈
   - 메인: 저장 직후 + 20분마다 오늘 집계 보고(공개 함수 getTodaySummaryPublic·getAllStudentsPublic·getRecentRecordsPublic 사용, 카메라는 최근 30건 한계 → camPartial)
   - 관리자: "전국 현황판" 탭(참여·학교 이름 공개·학교 이름, 지금 보내기, 미리보기), 관리자 메뉴 열면 1시간에 한 번 getAllDataAdmin 으로 이번 달+지난 달 전체 동기화. 참여 끄면 `leave` 로 수집기 자료 삭제
@@ -38,9 +38,9 @@ python3 test_site.py                              # playwright 전체 흐름 시
 - 알려진 한계: 학교 키가 getExtraSettings(공개)로 보임 → 껍데기 주소를 아는 사람은 그 학교 이름으로 보고 가능. 껍데기 2판에서 숨길 수 있음
 
 ## 다음 할 일
-- Collector.gs 배포 → beta/national.json 에 주소 → beta 에서 실제 확인
-- 정식판으로 복사: beta/index.html·board.html·hall.html·national.json → 루트, changelog 맨 위 2.1.0 추가
-- 인디스쿨 참여 안내 글 작성
+- Collector.gs 배포 → `national.json`·`beta/national.json` 두 곳에 주소 → 실제 Apps Script 에서 확인
+- 인디스쿨 공유: `share/` (줄넘기기록관리_v2.1.zip = Shell(껍데기).txt + 사용설명서.pdf, 인디스쿨_안내글.md)
+  - 설명서 원본 `share/manual.html` (그림 `share/img/`), PDF 는 playwright page.pdf 로 만듦
 
 ## 관련
 - 줄넘기 판정기: MusicalPE/jump-rope-checker (현재 v0.7.4, ?app= 서버 연동 + mode=post 오프라인 연동)

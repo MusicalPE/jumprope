@@ -54,11 +54,12 @@ beta/index.html   시험판 (먼저 여기서 확인 → 정식판으로 복사)
 beta/changelog.json
 Shell.gs          학교 시트용 껍데기 (배포용 사본)
 Collector.gs      전국 현황판 중앙 수집기 (운영자 한 명만 설치)
-beta/board.html   전국 현황판 · beta/hall.html 기록실 · beta/national.json 수집기 주소
+board.html        전국 현황판 · hall.html 기록실 · national.json 수집기 주소 (beta/ 에도 같은 구성)
+share/            인디스쿨 공유 꾸러미 (zip·사용설명서·안내 글)
 ```
 
 #### 전국 현황판 수집기 설치 (운영자 한 번만)
 1. 새 스프레드시트 → 확장 프로그램 → Apps Script → `Collector.gs` 내용 붙여넣기
 2. 배포 → 새 배포 → 웹 앱 (실행: 나 / 액세스: 모든 사용자)
-3. 나온 `…/exec` 주소를 `beta/national.json` 의 `"collector"` 에 넣고 올리기 (정식판은 루트 `national.json`)
+3. 나온 `…/exec` 주소를 루트 `national.json` 과 `beta/national.json` 의 `"collector"` 에 넣고 올리기
 GitHub 저장소 Settings → Pages → Branch: `main` / `(root)` 로 켜면 `https://musicalpe.github.io/jumprope/` 로 열립니다.

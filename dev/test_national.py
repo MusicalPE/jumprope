@@ -2,8 +2,9 @@
 from playwright.sync_api import sync_playwright
 import urllib.parse, json, urllib.request, re, os
 H='http://localhost:8890'
+CH=os.environ.get('CH', 'beta/')   # 정식판 시험: CH= python3 test_national.py
 EXEC=H+'/exec'
-APPU=H+'/jumprope/beta/?s='+urllib.parse.quote(EXEC, safe='')
+APPU=H+'/jumprope/'+CH+'?s='+urllib.parse.quote(EXEC, safe='')
 V=os.path.dirname(os.path.abspath(__file__))+'/vendor/'
 OUT=os.environ.get('SHOTS', '.')
 def route(r):
@@ -53,7 +54,7 @@ with sync_playwright() as p:
     after=sum(r[2] for r in col_state()['daily'] if r[0]==pid)
     check('저장 직후 현황판 반영 (+500)', after-before==500, f'{before} → {after}')
     # 현황판
-    pg.goto(H+'/jumprope/beta/board.html?me='+pid); pg.wait_for_timeout(1500)
+    pg.goto(H+'/jumprope/'+CH+'board.html?me='+pid); pg.wait_for_timeout(1500)
     rows=pg.locator('tr.school').count()
     check('현황판 학교 행', rows==4, str(rows))
     check('우리 학교 강조', pg.locator('tr.school.me').count()==1)
@@ -67,7 +68,7 @@ with sync_playwright() as p:
     pg.select_option('#monthSel', opts[1]); pg.wait_for_timeout(1200)
     check('지난 달 보기', '최종 기록' in pg.text_content('#heroSub'), pg.text_content('#heroSub'))
     # 기록실
-    pg.goto(H+'/jumprope/beta/hall.html?me='+pid); pg.wait_for_timeout(1500)
+    pg.goto(H+'/jumprope/'+CH+'hall.html?me='+pid); pg.wait_for_timeout(1500)
     check('기록실 달 카드', pg.locator('.month').count()==1, pg.text_content('.month-head h2'))
     check('학교 1~3등', pg.locator('.podiums .podium').first.locator('.pl').count()==3)
     check('학생 1~3등', pg.locator('.podium.stars .pl').count()>=3)
@@ -75,7 +76,7 @@ with sync_playwright() as p:
     pg.screenshot(path=OUT+'/nat_hall.png', full_page=True)
     # 휴대폰 폭
     m=b.new_context(viewport={'width':390,'height':844}, device_scale_factor=2); m.route(re.compile(r'https://cdn\.jsdelivr\.net/.*'), route)
-    mp=m.new_page(); mp.goto(H+'/jumprope/beta/board.html?me='+pid); mp.wait_for_timeout(1500)
+    mp=m.new_page(); mp.goto(H+'/jumprope/'+CH+'board.html?me='+pid); mp.wait_for_timeout(1500)
     check('휴대폰 가로 넘침 없음', mp.evaluate('document.documentElement.scrollWidth<=window.innerWidth'))
     mp.screenshot(path=OUT+'/nat_board_phone.png', full_page=True)
     # 참여 끄기 → 기록 삭제

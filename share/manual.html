@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<title>줄넘기 기록 관리 v2.1 사용설명서</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 16mm; }
+  body { font-family: 'Noto Sans CJK KR','Noto Sans KR','Malgun Gothic',sans-serif; color:#1F2937; font-size:10.5pt; line-height:1.65; margin:0; }
+  h1 { font-size:24pt; margin:0 0 4px; }
+  h2 { font-size:15pt; margin:22px 0 8px; padding-bottom:5px; border-bottom:2px solid #F26A3D; break-after:avoid; }
+  h3 { font-size:11.5pt; margin:14px 0 4px; break-after:avoid; }
+  p { margin:5px 0; }
+  .cover { background:linear-gradient(135deg,#F26A3D,#FF8A65); color:#fff; border-radius:14px; padding:26px 28px; margin-bottom:18px; }
+  .cover p { margin:4px 0 0; opacity:.95; font-size:11.5pt; }
+  .cover .meta { margin-top:14px; font-size:9.5pt; opacity:.9; }
+  ol, ul { margin:4px 0 6px; padding-left:22px; }
+  li { margin:2px 0; }
+  .box { background:#F3F5F8; border-radius:10px; padding:10px 14px; margin:8px 0; break-inside:avoid; }
+  .tip { background:#FFF1EC; border-left:4px solid #F26A3D; border-radius:6px; padding:8px 12px; margin:8px 0; break-inside:avoid; }
+  .warn { background:#FEF3C7; border-left:4px solid #D97706; border-radius:6px; padding:8px 12px; margin:8px 0; break-inside:avoid; }
+  code { background:#EEF0F3; border-radius:4px; padding:1px 5px; font-size:9.5pt; }
+  figure { margin:8px 0 12px; text-align:center; break-inside:avoid; }
+  figure img { max-width:80%; border:1px solid #E5E7EB; border-radius:8px; }
+  figure.half img { max-width:52%; }
+  figure.phone img { max-width:34%; }
+  figcaption { font-size:8.8pt; color:#6B7280; margin-top:3px; }
+  table { width:100%; border-collapse:collapse; margin:6px 0; break-inside:avoid; }
+  th, td { border:1px solid #E5E7EB; padding:6px 9px; text-align:left; vertical-align:top; font-size:9.8pt; }
+  th { background:#F3F5F8; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:start; }
+  .pb { break-before:page; }
+  .toc li { margin:1px 0; }
+  .foot { break-before:avoid; text-align:center; color:#9CA3AF; font-size:9pt; margin-top:24px; }
+</style></head>
+<body>
+
+<div class="cover">
+  <h1>🏆 줄넘기 기록 관리 v2.1</h1>
+  <p>학생은 휴대폰으로 그날 뛴 줄넘기 횟수를 넣고, 반 전체 그래프·학생별 누적·전국 현황판까지 한눈에.</p>
+  <p>학교 시트에 <b>껍데기(Shell) 하나만</b> 설치하면, 새 기능은 자동으로 들어옵니다.</p>
+  <div class="meta">사용설명서 · 2026년 10월 · Made by 음악적체육인 · https://musicalpe.github.io/jumprope/</div>
+</div>
+
+<div class="box toc"><b>차례</b>
+<ol>
+  <li>꾸러미에 들어 있는 것</li><li>처음 설치 (5분, 한 번만)</li><li>첫 설정 — 비밀번호 · 학생 등록 · QR</li>
+  <li>수업에서 쓰기</li><li>전국 현황판 · 기록실 (2.1 새 기능)</li><li>1.x 를 쓰던 학교에서 옮기기</li>
+  <li>업데이트</li><li>자주 묻는 질문 · 문제 해결</li>
+</ol></div>
+
+<h2>1. 꾸러미에 들어 있는 것</h2>
+<table>
+  <tr><th style="width:34%">파일</th><th>쓰임</th></tr>
+  <tr><td><code>Shell(껍데기).txt</code></td><td>학교 스프레드시트의 Apps Script 에 붙여넣는 코드. <b>메모장으로 열어 전체 복사</b>하면 됩니다.</td></tr>
+  <tr><td><code>사용설명서.pdf</code></td><td>지금 보고 있는 문서</td></tr>
+</table>
+<p>화면과 기능은 인터넷(GitHub)에서 열리기 때문에 따로 내려받을 파일은 이것뿐입니다. 학생·기록·설정은 <b>선생님 구글 드라이브의 스프레드시트</b>에만 저장됩니다.</p>
+
+<h2>2. 처음 설치 (5분, 한 번만)</h2>
+<ol>
+  <li>구글 드라이브에서 <b>새 스프레드시트</b>를 만듭니다. (이름 예: <code>6학년 줄넘기</code>)</li>
+  <li>메뉴 <b>확장 프로그램 → Apps Script</b> 를 엽니다.</li>
+  <li>왼쪽 <code>Code.gs</code> 의 내용을 <b>전부 지우고</b>, <code>Shell(껍데기).txt</code> 내용을 붙여넣은 뒤 저장(Ctrl+S)합니다.</li>
+  <li>오른쪽 위 <b>배포 → 새 배포</b> → 톱니바퀴에서 유형 <b>웹 앱</b>
+    <ul><li>다음 사용자로 실행: <b>나</b></li><li>액세스 권한: <b>모든 사용자</b></li></ul></li>
+  <li><b>배포</b> → 권한 허용. "Google에서 확인하지 않은 앱" 경고가 나오면 <b>고급 → (프로젝트 이름)(으)로 이동(안전하지 않음)</b> → 허용.
+    <br><span style="color:#6B7280">선생님 본인이 만든 코드를 선생님 시트에서 실행하는 것이라 나오는 안내입니다.</span></li>
+  <li>나온 <b>웹 앱 주소</b>(<code>…/exec</code> 로 끝남)를 브라우저로 열면 아래 "설치 확인" 화면이 뜹니다. <b>프로그램 열기 →</b> 를 누르세요.</li>
+  <li>열린 프로그램 주소를 <b>즐겨찾기</b>에 넣으면 설치 끝! 관리자 비밀번호는 처음에 <code>1234</code> 입니다.</li>
+</ol>
+<figure class="half"><img src="img/install.png"><figcaption>웹 앱 주소를 열면 나오는 설치 확인 화면</figcaption></figure>
+<div class="warn">액세스 권한이 <b>"모든 사용자"</b>가 아니면 학생 휴대폰에서 "학교 시트에 연결하지 못했어요"가 뜹니다. 학생들은 구글 로그인 없이 들어옵니다.</div>
+
+<h2>3. 첫 설정 — 비밀번호 · 학생 등록 · QR</h2>
+<p>메인 화면 오른쪽 위 <b>관리자 메뉴</b> → 비밀번호 <code>1234</code> 로 들어갑니다.</p>
+<h3>① 관리자 비밀번호 바꾸기</h3>
+<p><b>비밀번호 · 초기화</b> 탭에서 바로 바꿔 주세요.</p>
+<h3>② 학생 등록 — 엑셀에서 붙여넣기</h3>
+<p><b>학생 등록</b> 탭에 엑셀·구글시트의 <b>학년 · 반 · 번호 · 이름</b> 네 칸(다섯째 칸에 학생 비밀번호, 선택)을 복사해 붙여넣고, 아래 미리보기를 확인한 뒤 <b>등록</b>.</p>
+<ul><li>학생 비밀번호를 비워 두면 <code>1234</code> 로 등록됩니다. (학생이 자기 기록 페이지를 볼 때 사용)</li>
+<li>제목 줄이 섞여 있거나 이미 등록된 학생은 자동으로 건너뜁니다.</li></ul>
+<figure><img src="img/admin_register.png"><figcaption>학생 등록 — 붙여넣으면 아래 표에서 확인</figcaption></figure>
+<h3>③ 기본 설정 — QR · 하루 목표 · 줄넘기 종류 · 승인 절차</h3>
+<figure><img src="img/admin_basic.png"><figcaption>기본 설정 탭의 학생 접속 QR</figcaption></figure>
+<ul>
+  <li><b>학생 접속 QR</b>: 크게 보여주기 / 주소 복사 / 이미지 저장. 프로그램이 새 판이 되어도 <b>QR은 그대로</b> 쓰면 됩니다.</li>
+  <li><b>즐겨찾기용 주소</b>(끝이 <code>&amp;qr=1</code>): 교실 컴퓨터에 넣어 두면 열자마자 QR이 크게 뜹니다.</li>
+  <li><b>오늘의 목표</b>: "오늘 목표 달성 학생 수" 기준 (기본 100회)</li>
+  <li><b>줄넘기 종류</b>: 한 줄에 하나씩 (모아뛰기, 엇갈아뛰기, 이중뛰기 …). 학기 중에는 이름을 바꾸기보다 추가만 하세요.</li>
+  <li><b>승인 절차</b>: 켜면 학생 입력 → 선생님 승인 후 반영. 기본은 꺼짐(저장 즉시 반영).</li>
+</ul>
+
+<h2>4. 수업에서 쓰기</h2>
+<div class="two">
+  <div>
+    <h3>학생</h3>
+    <ol><li>QR을 찍어 들어옵니다.</li><li>학년 → 반 → 이름 → 줄넘기 종류를 고르고 뛴 횟수를 넣고 <b>저장</b>.</li>
+    <li>여러 번 뛰었으면 그때마다 넣으면 그날 횟수가 모두 더해집니다.</li>
+    <li>그래프의 자기 이름 막대를 누르고 비밀번호를 넣으면 날짜별 기록을 볼 수 있어요.</li></ol>
+    <h3>선생님</h3>
+    <ul><li>메인 화면: 이번주·오늘의 줄넘기왕, 연속 기록 1위, 학생별 누적 그래프(종류별로 쌓아서 / 한 종류만)</li>
+    <li>학생 관리 탭: 학생별 기록 고치기·삭제, 명단 순서 바꾸기</li>
+    <li>테마 · 색상, AI 한마디(Gemini 키를 넣으면 매일 새 응원 문구)</li></ul>
+  </div>
+  <figure class="phone" style="margin:0"><img src="img/phone.png" style="max-width:78%"><figcaption>학생 휴대폰 입력 화면</figcaption></figure>
+</div>
+<figure><img src="img/main.png"><figcaption>메인 화면 (교실 TV에 띄워 두기 좋아요)</figcaption></figure>
+<h3>📷 카메라 판정기 (선택)</h3>
+<p><b>카메라 판정기</b> 탭에서 켜면 입력 폼에 <b>📷 카메라로 뛰기</b> 버튼이 생깁니다. 태블릿·노트북·휴대폰 카메라가 실제로 뛴 횟수를 세고, "끝내고 기록하기"를 누르면 자동으로 기록됩니다. 카메라 기록은 📷 표시가 붙고, 전국 현황판에서도 "카메라 인증" 횟수로 따로 보여요.</p>
+
+<h2 class="pb">5. 전국 현황판 · 기록실 <span style="font-size:10pt;color:#F26A3D">2.1 새 기능</span></h2>
+<p>참여를 켜면 우리 학교 기록이 전국 현황판에 모여 다른 학교와 <b>한 달 단위</b>로 순위를 겨룹니다. <b>매달 1일에 새로 시작</b>하고, 지난 달 1~3등은 <b>기록실</b>에 남습니다. <b>참여는 기본 꺼짐</b>이에요.</p>
+<h3>켜는 방법</h3>
+<ol><li>관리자 메뉴 → <b>전국 현황판</b> 탭</li>
+<li><b>전국 현황판에 참여하기</b> 체크. 학교 이름을 보이게 하려면 <b>학교 이름 공개</b>도 체크하고 이름 입력 (끄면 "익명 학교 ABCD")</li>
+<li><b>저장</b> → 이번 달·지난 달 기록이 바로 보내지고, 아래에 "현황판에 보이는 모습"이 나옵니다.</li></ol>
+<figure><img src="img/admin_national.png"><figcaption>관리자 메뉴 → 전국 현황판 탭</figcaption></figure>
+<h3>무엇이 보내지나요?</h3>
+<table>
+  <tr><th style="width:50%">현황판에 보내는 것</th><th>보내지 않는 것</th></tr>
+  <tr><td>가린 이름(예: <b>김*늘</b>) · 학년 · 날짜별 뛴 횟수 · 카메라 인증 횟수 · 등록 학생 수 · (공개를 켰을 때만) 학교 이름</td>
+      <td>실명 · 반 · 번호 · 비밀번호 · 그 밖의 학교 시트 내용</td></tr>
+</table>
+<ul><li>참여를 <b>끄면</b> 현황판에 올라간 우리 학교 기록은 <b>지워집니다</b>.</li>
+<li>학생이 기록을 저장할 때마다 오늘 집계가 보내지고, 관리자 메뉴를 열면 이번 달·지난 달 전체를 한 번 더 맞춥니다(늦게 넣은 기록·승인 반영).</li></ul>
+<h3>현황판 보기</h3>
+<p>참여 중이면 메인 화면 위에 <b>🏆 전국 현황판</b> 버튼이 생깁니다. 우리 학교 줄이 색으로 표시되고, 학교 줄을 누르면 그 학교 안 학생 순위가 펼쳐집니다.</p>
+<ul><li><b>합계</b> 순위와 함께 <b>1인당 평균</b>(합계 ÷ 등록 학생 수)·<b>참여율</b>(한 번이라도 뛴 학생 ÷ 등록 학생 수) 순위로 바꿔 볼 수 있어 작은 학교도 공정하게 겨룹니다. (두 순위는 등록 학생 5명 이상 학교만)</li>
+<li>전국 학생 순위 TOP 30, 지난 달 현황판도 고를 수 있어요.</li></ul>
+<figure><img src="img/board.png"><figcaption>전국 현황판</figcaption></figure>
+<figure><img src="img/hall.png"><figcaption>기록실 — 지난 달들의 1~3등</figcaption></figure>
+
+<h2>6. 1.x 를 쓰던 학교에서 옮기기</h2>
+<p>학생과 기록은 같은 스프레드시트에 그대로 남습니다.</p>
+<ol><li>Apps Script 에서 <code>Code.gs</code> 내용을 <code>Shell(껍데기).txt</code> 내용으로 바꿔 붙여넣습니다.</li>
+<li><code>Index</code>, <code>StudentPage</code>, <code>AdminPage</code>, <code>ApprovalPage</code>, <code>AdminLogin</code>, <code>Styles</code> HTML 파일은 삭제해도 됩니다.</li>
+<li><b>배포 → 배포 관리 → 수정(연필) → 버전: 새 버전 → 배포</b> (주소가 그대로 유지됩니다)</li>
+<li>웹 앱 주소를 열고 <b>프로그램 열기</b> → 즐겨찾기. 학생 QR은 관리자 메뉴의 새 QR로 한 번만 다시 알려 주세요.</li></ol>
+<div class="tip">v2 는 승인 절차가 <b>기본 꺼짐</b>입니다. 예전처럼 승인 후 반영하려면 기본 설정에서 켜세요.</div>
+
+<h2>7. 업데이트</h2>
+<ul><li><b>화면·기능</b>: 자동. 할 일이 없습니다. 바뀐 내용은 관리자 메뉴 → <b>업데이트 내역</b>(NEW 표시)에서 볼 수 있어요.</li>
+<li><b>껍데기(Shell)</b>: 거의 바뀌지 않습니다. 바꿔야 할 때는 업데이트 내역 탭에 안내가 뜹니다. (2.1 도 껍데기 그대로)</li>
+<li>새 기능을 미리 써 보려면 설치 확인 화면의 <b>베타 열기</b>를 이용하세요.</li></ul>
+
+<h2>8. 자주 묻는 질문 · 문제 해결</h2>
+<table>
+<tr><th style="width:38%">증상</th><th>해결</th></tr>
+<tr><td>"학교 시트에 연결하지 못했어요"</td><td>배포의 액세스 권한이 <b>모든 사용자</b>인지 확인 → 아니면 배포 관리에서 수정 후 새 버전으로 배포</td></tr>
+<tr><td>관리자 비밀번호를 잊었어요</td><td>Apps Script 편집기 맨 아래에 <code>function 비번초기화(){ setAdminPassword('1234'); }</code> 를 붙여넣고 저장 → 위쪽 함수 목록에서 <b>비번초기화</b>를 골라 <b>실행</b> → 비밀번호가 1234 로 돌아갑니다. 끝나면 붙여넣은 줄은 지워 주세요.</td></tr>
+<tr><td>학생이 이름을 못 찾아요</td><td>학생 관리 탭에서 학년·반 값이 숫자로 똑같이 들어갔는지 확인 (예: <code>6</code> 과 <code>6학년</code> 이 섞이면 따로 보임)</td></tr>
+<tr><td>학기를 새로 시작하고 싶어요</td><td>비밀번호 · 초기화 탭 → 모든 기록 삭제 (명단은 남음). 미리 "파일 → 버전 기록"으로 백업하세요.</td></tr>
+<tr><td>전국 현황판에 우리 학교가 안 보여요</td><td>참여 체크 후 저장했는지, 이번 달 기록이 있는지 확인 → 전국 현황판 탭의 <b>지금 보내기</b>. 현황판은 몇 분 단위로 새로 고쳐집니다.</td></tr>
+<tr><td>학교 이름을 숨기고 싶어요</td><td>전국 현황판 탭에서 "학교 이름 공개"를 끄고 저장 → "익명 학교 ABCD" 로 표시</td></tr>
+</table>
+<div class="foot">줄넘기 기록 관리 v2.1 · Made by 음악적체육인 · 문의는 인디스쿨 글 댓글로 남겨 주세요</div>
+</body></html>
