@@ -29,7 +29,7 @@ python3 test_site.py                              # playwright 전체 흐름 시
   - 이번 달·지난 달 날짜만 받음(늦은 입력 반영), 같은 학교·같은 날은 덮어씀. 이름은 서버에서도 다시 가림
   - Schools 시트 Hidden 칸에 1 → 그 학교 숨김(장난 보고 대응)
   - 1인당 평균·참여율 순위는 등록 학생 5명 이상 학교만 (MIN_REGISTERED_FOR_RATIO)
-- `national.json`·`beta/national.json` 의 `collector` 에 수집기 주소 (**지금은 비어 있음 → 화면에 "준비 중"**)
+- `national.json`·`beta/national.json` 의 `collector` 에 수집기 주소 (2026-10-04 운영자 배포 주소 넣음)
 - `beta/index.html`: `NAT` 모듈
   - 메인: 저장 직후 + 20분마다 오늘 집계 보고(공개 함수 getTodaySummaryPublic·getAllStudentsPublic·getRecentRecordsPublic 사용, 카메라는 최근 30건 한계 → camPartial)
   - 관리자: "전국 현황판" 탭(참여·학교 이름 공개·학교 이름, 지금 보내기, 미리보기), 관리자 메뉴 열면 1시간에 한 번 getAllDataAdmin 으로 이번 달+지난 달 전체 동기화. 참여 끄면 `leave` 로 수집기 자료 삭제
@@ -38,7 +38,7 @@ python3 test_site.py                              # playwright 전체 흐름 시
 - 알려진 한계: 학교 키가 getExtraSettings(공개)로 보임 → 껍데기 주소를 아는 사람은 그 학교 이름으로 보고 가능. 껍데기 2판에서 숨길 수 있음
 
 ## 다음 할 일
-- Collector.gs 배포 → `national.json`·`beta/national.json` 두 곳에 주소 → 실제 Apps Script 에서 확인
+- 수집기 주소 넣음 → 실제 학교 화면에서 참여 켜고 보고·현황판 확인, main 반영
 - 인디스쿨 공유: `share/` (줄넘기기록관리_v2.1.zip = Shell(껍데기).txt + 사용설명서.pdf, 인디스쿨_안내글.md)
   - 설명서 원본 `share/manual.html` (그림 `share/img/`), PDF 는 playwright page.pdf 로 만듦
 
