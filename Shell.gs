@@ -9,7 +9,7 @@
  * 배포 설정: 다음 사용자로 실행 = 나, 액세스 권한 = 모든 사용자
  *************************************************************/
 
-const SHELL_VERSION = 1;                      // 껍데기 판 (화면이 확인함)
+const SHELL_VERSION = 2;                      // 껍데기 판 (화면이 확인함)  2: 새 학교는 승인 절차 기본 켜짐, 카메라 기록은 기본 바로 승인
 const APP_URL = 'https://musicalpe.github.io/jumprope/';
 const BETA_URL = 'https://musicalpe.github.io/jumprope/beta/';
 
@@ -100,7 +100,7 @@ function ping() {
 function getAppSettingsPublic() {
   const p = PropertiesService.getScriptProperties();
   return {
-    approvalOn: p.getProperty('APPROVAL_ON') === '1',
+    approvalOn: approvalOn_(),
     cameraEnabled: p.getProperty('CAMERA_ENABLED') === '1',
     dailyGoal: getDailyGoal_(),
     shell: SHELL_VERSION
@@ -137,7 +137,17 @@ function getAllDataAdmin(token) {
   for (let i = 1; i < rc.length; i++) records.push({ recordId: rc[i][0], studentId: String(rc[i][2]).trim(), date: formatDate_(rc[i][3]), count: Number(rc[i][4]) || 0, status: rc[i][5] || 'approved', time: formatTime_(rc[i][6]), type: typeLabel_(rc[i][7]), source: String(rc[i][8] || '') });
   return { students: students, records: records };
 }
-function approvalOn_() { return PropertiesService.getScriptProperties().getProperty('APPROVAL_ON') === '1'; }
+// 승인 절차: 한 번도 정한 적이 없으면 새 학교(기록 없음)는 켜짐, 이미 쓰던 학교(기록 있음)는 예전처럼 꺼짐으로 정해 둔다
+function approvalOn_() {
+  const p = PropertiesService.getScriptProperties();
+  let v = p.getProperty('APPROVAL_ON');
+  if (v !== '1' && v !== '0') {
+    const sh = getSS_().getSheetByName(SHEET_RECORDS);
+    v = (sh && sh.getLastRow() > 1) ? '0' : '1';
+    p.setProperty('APPROVAL_ON', v);
+  }
+  return v === '1';
+}
 
 /************ 유틸 ************/
 function hashPw_(pw) {
@@ -1010,7 +1020,7 @@ function getCameraSettings_() {
   const sens = Number(p.getProperty('CAMERA_SENS'));
   return {
     enabled: p.getProperty('CAMERA_ENABLED') === '1',
-    autoApprove: p.getProperty('CAMERA_AUTO_APPROVE') === '1',
+    autoApprove: p.getProperty('CAMERA_AUTO_APPROVE') !== '0',   // 카메라가 센 기록은 기본으로 바로 승인 (껍데기 2판부터)
     sens: (sens >= 6 && sens <= 16) ? Math.round(sens) : 10,
     url: (p.getProperty('CAMERA_URL') || DEFAULT_CAMERA_URL).trim() || DEFAULT_CAMERA_URL
   };

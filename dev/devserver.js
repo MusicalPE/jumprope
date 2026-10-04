@@ -9,6 +9,7 @@ const col = createGas({ selfUrl: 'http://localhost:' + PORT + '/collector', shel
 // 기존 1.x 사용 학교처럼 학생·기록 몇 개 넣어 두기 (env SEED=1)
 if (process.env.SEED) {
   const g = gas.ctx;
+  gas.props.APPROVAL_ON = '0';   // 승인 절차를 꺼 두고 쓰던 학교
   const t = g.verifyAdminPassword('1234').token;
   g.addStudentsBulk(t, [{ grade: '6', cls: '1', number: '1', name: '김하늘' }, { grade: '6', cls: '1', number: '2', name: '박준우' }, { grade: '6', cls: '1', number: '3', name: '이서연' }, { grade: '5', cls: '2', number: '7', name: '최온유' }]);
   const ids = g.getAllStudentsPublic().map(s => s.id);

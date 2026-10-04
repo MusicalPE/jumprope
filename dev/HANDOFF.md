@@ -1,7 +1,7 @@
 # 줄넘기 기록 관리 v2 — 이어서 작업하기 위한 메모
 
 ## 구조
-- `Shell.gs` (저장소 루트): 학교 스프레드시트에 붙이는 껍데기. `SHELL_VERSION = 1`.
+- `Shell.gs` (저장소 루트): 학교 스프레드시트에 붙이는 껍데기. `SHELL_VERSION = 2` (2판은 선택 업데이트, requiredShell 은 1 그대로).
   - `doGet`: `?api=rope_x_who|rope_x_save` → 줄넘기 판정기 연동(JSON), 그 밖에는 "프로그램 열기" 설치 확인 화면
   - `doPost`: 본문 `{"fn","args"}` → `RPC_ALLOW_` 목록에 있는 함수만 실행 → `{"ok","result"|"error"}`
   - 설정은 1.x 와 같은 Script Properties 이름 그대로(DAILY_GOAL, JUMP_TYPES, ADMIN_HASH, GEMINI_KEY, THEME_*, CAMERA_*) + `APPROVAL_ON` + 자유 저장칸 `EXTRA_SETTINGS`(JSON, setExtraSettings) — 새 기능은 가능하면 이 칸과 getAllDataAdmin 으로 화면에서 처리해서 껍데기를 안 바꾸기
@@ -33,6 +33,11 @@ python3 test_site.py                              # playwright 전체 흐름 시
     수집기는 teacher 가 있을 때만 교사·연락처를 덮어씀 → 학생 화면 자동 보고가 지우지 않음. 예전 7칸 시트는 머리줄 자동 확장. COLLECTOR_VERSION = 2
   - 2.1.2: 기록실 `?api=hall&month=` → { list: 최근 HALL_MONTHS(12)개 지난 달, month: 고른 달 상세 }. 달마다 캐시 'hall|YYYY-MM'(지난 달 1시간, 그 전 6시간),
     목록 캐시 'hall|list|<이번 달>'. Hidden 바꾼 뒤 바로 반영은 편집기에서 refreshCache 실행. hall.html 은 예전 응답(months 배열)도 읽음. COLLECTOR_VERSION = 3
+  - 2.1.3: 전국 현황판 참여 = 승인 절차 필수. 참여 켜면 setAppSettings(approvalOn:true), 참여 중 승인 끄면 confirm → nat.on=false + leave.
+    NAT.approvalOk() 가 거짓이면 reportToday·syncAll 안 보냄. 승인 화면에서 승인하면 2.5초 뒤 syncAll(force).
+    카메라 기록은 CAMERA_AUTO_APPROVE 로 승인 없이 반영(껍데기 2판부터 기본 켜짐, '0' 일 때만 끔).
+    껍데기 2판: APPROVAL_ON 미설정이면 기록 없는 새 학교 '1', 기록 있는 학교 '0' 으로 정해 저장. devserver SEED 는 APPROVAL_ON='0'(기존 학교 흉내)
+  - 통합 프로그램 연동 설명서(dev/통합프로그램_현황판_연동.md)는 사용자가 통합판 채팅에서 따로 진행 중 → 여기서 고치지 말 것
   - 수집기 주소는 2026-10-04 에 한 번 바뀜(실수로 새 배포). 수정은 꼭 '배포 관리 → 수정 → 새 버전'
   - 1인당 평균·참여율 순위는 등록 학생 5명 이상 학교만 (MIN_REGISTERED_FOR_RATIO)
 - `national.json`·`beta/national.json` 의 `collector` 에 수집기 주소 (2026-10-04 운영자 배포 주소 넣음)
@@ -45,8 +50,8 @@ python3 test_site.py                              # playwright 전체 흐름 시
 
 ## 다음 할 일
 - 수집기 주소 넣음 → 실제 학교 화면에서 참여 켜고 보고·현황판 확인, main 반영
-- 인디스쿨 공유: `share/` (줄넘기기록관리_v2.1.2.zip = Shell(껍데기).txt + 사용설명서.pdf, 인디스쿨_안내글.md)
-  - (2026-10-04 v2.1.2 기준으로 갱신: 줄넘기기록관리_v2.1.2.zip)
+- 인디스쿨 공유: `share/` (줄넘기기록관리_v2.1.3.zip = Shell(껍데기).txt + 사용설명서.pdf, 인디스쿨_안내글.md)
+  - (2026-10-04 v2.1.3 기준으로 갱신: 줄넘기기록관리_v2.1.3.zip)
   - 설명서 원본 `share/manual.html` (그림 `share/img/`), PDF 는 playwright page.pdf 로 만듦
 
 ## 관련

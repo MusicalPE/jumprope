@@ -412,7 +412,7 @@ window.JRQR = {
 </script>
 <script>
 /* ===================== 줄넘기 기록 관리 v2 — 시작 ===================== */
-const APP = { version: '2.1.2', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.1.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -454,6 +454,8 @@ const NAT = {
     return this._ready;
   },
   active: function(){ return !!(this.collector && this.cfg.on && this.cfg.key); },
+  /* 전국 현황판은 승인 절차가 켜진 학교만 보고 (학생이 마구 넣은 숫자가 바로 순위에 오르지 않게) */
+  approvalOk: function(){ return !!(APP.settings && APP.settings.approvalOn); },
   mask: function(n){
     const c = Array.from(String(n == null ? '' : n).trim());
     if (c.length <= 1) return c.join('');
@@ -518,7 +520,7 @@ const NAT = {
   },
   _reportToday: function(gapMs){
     return this.load().then(function(){
-      if (!NAT.active() || (gapMs && !NAT._due('today', gapMs))) return null;
+      if (!NAT.active() || !NAT.approvalOk() || (gapMs && !NAT._due('today', gapMs))) return null;
       NAT._mark('today');
       return Promise.all([rpc('getAllStudentsPublic'), rpc('getTodaySummaryPublic'), rpc('getRecentRecordsPublic').catch(function(){ return []; })]).then(function(r){
         const students = r[0] || [], today = (r[1] && r[1].list) || [], recent = r[2] || [];
@@ -541,7 +543,7 @@ const NAT = {
   /* 관리자: 이번 달 + 지난 달 전체를 정확히 다시 보냄 (늦게 넣은 기록·승인 반영). 평소엔 1시간에 한 번 */
   syncAll: function(token, force){
     return this.load().then(function(){
-      if (!NAT.active() || (!force && !NAT._due('sync', 60 * 60 * 1000))) return null;
+      if (!NAT.active() || !NAT.approvalOk() || (!force && !NAT._due('sync', 60 * 60 * 1000))) return null;
       return rpc('getAllDataAdmin', [token]).then(function(all){
         const now = new Date(), pm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const from = pm.getFullYear() + '-' + String(pm.getMonth() + 1).padStart(2, '0') + '-01';
@@ -943,7 +945,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <h2>카메라 판정기 연동 (모션 인식 줄넘기)</h2>
       <p class="hint">켜면 메인 화면 입력 폼에 <b>📷 카메라로 뛰기</b> 버튼이 생깁니다. 학생이 누르면 <b>줄넘기 판정기</b>(카메라로 관절 움직임을 읽어 실제로 뛴 횟수를 세는 페이지)가 열리고, 다 뛰고 "끝내고 기록하기"를 누르면 횟수가 이 시트에 자동으로 들어와요. 판정기는 태블릿·노트북·스마트폰의 카메라를 씁니다.</p>
       <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;"><input type="checkbox" id="camEnabled" style="width:auto; margin:0;"> 카메라 판정기 사용 (메인 화면에 버튼 표시)</label>
-      <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;"><input type="checkbox" id="camAuto" style="width:auto; margin:0;"> 카메라 기록은 승인 없이 바로 그래프에 반영 (끄면 직접 입력처럼 승인 대기)</label>
+      <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;"><input type="checkbox" id="camAuto" style="width:auto; margin:0;"> 카메라 기록은 승인 없이 바로 그래프·전국 현황판에 반영 (끄면 직접 입력처럼 승인 대기)</label>
       <div class="form-row" style="align-items:flex-end;">
         <label style="flex:1; min-width:180px;">민감도 (<span id="camSensV">10 · 보통</span>) <input type="range" id="camSens" min="6" max="16" value="10" style="padding:0;"></label>
         <label style="flex:2;">판정기 주소 <input type="text" id="camUrl" placeholder="https://musicalpe.github.io/jump-rope-checker/"></label>
@@ -990,6 +992,8 @@ document.addEventListener('DOMContentLoaded', function(){
         <label>연락처 <span class="hint">(선택)</span><input id="natContact" maxlength="80" placeholder="예: 이메일 · 학교 전화"></label>
       </div>
       <p class="hint" style="margin-top:0;">학교 이름·담당 교사·연락처는 현황판 <b>운영자만</b> 봅니다(문의·장난 보고 확인용). 담당 교사·연락처는 학교 시트에 남기지 않고 <b>이 기기</b>에만 기억해 둬요. 다른 기기에서 관리할 때는 다시 넣어 주세요.</p>
+      <p class="hint" style="margin-top:0;">전국 현황판에 참여하려면 <b>승인 절차</b>가 켜져 있어야 해요. 참여를 켜면 승인 절차도 함께 켜지고, 선생님이 승인한 기록만 현황판에 올라갑니다. 카메라 판정기로 센 기록은 승인 없이 바로 반영돼요(카메라 설정에서 승인 대기로 바꿀 수 있음).</p>
+      <p id="natApprovalWarn" class="warn-box" style="display:none;">승인 절차가 꺼져 있어서 현황판에 보내지 않고 있어요. <b>저장</b>을 누르면 승인 절차를 켜고 다시 보냅니다.</p>
       <p id="natRegWarn" class="warn-box" style="display:none;">담당 교사가 아직 등록되지 않았어요. 담당 교사 이름을 넣고 <b>저장</b>해 주세요.</p>
       <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="natShowName" style="width:auto; margin:0;"> 현황판에 학교 이름 공개 <span class="hint">(끄면 "익명 학교 ABCD" 로 표시)</span></label>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:6px;">
@@ -1673,7 +1677,12 @@ document.querySelector('#pendingTable tbody').addEventListener('click', function
   const tr = btn.closest('tr');
   const recordId = tr.dataset.recordId;
   if (btn.dataset.action === 'approve') {
-    google.script.run.withSuccessHandler(loadList).approveRecord(token, recordId);
+    google.script.run.withSuccessHandler(function(r){
+      loadList(r);
+      // 승인한 기록을 전국 현황판에도 반영 (여러 개를 연달아 승인하면 마지막 뒤 한 번만)
+      clearTimeout(NAT._approveTimer);
+      NAT._approveTimer = setTimeout(function(){ NAT.syncAll(token, true).catch(function(){}); }, 2500);
+    }).approveRecord(token, recordId);
   } else if (btn.dataset.action === 'reject') {
     if (!confirm('이 기록을 거절하시겠습니까? (학생에게는 반영되지 않습니다)')) return;
     google.script.run.withSuccessHandler(loadList).rejectRecord(token, recordId);
@@ -2242,12 +2251,28 @@ function renderApprovalUI(){
 }
 renderApprovalUI();
 document.getElementById('saveApprovalBtn').addEventListener('click', function(){
-  const msg = document.getElementById('approvalMsg'); msg.textContent = '저장 중...';
+  const msg = document.getElementById('approvalMsg');
+  const want = document.getElementById('approvalOn').checked;
+  // 전국 현황판에 참여 중이면 승인 절차를 끌 때 참여도 함께 끈다
+  const leaveNat = !want && NAT.active();
+  if (leaveNat && !confirm('승인 절차를 끄면 전국 현황판 참여도 꺼지고, 현황판에 올라간 우리 학교 기록이 지워집니다. 끌까요?')) {
+    document.getElementById('approvalOn').checked = true; msg.textContent = ''; return;
+  }
+  msg.textContent = '저장 중...';
   google.script.run.withSuccessHandler(function(res){
     APP.settings = Object.assign(APP.settings, res.settings || {}); renderApprovalUI();
     msg.textContent = APP.settings.approvalOn ? '저장했어요. 이제 학생 기록은 승인 후 반영됩니다.' : '저장했어요. 학생 기록이 바로 반영됩니다.';
+    if (leaveNat) {
+      const key = NAT.cfg.key;
+      rpc('setExtraSettings', [token, { nat: Object.assign({}, NAT.cfg, { on: false }) }]).then(function(r){
+        NAT.cfg = (r && r.settings && r.settings.nat) || Object.assign({}, NAT.cfg, { on: false });
+        if (NAT.refreshUI) NAT.refreshUI();
+        return NAT.post('leave', { key: key });
+      }).then(function(){ msg.textContent += ' 전국 현황판 참여도 껐고, 현황판의 우리 학교 기록을 지웠어요.'; })
+        .catch(function(err){ msg.textContent += ' (전국 현황판 참여를 끄지 못했어요: ' + (err.message || err) + ')'; });
+    }
   }).withFailureHandler(function(err){ msg.textContent = '오류: ' + String(err); })
-  .setAppSettings(token, { approvalOn: document.getElementById('approvalOn').checked });
+  .setAppSettings(token, { approvalOn: want });
 });
 
 /* ---- 전국 현황판 참여 (2.1) ---- */
@@ -2261,6 +2286,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
     $('natOn').checked = !!c.on; $('natShowName').checked = !!c.showName; $('natName').value = c.name || '';
     $('natTeacher').value = ct.teacher || ''; $('natContact').value = ct.contact || '';
     $('natRegWarn').style.display = (NAT.active() && !ct.teacher) ? '' : 'none';
+    $('natApprovalWarn').style.display = (NAT.active() && !NAT.approvalOk()) ? '' : 'none';
     $('natSyncBtn').style.display = NAT.active() ? '' : 'none';
     const noCol = !NAT.collector;
     $('natNoCollector').style.display = noCol ? '' : 'none';
@@ -2295,6 +2321,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
     if (on && !name) { msg.textContent = '학교 이름을 넣어 주세요. (현황판에 이름을 숨기려면 "학교 이름 공개"를 끄면 돼요)'; $('natName').focus(); return; }
     if (on && !teacher) { msg.textContent = '담당 교사 이름을 넣어 주세요.'; $('natTeacher').focus(); return; }
     if (teacher) NAT.contact({ teacher: teacher, contact: contact });
+    const needApproval = on && !NAT.approvalOk();
     const wasOn = NAT.active();
     if (wasOn && !on && !confirm('참여를 끄면 현황판에 올라간 우리 학교 기록이 지워집니다. 끌까요?')) return;
     const next = { on: on, key: NAT.cfg.key || NAT.newKey(), name: name, showName: showName };
@@ -2303,7 +2330,14 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
       if (!res || !res.ok) { msg.textContent = (res && res.message) || '저장하지 못했어요.'; return; }
       NAT.cfg = (res.settings && res.settings.nat) || next;
       fill();
-      if (on) { msg.textContent = '저장했어요. 현황판에 보내는 중...'; sync(true); }
+      if (on) {
+        msg.textContent = '저장했어요. 현황판에 보내는 중...';
+        const send = function(){ return sync(true).then(function(){ if (needApproval) msg.textContent = '승인 절차를 함께 켰어요. ' + msg.textContent; }); };
+        if (needApproval) rpc('setAppSettings', [token, { approvalOn: true }]).then(function(r){
+          APP.settings = Object.assign(APP.settings, (r && r.settings) || { approvalOn: true }); renderApprovalUI(); fill(); return send();
+        }).catch(function(err){ msg.textContent = '승인 절차를 켜지 못해 현황판에 보내지 않았어요: ' + (err.message || err); });
+        else send();
+      }
       else if (wasOn) {
         $('natPreviewCard').style.display = 'none';
         NAT.post('leave', { key: next.key }).then(function(){ msg.textContent = '참여를 껐어요. 현황판에서 우리 학교 기록을 지웠습니다.'; })
@@ -2312,6 +2346,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
     }).withFailureHandler(function(err){ msg.textContent = '오류: ' + String(err); })
     .setExtraSettings(token, { nat: next });
   });
+  NAT.refreshUI = fill;
   NAT.load().then(function(){ fill(); return sync(false); });
 })();
 

@@ -38,6 +38,7 @@ with sync_playwright() as p:
     pg.fill('#natTeacher', '홍길동'); pg.fill('#natContact', 'hong@school.kr'); pg.check('#natShowName')
     pg.click('#saveNatBtn'); pg.wait_for_timeout(2500)
     check('저장·보내기 메시지', '보냈어요' in pg.text_content('#natMsg'), pg.text_content('#natMsg'))
+    check('참여 켜면 승인 절차도 켜짐', get(H+'/__state')['props'].get('APPROVAL_ON')=='1' and '승인 절차를 함께 켰어요' in pg.text_content('#natMsg'), pg.text_content('#natMsg'))
     check('미리보기 표시', pg.is_visible('#natPreview table'), pg.text_content('#natPreview .nat-kpis'))
     st=col_state()
     ours=[r for r in st['schools'] if r[1]=='우리초등학교']
@@ -58,7 +59,13 @@ with sync_playwright() as p:
     pg.select_option('#nameSelect', index=1); pg.select_option('#typeSelect','모아뛰기'); pg.fill('#countInput','500')
     pg.click('#recordForm button[type=submit]'); pg.wait_for_timeout(2500)
     after=sum(r[2] for r in col_state()['daily'] if r[0]==pid)
-    check('저장 직후 현황판 반영 (+500)', after-before==500, f'{before} → {after}')
+    check('승인 전 기록은 현황판에 안 감 (+0)', after==before, f'{before} → {after}')
+    pg.click('#navApproval'); pg.wait_for_timeout(2000)
+    if pg.is_visible('#pw'):
+        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
+    pg.click('#pendingTable tbody tr:first-child button[data-action="approve"]'); pg.wait_for_timeout(5000)
+    after=sum(r[2] for r in col_state()['daily'] if r[0]==pid)
+    check('승인하면 현황판 반영 (+500)', after-before==500, f'{before} → {after}')
     # 현황판
     pg.goto(H+'/jumprope/'+CH+'board.html?me='+pid); pg.wait_for_timeout(1500)
     rows=pg.locator('tr.school').count()
@@ -102,7 +109,16 @@ with sync_playwright() as p:
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
     if pg.is_visible('#pw'):
         pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
-    pg.click('#adminNav button[data-tab="national"]'); pg.wait_for_timeout(1500)
+    pg.click('#adminNav button[data-tab="basic"]'); pg.wait_for_timeout(800)
+    pg.uncheck('#approvalOn'); pg.click('#saveApprovalBtn'); pg.wait_for_timeout(2500)
+    st=col_state()
+    check('승인 절차 끄면 참여도 꺼지고 수집기에서 삭제', not any(r[0]==pid for r in st['schools']+st['daily']) and '참여도 껐' in pg.text_content('#approvalMsg'), pg.text_content('#approvalMsg'))
+    ex=json.loads(get(H+'/__state')['props'].get('EXTRA_SETTINGS','{}'))
+    check('참여 설정 꺼짐', ex.get('nat',{}).get('on') is False, str(ex.get('nat')))
+    # 다시 참여 → 승인 절차 다시 켜짐 → 참여 끄기
+    pg.click('#adminNav button[data-tab="national"]'); pg.wait_for_timeout(800)
+    pg.check('#natOn'); pg.click('#saveNatBtn'); pg.wait_for_timeout(2500)
+    check('다시 참여하면 승인 절차 다시 켜짐', get(H+'/__state')['props'].get('APPROVAL_ON')=='1' and any(r[0]==pid for r in col_state()['schools']), pg.text_content('#natMsg'))
     pg.uncheck('#natOn'); pg.click('#saveNatBtn'); pg.wait_for_timeout(2000)
     st=col_state()
     check('참여 끄면 수집기에서 삭제', not any(r[0]==pid for r in st['schools']+st['daily']), pg.text_content('#natMsg'))
