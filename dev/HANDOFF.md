@@ -45,7 +45,8 @@ python3 test_site.py                              # playwright 전체 흐름 시
 
 ## 다음 할 일
 - 수집기 주소 넣음 → 실제 학교 화면에서 참여 켜고 보고·현황판 확인, main 반영
-- 인디스쿨 공유: `share/` (줄넘기기록관리_v2.1.zip = Shell(껍데기).txt + 사용설명서.pdf, 인디스쿨_안내글.md)
+- 인디스쿨 공유: `share/` (줄넘기기록관리_v2.1.2.zip = Shell(껍데기).txt + 사용설명서.pdf, 인디스쿨_안내글.md)
+  - (2026-10-04 v2.1.2 기준으로 갱신: 줄넘기기록관리_v2.1.2.zip)
   - 설명서 원본 `share/manual.html` (그림 `share/img/`), PDF 는 playwright page.pdf 로 만듦
 
 ## 관련
