@@ -354,6 +354,12 @@
   .lv-grid tr.lv-locked td.ck.done { background: #FDECEC; }
   .lv-dist { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .lv-dist span.n { font-weight: 700; margin-left: 4px; }
+  .lv-pick { display: inline-flex; align-items: center; background: none; border: 1px solid transparent; border-radius: 999px; padding: 3px 8px 3px 3px; color: var(--ink); font: inherit; cursor: pointer; box-shadow: none; }
+  button.lv-pick:hover { background: var(--bg); transform: none; }
+  button.lv-pick.on { background: var(--coral-tint); border-color: var(--coral-tint-2); }
+  .lv-pick.none { cursor: default; }
+  .lv-who { margin-top: 12px; padding: 10px 12px; background: var(--bg); border-radius: var(--r-sm); display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.92em; }
+  .lv-who span { white-space: nowrap; }
   .lv-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-top: 10px; }
   .lv-items div { border: 1px solid var(--line-2); border-radius: var(--r-sm); padding: 8px 10px; font-size: 0.9em; }
   .lv-items div.ok { background: var(--green-tint); border-color: transparent; }
@@ -829,6 +835,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="card" id="levelCard" style="display:none;">
       <h2>우리 반 급수</h2>
       <div class="lv-dist" id="levelDist"></div>
+      <div class="lv-who" id="levelWho" style="display:none;"></div>
     </div>
 
     <div class="note-panel">
@@ -1184,6 +1191,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <h2>급수 인증</h2>
       <div id="lvNoShell" class="warn-box" style="display:none;">급수 인증은 학교 껍데기 <b>3판</b>이 필요해요. (베타 시험 중: 시험용 시트에 beta/Shell.gs 를 붙여 넣고 "새 버전"으로 배포하세요)</div>
       <p class="hint" style="margin-top:0;">학생이 선생님 앞에서 <b>걸리지 않고</b> 기준 횟수를 성공하면 그 항목을 체크하고 <b>저장</b>하세요. 한 급수의 항목을 모두 통과하면 다음 급수로 올라갑니다. (흰 → 노랑 → 초록 → 파랑 → 밤 → 주황 → 빨강 → 검은 → 와이어)</p>
+      <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="lvMain" style="width:auto; margin:0;"> 메인 화면에 "우리 반 급수" 보이기 <span class="hint">(급수별 명수, 누르면 명단 · 끄면 학생 본인 화면에만 보여요)</span></label>
       <div class="form-row">
         <label>반 <select id="lvClass"></select></label>
         <label>급수 <select id="lvLevel"></select></label>
@@ -1399,12 +1407,28 @@ google.script.run.withSuccessHandler(function(list){
   });
   // 우리 반 급수 (껍데기 3판 + 통과 기록이 있을 때)
   if (LEVELS.supported()) LEVELS.load().then(function(){
-    if (!Object.keys(LEVELS.passes).length) return;
-    const cnt = {};
-    list.forEach(function(st){ const lv = LEVELS.of(st.id).level; cnt[lv] = (cnt[lv] || 0) + 1; });
+    if (!Object.keys(LEVELS.passes).length || LEVELS.extra.levelsMain === false) return;   // 선생님이 끄면 메인에 안 보임
+    const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    const by = {};
+    list.forEach(function(st){ const lv = LEVELS.of(st.id).level; (by[lv] = by[lv] || []).push(st); });
     let html = '';
-    for (let i = LEVELS.table.length - 1; i >= -1; i--) if (cnt[i]) html += '<span>' + LEVELS.chip(i) + '<span class="n">' + cnt[i] + '명</span></span>';
-    document.getElementById('levelDist').innerHTML = html;
+    for (let i = LEVELS.table.length - 1; i >= -1; i--) if (by[i]) {
+      // 딴 급수는 눌러서 명단 보기, "아직 없음"은 명수만 (교실 화면에 못 딴 학생 이름이 모이지 않게)
+      html += i >= 0 ? '<button type="button" class="lv-pick" data-lv="' + i + '">' + LEVELS.chip(i) + '<span class="n">' + by[i].length + '명</span></button>'
+                     : '<span class="lv-pick none">' + LEVELS.chip(i) + '<span class="n">' + by[i].length + '명</span></span>';
+    }
+    const dist = document.getElementById('levelDist'), who = document.getElementById('levelWho');
+    dist.innerHTML = html;
+    let open = null;
+    dist.addEventListener('click', function(e){
+      const b = e.target.closest('button.lv-pick'); if (!b) return;
+      const lv = Number(b.dataset.lv);
+      Array.prototype.forEach.call(dist.querySelectorAll('button.lv-pick'), function(x){ x.classList.toggle('on', x === b && open !== lv); });
+      if (open === lv) { open = null; who.style.display = 'none'; return; }
+      open = lv;
+      who.innerHTML = '<b>' + esc(LEVELS.label(lv)) + '</b> · ' + by[lv].map(function(st){ return '<span>' + esc(st.grade) + '-' + esc(st.cls) + ' ' + esc(st.name) + '</span>'; }).join('');
+      who.style.display = '';
+    });
     document.getElementById('levelCard').style.display = '';
   });
 }).getAllStudentsPublic();
@@ -2684,10 +2708,20 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
       LEVELS.table = LEVELS.DEFAULT; LEVELS.custom = false; $('lvTableMsg').textContent = '협회 기준표로 되돌렸어요.'; render(0);
     }).catch(function(err){ $('lvTableMsg').textContent = '오류: ' + (err.message || err); });
   });
+  $('lvMain').addEventListener('change', function(){
+    const on = this.checked;
+    $('lvMsg').textContent = '저장 중...';
+    rpc('setExtraSettings', [token, { levelsMain: on ? null : false }]).then(function(r){
+      if (!r || !r.ok) throw new Error((r && r.message) || '저장 실패');
+      LEVELS.extra = r.settings || LEVELS.extra;
+      $('lvMsg').textContent = on ? '메인 화면에 우리 반 급수를 보여요.' : '메인 화면에서 우리 반 급수를 숨겼어요.';
+    }).catch(function(err){ $('lvMain').checked = !on; $('lvMsg').textContent = '저장하지 못했어요: ' + (err.message || err); });
+  });
   const ok = LEVELS.supported();
   $('lvNoShell').style.display = ok ? 'none' : '';
+  $('lvMain').disabled = !ok;
   ['lvSave', 'lvTableSave', 'lvTableReset'].forEach(function(id){ $(id).disabled = !ok; });
-  Promise.all([rpc('getAllStudentsPublic'), LEVELS.load()]).then(function(r){ students = r[0] || []; LEVELS.students = students; render(); });
+  Promise.all([rpc('getAllStudentsPublic'), LEVELS.load()]).then(function(r){ students = r[0] || []; LEVELS.students = students; $('lvMain').checked = LEVELS.extra.levelsMain !== false; render(); });
 })();
 
 /* ---- 인증서 · 상장 (2.2 베타) ---- */

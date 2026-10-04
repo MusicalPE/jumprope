@@ -95,8 +95,21 @@ with sync_playwright() as p:
     # ── 메인: 급수 · 여행
     pg.goto(APPU); pg.wait_for_timeout(2500)
     check('메인 우리 반 급수', pg.is_visible('#levelCard') and '흰' in pg.text_content('#levelDist'), pg.text_content('#levelDist'))
+    pg.click('#levelDist button.lv-pick'); pg.wait_for_timeout(200)
+    check('급수 누르면 명단', pg.is_visible('#levelWho') and '김하늘' in pg.text_content('#levelWho'), pg.text_content('#levelWho'))
+    check('아직 없음은 명단 안 펼침', pg.locator('#levelDist button.lv-pick').count()==1 and pg.locator('#levelDist .lv-pick.none').count()==1)
+    pg.click('#levelDist button.lv-pick'); pg.wait_for_timeout(200)
+    check('다시 누르면 접힘', not pg.is_visible('#levelWho'))
     check('메인 여행 막대', pg.is_visible('#journeyCard') and '국토 한 바퀴' in pg.text_content('#journeyCard'), pg.text_content('#journeyCard')[:80])
     pg.screenshot(path=OUT+'/v22_main.png', full_page=True)
+    pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
+    if pg.is_visible('#pw'):
+        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
+    pg.click('#adminNav button[data-tab="levels"]'); pg.wait_for_timeout(800)
+    check('메인 표시 기본 켜짐', pg.is_checked('#lvMain'))
+    pg.uncheck('#lvMain'); pg.wait_for_timeout(1000)
+    pg.goto(APPU); pg.wait_for_timeout(2500)
+    check('끄면 메인에 우리 반 급수 숨김', not pg.is_visible('#levelCard'))
     # ── 학생 화면: 나의 급수
     pg.goto(APPU+'&page=student&id='+sid); pg.wait_for_timeout(1000)
     pg.fill('#authPw','1234'); pg.click('#authForm button[type=submit]'); pg.wait_for_timeout(1500)
