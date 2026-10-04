@@ -349,6 +349,9 @@
   .lv-grid table th.it b { display: block; margin: 2px 0; }
   .lv-grid td.ck { text-align: center; } .lv-grid td.ck input { width: 20px; height: 20px; margin: 0; }
   .lv-grid td.ck.done { background: var(--green-tint); }
+  .lv-grid tr.lv-locked td { background: var(--bg); color: var(--muted); }
+  .lv-grid tr.lv-locked td.ck input:disabled { opacity: .35; cursor: not-allowed; }
+  .lv-grid tr.lv-locked td.ck.done { background: #FDECEC; }
   .lv-dist { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .lv-dist span.n { font-weight: 700; margin-left: 4px; }
   .lv-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-top: 10px; }
@@ -2621,14 +2624,18 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
     let h = '<table><thead><tr><th>번호</th><th>이름</th><th>지금 급수</th>' + L.items.map(function(it, j){ return '<th class="it">' + esc(it[0]) + '<b>' + esc(LEVELS.goal(it[1])) + '</b><input type="checkbox" class="lvAll" data-j="' + j + '" title="모두 체크"></th>'; }).join('') + '</tr></thead><tbody>';
     list.forEach(function(s){
       const me = LEVELS.of(s.id);
-      h += '<tr><td>' + esc(s.number) + '</td><td>' + esc(s.name) + '</td><td>' + LEVELS.chip(me.level, true) + '</td>' + L.items.map(function(it, j){
+      // 바로 앞 급수를 아직 못 땄으면 이 급수는 잠금 (이미 체크된 칸은 고칠 수 있게 해제만 가능)
+      const locked = me.level < lv - 1;
+      const why = locked ? LEVELS.label(me.level + 1) + '를 먼저 따야 해요' : '';
+      h += '<tr' + (locked ? ' class="lv-locked"' : '') + '><td>' + esc(s.number) + '</td><td>' + esc(s.name) + '</td><td>' + LEVELS.chip(me.level, true) + '</td>' + L.items.map(function(it, j){
         const d = me.passed[lv + '|' + j]; const on = d !== undefined; orig[s.id + '|' + j] = on;
-        return '<td class="ck' + (on ? ' done' : '') + '" title="' + (on ? esc(d) + ' 통과' : '') + '"><input type="checkbox" class="lvCk" data-id="' + esc(s.id) + '" data-j="' + j + '"' + (on ? ' checked' : '') + '></td>';
+        return '<td class="ck' + (on ? ' done' : '') + '" title="' + esc(on ? d + ' 통과' + (locked ? ' · ' + why : '') : why) + '"><input type="checkbox" class="lvCk" data-id="' + esc(s.id) + '" data-j="' + j + '"' + (on ? ' checked' : '') + (locked ? ' data-locked="1"' + (on ? '' : ' disabled') : '') + '></td>';
       }).join('') + '</tr>';
     });
-    $('lvGrid').innerHTML = h + '</tbody></table>';
+    const nLocked = list.filter(function(s){ return LEVELS.of(s.id).level < lv - 1; }).length;
+    $('lvGrid').innerHTML = h + '</tbody></table>' + (nLocked ? '<p class="hint" style="margin:6px 0 0;">회색 줄은 ' + esc(lv > 0 ? LEVELS.label(lv - 1) : '') + '를 아직 못 딴 학생이라 체크할 수 없어요. (' + nLocked + '명)</p>' : '');
     Array.prototype.forEach.call(document.querySelectorAll('.lvAll'), function(a){
-      a.addEventListener('change', function(){ const j = this.dataset.j, on = this.checked; Array.prototype.forEach.call(document.querySelectorAll('.lvCk[data-j="' + j + '"]'), function(c){ c.checked = on; }); });
+      a.addEventListener('change', function(){ const j = this.dataset.j, on = this.checked; Array.prototype.forEach.call(document.querySelectorAll('.lvCk[data-j="' + j + '"]'), function(c){ if (c.disabled || (on && c.dataset.locked)) return; c.checked = on; }); });
     });
   }
   function render(keepLevel){
@@ -2641,6 +2648,10 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
   }
   $('lvClass').addEventListener('change', function(){ fillLevels(commonNext()); grid(); });
   $('lvLevel').addEventListener('change', grid);
+  $('lvGrid').addEventListener('change', function(e){
+    const c = e.target;
+    if (c.classList && c.classList.contains('lvCk') && c.dataset.locked && c.checked) { c.checked = false; c.disabled = true; }   // 잠긴 칸은 해제만
+  });
   $('lvSave').addEventListener('click', function(){
     const lv = Number($('lvLevel').value) || 0, date = $('lvDate').value || today(), changes = [];
     const before = {}; inClass().forEach(function(s){ before[s.id] = LEVELS.of(s.id).level; });

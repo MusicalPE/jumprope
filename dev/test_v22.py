@@ -48,6 +48,15 @@ with sync_playwright() as p:
     lv=get(H+'/__state')['levels']
     check('Levels 시트 6줄 (5+1)', len(lv)==1+6, str(len(lv)))
     pg.screenshot(path=OUT+'/v22_levels.png', full_page=True)
+    # 앞 급수를 못 딴 학생은 잠금: 노랑 → 김하늘(흰 땀) 열림, 박준우(없음) 잠김 / 초록 → 둘 다 잠김
+    pg.select_option('#lvLevel','1'); pg.wait_for_timeout(300)
+    r0=pg.locator('#lvGrid tbody tr').nth(0); r1=pg.locator('#lvGrid tbody tr').nth(1)
+    check('노랑: 흰 딴 학생 열림, 못 딴 학생 잠김', not r0.locator('input.lvCk').first.is_disabled() and r1.locator('input.lvCk').first.is_disabled() and 'lv-locked' in (r1.get_attribute('class') or ''))
+    pg.locator('#lvGrid th.it input.lvAll').first.check(); pg.wait_for_timeout(100)
+    check('모두 체크는 잠긴 학생 건너뜀', r0.locator('input.lvCk').first.is_checked() and not r1.locator('input.lvCk').first.is_checked())
+    pg.select_option('#lvLevel','2'); pg.wait_for_timeout(300)
+    check('초록: 노랑 못 딴 학생 모두 잠김', pg.locator('#lvGrid input.lvCk:not([disabled])').count()==0 and '를 아직 못 딴' in pg.text_content('#lvGrid'))
+    pg.select_option('#lvLevel','0'); pg.wait_for_timeout(300)
     # 체크 해제 → 줄 삭제
     pg.locator('#lvGrid tbody tr').nth(1).locator('input.lvCk').first.uncheck(); pg.click('#lvSave'); pg.wait_for_timeout(1200)
     check('체크 풀면 삭제', len(get(H+'/__state')['levels'])==1+5)
