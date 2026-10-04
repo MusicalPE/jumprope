@@ -48,6 +48,14 @@ python3 test_site.py                              # playwright 전체 흐름 시
 - 시험: `node devserver.js` 가 `/collector` 로 Collector.gs 도 흉내 내고 national.json 을 로컬 주소로 바꿔 줌. `python3 test_national.py` (playwright 1.56 이 설치된 chromium 과 맞음)
 - 알려진 한계: 학교 키가 getExtraSettings(공개)로 보임 → 껍데기 주소를 아는 사람은 그 학교 이름으로 보고 가능. 껍데기 2판에서 숨길 수 있음
 
+## 2.2 베타 (beta/ 만, 정식판은 2.1.3) — 사용자가 시험한 뒤 괜찮은 것만 정식판으로
+- `beta/Shell.gs` = 껍데기 3판: Levels 시트(StudentID, Level, Item, PassedAt, By) + getLevelsPublic / saveLevelPasses. 루트 Shell.gs 는 2판 그대로
+- 급수: LEVELS 모듈(협회 기준표 DEFAULT, EXTRA_SETTINGS.levels 로 덮어씀), 관리자 "급수 인증" 탭(반·급수 고르고 체크), 학생 화면 나의 급수, 메인 우리 반 급수
+- 인증서: 관리자 "인증서 · 상장" 탭. 급수 인증서 / 전국 현황판 상장(기록실 달: 우리 학교 전국 순위, 학생 전국 1~3등, 우리 학교 안 1~3등). 실명은 학생 키(k)를 학교 안에서 계산해 매칭. A4 가로 인쇄(body.printing-cert)
+- 우리 반 여행: JOURNEY 모듈, EXTRA_SETTINGS.journey = { on, course, base }, 관리자 "우리 반 여행" 탭, 메인 진행 막대 (1회=1m, 승인 누적 - base)
+- 수집기 4판(정식판과 공유, 예전 응답 유지): ?api=board&grade=, 응답에 grade·grades·allTime, 학교별 noReg, report 의 registeredByGrade → Schools RegByGrade 칸, 기록실 학생에 k·pid
+- 시험: `SEED=1 SHELL_PATH=../beta/Shell.gs node devserver.js` 후 `python3 test_v22.py`
+
 ## 다음 할 일
 - 수집기 주소 넣음 → 실제 학교 화면에서 참여 켜고 보고·현황판 확인, main 반영
 - 인디스쿨 공유: `share/` (줄넘기기록관리_v2.1.3.zip = Shell(껍데기).txt + 사용설명서.pdf, 인디스쿨_안내글.md)

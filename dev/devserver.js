@@ -3,7 +3,8 @@ const express = require('express');
 const path = require('path');
 const { createGas } = require('./gas-emu');
 const PORT = +process.env.PORT || 8890;
-const gas = createGas({ selfUrl: 'http://localhost:' + PORT + '/exec' });
+// SHELL_PATH=../beta/Shell.gs 로 베타 껍데기 시험
+const gas = createGas({ selfUrl: 'http://localhost:' + PORT + '/exec', shellPath: process.env.SHELL_PATH ? path.resolve(__dirname, process.env.SHELL_PATH) : undefined });
 // 전국 현황판 중앙 수집기 (../Collector.gs) — /collector
 const col = createGas({ selfUrl: 'http://localhost:' + PORT + '/collector', shellPath: __dirname + '/../Collector.gs' });
 // 기존 1.x 사용 학교처럼 학생·기록 몇 개 넣어 두기 (env SEED=1)
@@ -33,7 +34,7 @@ app.post('/__col/seed', (req, res) => { try { res.json(seedCollector(JSON.parse(
 app.get('/__col/state', (req, res) => res.json({ schools: (col.sheets.Schools || { _rows: [] })._rows, daily: (col.sheets.Daily || { _rows: [] })._rows }));
 app.use('/jumprope', express.static(path.join(__dirname, '..')));
 app.use('/checker', express.static(path.join(__dirname, 'checker')));
-app.get('/__state', (req, res) => res.json({ props: gas.props, records: (gas.sheets.Records || { _rows: [] })._rows, students: (gas.sheets.Students || { _rows: [] })._rows }));
+app.get('/__state', (req, res) => res.json({ props: gas.props, records: (gas.sheets.Records || { _rows: [] })._rows, students: (gas.sheets.Students || { _rows: [] })._rows, levels: (gas.sheets.Levels || { _rows: [] })._rows }));
 app.listen(PORT, () => console.log('dev on ' + PORT));
 
 // 다른 학교 몇 곳 + 지난 달 기록을 수집기에 직접 넣기 (현황판·기록실 시험용)

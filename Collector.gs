@@ -20,7 +20,7 @@
  *              Students = [[학생키, 가린이름, 학년, 횟수, 카메라횟수], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 3;
+const COLLECTOR_VERSION = 4;   // 4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -36,7 +36,7 @@ function doGet(e) {
   const q = (e && e.parameter) || {};
   let out;
   try {
-    if (q.api === 'board') out = getBoard_(q.month);
+    if (q.api === 'board') out = getBoard_(q.month, q.grade);
     else if (q.api === 'hall') out = getHall_(q.month);
     else out = { collector: COLLECTOR_VERSION, today: today_() };
     out = { ok: true, result: out };
@@ -96,7 +96,7 @@ function sheet_(name, header) {
   if (!sh) { sh = ss.insertSheet(name); sh.appendRow(header); }
   return sh;
 }
-const SCHOOLS_HEADER_ = ['PublicId', 'Name', 'ShowName', 'Registered', 'FirstSeen', 'LastSeen', 'Hidden', 'SchoolName', 'Teacher', 'Contact'];
+const SCHOOLS_HEADER_ = ['PublicId', 'Name', 'ShowName', 'Registered', 'FirstSeen', 'LastSeen', 'Hidden', 'SchoolName', 'Teacher', 'Contact', 'RegByGrade'];
 function schoolsSheet_() {
   const sh = sheet_(SH_SCHOOLS, SCHOOLS_HEADER_);
   // 예전(7칸) 시트면 머리줄에 새 칸 이름을 붙인다
@@ -106,7 +106,7 @@ function schoolsSheet_() {
 function dailySheet_() { return sheet_(SH_DAILY, ['PublicId', 'Date', 'Total', 'Participants', 'Camera', 'Students', 'UpdatedAt']); }
 
 /************ 보고 받기 ************/
-// p = { key, name, showName, schoolName, teacher?, contact?, registered, camPartial, days: [{ date, students: [[sk, name, grade, count, cam], ...] }] }
+// p = { key, name, showName, schoolName, teacher?, contact?, registered, registeredByGrade?: {학년: 수}, camPartial, days: [{ date, students: [[sk, name, grade, count, cam], ...] }] }
 function report_(p) {
   const key = cleanText_(p.key, 80);
   if (key.length < 16) throw new Error('학교 키가 올바르지 않습니다.');
@@ -130,19 +130,27 @@ function report_(p) {
     const showName = !!p.showName;
     const name = showName ? cleanText_(p.name, 40) : '';
     const reg = int_(p.registered, 5000);
+    // 학년별 등록 학생 수 (학년별 순위의 1인당 평균·참여율용) — 없으면 비워 둠
+    let rbg = '';
+    if (p.registeredByGrade && typeof p.registeredByGrade === 'object') {
+      const o = {};
+      Object.keys(p.registeredByGrade).slice(0, 12).forEach(function (g) { const k = cleanText_(g, 4), n = int_(p.registeredByGrade[g], 5000); if (k && n) o[k] = n; });
+      if (Object.keys(o).length) rbg = JSON.stringify(o);
+    }
     const schoolName = cleanText_(p.schoolName, 40);
     // 담당 교사·연락처는 관리자 화면에서 보낼 때만 들어온다 (teacher 가 있을 때만 바꿈)
     const teacher = cleanText_(p.teacher, 30);
     const contact = cleanText_(p.contact, 80);
     const now = new Date();
     if (srow === -1) {
-      ssh.appendRow([pid, name, showName ? 1 : 0, reg, now, now, '', schoolName, teacher, teacher ? contact : '']);
+      ssh.appendRow([pid, name, showName ? 1 : 0, reg, now, now, '', schoolName, teacher, teacher ? contact : '', rbg]);
       srow = ssh.getLastRow();
     } else {
       ssh.getRange(srow, 2, 1, 3).setValues([[name, showName ? 1 : 0, reg]]);
       ssh.getRange(srow, 6).setValue(now);
       if (schoolName) ssh.getRange(srow, 8).setValue(schoolName);
       if (teacher) ssh.getRange(srow, 9, 1, 2).setValues([[teacher, contact]]);
+      if (rbg) ssh.getRange(srow, 11).setValue(rbg);
     }
     contactSet = !!(teacher || (sv[srow - 1] && String(sv[srow - 1][8] || '').trim()));
 
@@ -211,8 +219,11 @@ function clearCache_() {
   const c = CacheService.getScriptCache();
   const m = month_(today_());
   c.remove('hall|list|' + m); c.remove('hall|' + prevMonth_(m));
-  c.remove('board|' + m); c.remove('board|' + prevMonth_(m));
+  const keys = ['board|' + m, 'board|' + prevMonth_(m), 'alltime'];
+  GRADES_.forEach(function (g) { keys.push('board|' + m + '|' + g, 'board|' + prevMonth_(m) + '|' + g); });
+  c.removeAll(keys);
 }
+const GRADES_ = ['1', '2', '3', '4', '5', '6'];
 
 function loadSchools_() {
   const v = schoolsSheet_().getDataRange().getValues();
@@ -226,6 +237,7 @@ function loadSchools_() {
       label: named ? String(v[i][1]).trim() : '익명 학교 ' + pid.slice(0, 4).toUpperCase(),
       named: !!named,
       registered: Number(v[i][3]) || 0,
+      regByGrade: (function () { try { return JSON.parse(v[i][10] || '{}') || {}; } catch (e) { return {}; } })(),
       hidden: String(v[i][6]).trim() === '1'
     };
   }
@@ -233,7 +245,8 @@ function loadSchools_() {
 }
 
 // 한 달치를 학교별·학생별로 묶기
-function aggregateMonth_(month, schools, dv) {
+// grade 가 있으면 그 학년 학생만 묶음 (학년별 순위). 1인당 평균·참여율은 학년별 등록 수를 보낸 학교만 순위
+function aggregateMonth_(month, schools, dv, grade) {
   const by = {};
   for (let i = 1; i < dv.length; i++) {
     const pid = String(dv[i][0]);
@@ -243,12 +256,13 @@ function aggregateMonth_(month, schools, dv) {
     if (!s) s = by[pid] = { total: 0, camera: 0, days: 0, st: {} };
     let list = [];
     try { list = JSON.parse(dv[i][5] || '[]'); } catch (e) {}
+    if (grade) list = list.filter(function (r) { return String(r[2]) === grade; });
     if (!list.length) continue;
     s.days++;
     list.forEach(function (r) {
       const c = Number(r[3]) || 0, cam = Number(r[4]) || 0;
       s.total += c; s.camera += cam;
-      const x = s.st[r[0]] || (s.st[r[0]] = { n: r[1], g: r[2], c: 0, cam: 0, days: 0 });
+      const x = s.st[r[0]] || (s.st[r[0]] = { k: r[0], n: r[1], g: r[2], c: 0, cam: 0, days: 0 });
       x.n = r[1]; x.g = r[2]; x.c += c; x.cam += cam; x.days++;
     });
   }
@@ -256,14 +270,16 @@ function aggregateMonth_(month, schools, dv) {
     const s = by[pid], info = schools[pid];
     const students = Object.keys(s.st).map(function (k) { return s.st[k]; }).sort(function (a, b) { return b.c - a.c; });
     const participants = students.length;
-    const registered = Math.max(info.registered, participants);
+    const gReg = grade ? (Number(info.regByGrade[grade]) || 0) : info.registered;
+    const registered = Math.max(gReg, participants);
     return {
       pid: pid, label: info.label, named: info.named,
       total: s.total, camera: s.camera, days: s.days,
       participants: participants, registered: registered,
       avg: registered ? Math.round(s.total / registered) : 0,
       rate: registered ? Math.round(participants / registered * 1000) / 10 : 0,
-      ratioOk: registered >= MIN_REGISTERED_FOR_RATIO,
+      ratioOk: registered >= MIN_REGISTERED_FOR_RATIO && (!grade || gReg > 0),
+      noReg: !!grade && !gReg,   // 학년별로 볼 때 학년별 학생 수를 안 보낸 학교 (평균·참여율 표시 안 함)
       students: students
     };
   }).filter(function (s) { return s.total > 0; });
@@ -283,7 +299,7 @@ function rank_(list, field, ok) {
 function nationalStudents_(schools, n) {
   const all = [];
   schools.forEach(function (s) {
-    s.students.forEach(function (x) { all.push({ n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days, pid: s.pid, school: s.label }); });
+    s.students.forEach(function (x) { all.push({ k: x.k, n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days, pid: s.pid, school: s.label }); });
   });
   all.sort(function (a, b) { return b.c - a.c; });
   return all.slice(0, n);
@@ -294,16 +310,47 @@ function monthsIn_(dv) {
   return Object.keys(m).sort().reverse();
 }
 
-function getBoard_(month) {
+// 그 달에 기록이 있는 학년들 (학년 고르기용)
+function gradesIn_(month, dv) {
+  const g = {};
+  for (let i = 1; i < dv.length; i++) {
+    if (month_(fmtDate_(dv[i][1])) !== month) continue;
+    try { JSON.parse(dv[i][5] || '[]').forEach(function (r) { if (r[2]) g[String(r[2])] = 1; }); } catch (e) {}
+  }
+  return Object.keys(g).sort(function (a, b) { return (Number(a) || 99) - (Number(b) || 99) || a.localeCompare(b); });
+}
+// 지구 한 바퀴: 지금까지 모든 학교가 뛴 합계 (숨긴 학교 제외)
+function allTime_(dv, schools) {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('alltime');
+  if (hit) return JSON.parse(hit);
+  let total = 0, since = '';
+  for (let i = 1; i < dv.length; i++) {
+    const pid = String(dv[i][0]);
+    if (!schools[pid] || schools[pid].hidden) continue;
+    total += Number(dv[i][2]) || 0;
+    const d = fmtDate_(dv[i][1]);
+    if (d && (!since || d < since)) since = d;
+  }
+  const out = { total: total, since: since };
+  cache.put('alltime', JSON.stringify(out), 600);
+  return out;
+}
+
+function getBoard_(month, grade) {
   const cur = month_(today_());
   month = /^\d{4}-\d{2}$/.test(String(month || '')) ? String(month) : cur;
+  grade = cleanText_(grade, 4);
+  const ck = 'board|' + month + (grade ? '|' + grade : '');
   const cache = CacheService.getScriptCache();
-  const hit = cache.get('board|' + month);
+  const hit = cache.get(ck);
   if (hit) return JSON.parse(hit);
   const dv = dailySheet_().getDataRange().getValues();
-  const schools = aggregateMonth_(month, loadSchools_(), dv);
+  const info = loadSchools_();
+  const schools = aggregateMonth_(month, info, dv, grade);
   const out = {
     month: month, current: cur, updated: new Date().toISOString(),
+    grade: grade, grades: gradesIn_(month, dv), allTime: allTime_(dv, info),
     months: monthsIn_(dv),
     minRegistered: MIN_REGISTERED_FOR_RATIO,
     summary: {
@@ -321,7 +368,7 @@ function getBoard_(month) {
     })
   };
   const text = JSON.stringify(out);
-  if (text.length < 90000) cache.put('board|' + month, text, BOARD_CACHE_SEC);
+  if (text.length < 90000) cache.put(ck, text, BOARD_CACHE_SEC);
   return out;
 }
 
@@ -367,7 +414,7 @@ function hallMonth_(m, schoolsInfo, dv) {
   let r = 0;
   studs.forEach(function (x, i) {
     r = (i > 0 && studs[i - 1].c === x.c) ? r : i + 1;
-    if (r <= 3) st3.push({ rank: r, n: x.n, g: x.g, c: x.c, cam: x.cam, school: x.school });
+    if (r <= 3) st3.push({ rank: r, k: x.k, pid: x.pid, n: x.n, g: x.g, c: x.c, cam: x.cam, school: x.school });
   });
   return {
     month: m,
@@ -377,7 +424,7 @@ function hallMonth_(m, schoolsInfo, dv) {
     students: st3,
     // 학교별 학생 1~3등 (학교 안 순위)
     inSchool: schools.slice(0, 30).map(function (s) {
-      return { label: s.label, named: s.named, pid: s.pid, top: s.students.slice(0, 3).map(function (x) { return { n: x.n, g: x.g, c: x.c }; }) };
+      return { label: s.label, named: s.named, pid: s.pid, top: s.students.slice(0, 3).map(function (x) { return { k: x.k, n: x.n, g: x.g, c: x.c }; }) };
     })
   };
 }
@@ -387,8 +434,8 @@ function refreshCache() {
   const c = CacheService.getScriptCache();
   const months = monthsIn_(dailySheet_().getDataRange().getValues());
   const cur = month_(today_());
-  const keys = ['hall|list|' + cur, 'board|' + cur];
-  months.forEach(function (m) { keys.push('hall|' + m, 'board|' + m); });
+  const keys = ['hall|list|' + cur, 'board|' + cur, 'alltime'];
+  months.forEach(function (m) { keys.push('hall|' + m, 'board|' + m); GRADES_.forEach(function (g) { keys.push('board|' + m + '|' + g); }); });
   c.removeAll(keys);
   return keys.length;
 }

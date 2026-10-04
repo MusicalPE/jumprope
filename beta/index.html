@@ -339,6 +339,52 @@
   .nat-reg { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 0 12px; }
   .nat-reg .req { color: var(--coral); }
   @media (max-width: 760px) { .nat-share, .nat-reg { grid-template-columns: 1fr; } }
+  .lv-chip { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.82em; font-weight: 700; border: 1px solid rgba(0,0,0,.18); white-space: nowrap; }
+  .lv-chip.lv-none { background: var(--bg); color: var(--muted); border-style: dashed; }
+  .lv-grid { overflow-x: auto; }
+  .lv-grid table th.it { font-size: 0.78em; font-weight: 600; min-width: 74px; text-align: center; white-space: normal; line-height: 1.3; }
+  .lv-grid td.ck { text-align: center; } .lv-grid td.ck input { width: 20px; height: 20px; margin: 0; }
+  .lv-grid td.ck.done { background: var(--green-tint); }
+  .lv-dist { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .lv-dist span.n { font-weight: 700; margin-left: 4px; }
+  .lv-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-top: 10px; }
+  .lv-items div { border: 1px solid var(--line-2); border-radius: var(--r-sm); padding: 8px 10px; font-size: 0.9em; }
+  .lv-items div.ok { background: var(--green-tint); border-color: transparent; }
+  .cert-preview { display: grid; gap: 16px; }
+  .cert { width: 100%; aspect-ratio: 297 / 210; background: #fff; box-shadow: var(--shadow); border-radius: 6px; padding: 3.2%; box-sizing: border-box; container-type: inline-size; }
+  .cert-in { height: 100%; box-sizing: border-box; border: 0.9cqw double #B08D3C; outline: 0.25cqw solid #B08D3C; outline-offset: -1.6cqw; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 3cqw 7cqw; color: #2b2b2b; font-family: 'Noto Serif KR', 'Nanum Myeongjo', serif; }
+  .cert-title { font-size: 6cqw; font-weight: 800; letter-spacing: 0.3em; margin-bottom: 1.4cqw; }
+  .cert-level .cert-title { letter-spacing: 0.12em; font-size: 5cqw; }
+  .cert-badge .lv-chip { font-size: 2.4cqw; padding: 0.5cqw 2.2cqw; }
+  .cert-rank { font-size: 2.6cqw; font-weight: 800; color: #9A7322; border: 0.25cqw solid #B08D3C; border-radius: 999px; padding: 0.4cqw 2.4cqw; }
+  .cert-who { font-size: 3cqw; margin: 2.4cqw 0 1.6cqw; }
+  .cert-body { font-size: 2.2cqw; line-height: 1.9; }
+  .cert-items { font-size: 1.6cqw; color: #555; }
+  .cert-small { font-size: 1.6cqw; color: #666; }
+  .cert-date { font-size: 2cqw; margin-top: 2.6cqw; }
+  .cert-from { font-size: 2.4cqw; font-weight: 700; margin-top: 1.2cqw; line-height: 1.5; }
+  @media print {
+    body.printing-cert * { visibility: hidden !important; }
+    body.printing-cert #certPreview, body.printing-cert #certPreview * { visibility: visible !important; }
+    body.printing-cert #certPreview { position: absolute; left: 0; top: 0; width: 297mm; display: block; }
+    body.printing-cert .cert { width: 297mm; height: 210mm; aspect-ratio: auto; box-shadow: none; border-radius: 0; page-break-after: always; break-after: page; }
+    body.printing-cert .lv-chip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @page { size: A4 landscape; margin: 0; }
+  .jr-card { position: relative; }
+  .jr-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+  .jr-head h2 { margin: 2px 0 0; } .jr-head small { color: var(--muted); font-weight: 600; font-size: 0.7em; }
+  .jr-tag { font-size: 0.8em; color: var(--coral-dark); font-weight: 700; }
+  .jr-num { color: var(--ink-2); } .jr-num b { font-size: 1.3em; color: var(--ink); }
+  .jr-track { position: relative; height: 12px; background: var(--bg); border-radius: 999px; margin: 26px 8px 0; }
+  .jr-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--coral-grad); border-radius: 999px; }
+  .jr-me { position: absolute; top: -24px; transform: translateX(-50%); font-size: 20px; }
+  .jr-stop { position: absolute; top: 0; transform: translateX(-50%); }
+  .jr-stop i { display: block; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid var(--line-2); box-sizing: border-box; }
+  .jr-stop.on i { border-color: var(--coral); background: var(--coral); }
+  .jr-stop b { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); font-size: 0.72em; color: var(--muted); white-space: nowrap; font-weight: 600; }
+  .jr-stop.on b { color: var(--ink-2); }
+  @media (max-width: 640px) { .jr-stop b { display: none; } .jr-stop.first b, .jr-stop.last b { display: block; } }
   .nat-kpis { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .nat-kpis div { background: var(--bg); border-radius: var(--r-sm); padding: 8px 12px; font-size: 0.88em; color: var(--muted); }
   .nat-kpis b { display: block; color: var(--ink); font-size: 1.25em; }
@@ -412,7 +458,7 @@ window.JRQR = {
 </script>
 <script>
 /* ===================== 줄넘기 기록 관리 v2 — 시작 ===================== */
-const APP = { version: '2.1.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.2.0', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -495,8 +541,10 @@ const NAT = {
       return Object.keys(days).sort().map(function(d){ return { date: d, students: days[d] }; });
     });
   },
-  meta: function(registered, admin){
-    const m = { key: this.cfg.key, name: this.cfg.showName ? (this.cfg.name || '') : '', showName: !!this.cfg.showName, schoolName: this.cfg.name || '', registered: registered, app: APP.version };
+  meta: function(students, admin){
+    const byGrade = {};
+    (students || []).forEach(function(s){ const g = String(s.grade || '').trim(); if (g) byGrade[g] = (byGrade[g] || 0) + 1; });
+    const m = { key: this.cfg.key, name: this.cfg.showName ? (this.cfg.name || '') : '', showName: !!this.cfg.showName, schoolName: this.cfg.name || '', registered: (students || []).length, registeredByGrade: byGrade, app: APP.version };
     if (admin) { const ct = this.contact(); if (ct.teacher) { m.teacher = ct.teacher; m.contact = ct.contact || ''; } }
     return m;
   },
@@ -535,7 +583,7 @@ const NAT = {
         });
         return NAT.buildDays(students, per).then(function(days){
           if (!days.length) return null;
-          return NAT.post('report', Object.assign(NAT.meta(students.length), { days: days, camPartial: recent.length >= 30 }));
+          return NAT.post('report', Object.assign(NAT.meta(students), { days: days, camPartial: recent.length >= 30 }));
         });
       });
     }).catch(function(err){ console.warn('전국 현황판 보내기 실패', err); return null; });
@@ -554,13 +602,113 @@ const NAT = {
           v[0] += r.count; if (r.source === 'camera') v[1] += r.count;
         });
         return NAT.buildDays(all.students || [], per).then(function(days){
-          return NAT.post('report', Object.assign(NAT.meta((all.students || []).length, true), { days: days })).then(function(res){
+          return NAT.post('report', Object.assign(NAT.meta(all.students || [], true), { days: days })).then(function(res){
             NAT._mark('sync'); NAT._mark('today');
             return { result: res, days: days };
           });
         });
       });
     });
+  }
+};
+
+/* ===== 급수제 (2.2 베타) =====
+   급수표(이름·색·항목·기준)는 EXTRA_SETTINGS.levels (고쳤을 때만 저장, 없으면 한국줄넘기협회 기준표)
+   누가 어떤 항목을 통과했는지는 껍데기 3판의 Levels 시트 (getLevelsPublic / saveLevelPasses)
+   지금 급수 = 흰부터 차례로, 모든 항목을 통과한 급수까지 */
+const LEVELS = {
+  DEFAULT: [
+    { name: '흰', color: '#FFFFFF', items: [['양발 모아 뛰기', '100'], ['번갈아 스텝', '50'], ['엇걸어 풀어 스텝', '10'], ['이중 뛰기', '20'], ['뒤로 뛰기', '30']] },
+    { name: '노랑', color: '#FFD60A', items: [['양발 모아 뛰기', '150'], ['번갈아 스텝', '70'], ['엇걸어 풀어 스텝', '20'], ['이중 뛰기', '30'], ['뒤로 뛰기', '50']] },
+    { name: '초록', color: '#1E8E3E', items: [['이중 뛰기', '50'], ['솔개 뛰기', '1'], ['송골매 뛰기', '1'], ['옆 떨쳐 앞으로 뛰기', ''], ['옆 떨쳐 엇걸어 스텝', ''], ['옆 떨쳐 EB', '4'], ['뒤로 이중 뛰기', '5']] },
+    { name: '파랑', color: '#2F56C8', items: [['이중 뛰기', '70'], ['솔개 뛰기', '5'], ['송골매 뛰기', '5'], ['1.5옆 떨쳐 앞으로 뛰기', ''], ['옆 떨쳐 엇걸어 스텝', ''], ['옆 떨쳐 EB', '10'], ['뒤로 이중 뛰기', '20']] },
+    { name: '밤', color: '#6B2A20', items: [['이중 뛰기', '100'], ['솔개 뛰기', '10'], ['송골매 뛰기', '10'], ['1.5중 옆 떨쳐 연결', '1'], ['뒤로 이중 뛰기', '30']] },
+    { name: '주황', color: '#F07C1E', items: [['이중 뛰기', '120'], ['솔개 뛰기', '15'], ['송골매 뛰기', '15'], ['1.5중 옆 떨쳐 연결', '2'], ['뒤로 이중 뛰기', '40']] },
+    { name: '빨강', color: '#E01B1B', items: [['이중 뛰기', '150'], ['십자매 뛰기', '2'], ['1.5중 옆 떨쳐 연결', '10'], ['뒤로 이중 뛰기', '50']] },
+    { name: '검은', color: '#1A1A1A', items: [['이중 뛰기', '100'], ['십자매 뛰기', '5'], ['1.5중 옆 떨쳐 연결', '10'], ['TS / 토드연결', '5회/2회'], ['뒤로 이중 뛰기', '60']] },
+    { name: '와이어', color: '#9CA3AF', items: [['이중 뛰기', '300'], ['3중 뛰기', '10'], ['TS 스텝', '10'], ['TS 이중 뛰기', '2'], ['토드 연결', '5'], ['뒤로 이중 뛰기', '20']] }
+  ],
+  table: null, passes: {}, custom: false, _ready: null,
+  supported: function(){ return !!(APP.shell && APP.shell.shell >= 3); },
+  load: function(force){
+    if (force) this._ready = null;
+    if (!this._ready) this._ready = Promise.all([
+      rpc('getExtraSettings').catch(function(){ return {}; }),
+      this.supported() ? rpc('getLevelsPublic').catch(function(){ return {}; }) : Promise.resolve({})
+    ]).then(function(r){
+      const t = r[0] && r[0].levels;
+      LEVELS.custom = Array.isArray(t) && t.length > 0;
+      LEVELS.table = LEVELS.custom ? t : LEVELS.DEFAULT;
+      LEVELS.passes = r[1] || {};
+      LEVELS.extra = r[0] || {};
+      return LEVELS;
+    });
+    return this._ready;
+  },
+  goal: function(v){ v = String(v == null ? '' : v).trim(); return !v ? '성공' : (/^\d+$/.test(v) ? v + '회' : v); },
+  label: function(i){ const l = this.table[i]; return l ? l.name + ' 줄넘기' : ''; },
+  /* 학생 한 명: { level: 딴 급수 번호(-1=아직), next: 도전 중인 급수 번호, passed: {"급수|항목": 날짜}, dates: {급수: 딴 날짜} } */
+  of: function(id){
+    const map = {}, rows = this.passes[String(id).trim()] || [];
+    rows.forEach(function(r){ map[r[0] + '|' + r[1]] = r[2] || ''; });
+    let level = -1; const dates = {};
+    for (let i = 0; i < this.table.length; i++) {
+      const items = this.table[i].items || [];
+      if (!items.length) break;
+      let last = '', all = true;
+      for (let j = 0; j < items.length; j++) { const d = map[i + '|' + j]; if (d === undefined) { all = false; break; } if (d > last) last = d; }
+      if (!all) break;
+      level = i; dates[i] = last;
+    }
+    return { level: level, next: Math.min(level + 1, this.table.length - 1), done: level >= this.table.length - 1, passed: map, dates: dates };
+  },
+  chip: function(i, small){
+    const l = this.table[i];
+    if (!l) return '<span class="lv-chip lv-none">' + (small ? '-' : '아직 없음') + '</span>';
+    const dark = /^#(?:[0-9a-f]{2}){3}$/i.test(l.color) && (function(c){ const n = parseInt(c.slice(1), 16); return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 < 150; })(l.color);
+    return '<span class="lv-chip" style="background:' + l.color + ';color:' + (dark ? '#fff' : '#1F2937') + '">' + (small ? l.name : this.label(i)) + '</span>';
+  },
+  /* 급수표 ↔ 글 (관리자 편집용): "흰 #FFFFFF" 다음 줄부터 "항목, 기준" , 빈 줄로 급수 구분 */
+  toText: function(t){
+    return (t || this.table).map(function(l){ return l.name + ' ' + l.color + '\n' + l.items.map(function(it){ return it[0] + (it[1] ? ', ' + it[1] : ''); }).join('\n'); }).join('\n\n');
+  },
+  fromText: function(text){
+    const out = [];
+    String(text || '').replace(/\r/g, '').split(/\n\s*\n/).forEach(function(block){
+      const lines = block.split('\n').map(function(x){ return x.trim(); }).filter(Boolean);
+      if (!lines.length) return;
+      const m = lines[0].match(/^(.+?)\s+(#[0-9a-fA-F]{6})$/);
+      const lv = { name: (m ? m[1] : lines[0]).replace(/\s*줄넘기$/, '').slice(0, 10), color: m ? m[2] : '#CCCCCC', items: [] };
+      lines.slice(1, 13).forEach(function(x){ const i = x.lastIndexOf(','); lv.items.push(i > 0 ? [x.slice(0, i).trim().slice(0, 30), x.slice(i + 1).trim().slice(0, 12)] : [x.slice(0, 30), '']); });
+      if (lv.items.length) out.push(lv);
+    });
+    return out.slice(0, 15);
+  }
+};
+
+/* ===== 우리 반 줄넘기 여행 (2.2 베타) — 1회 = 1m =====
+   EXTRA_SETTINGS.journey = { course, base } : base = 새로 시작할 때의 누적 횟수 (그 뒤로 뛴 만큼 나아감) */
+const JOURNEY = {
+  COURSES: {
+    busan: { name: '서울 → 부산', km: 400, stops: [['서울', 0], ['수원', 30], ['천안', 85], ['대전', 150], ['김천', 230], ['대구', 290], ['부산', 400]] },
+    korea: { name: '국토 한 바퀴', km: 1200, stops: [['서울', 0], ['강릉', 230], ['포항', 490], ['부산', 600], ['목포', 860], ['전주', 1000], ['서울', 1200]] },
+    jeju: { name: '서울 → 제주 (배 타고)', km: 560, stops: [['서울', 0], ['대전', 150], ['광주', 300], ['목포', 370], ['제주', 560]] },
+    earth: { name: '지구 한 바퀴', km: 40075, stops: [['출발', 0], ['서울→부산 거리 10번', 4000], ['베이징~모스크바쯤', 10000], ['반 바퀴', 20037], ['3/4', 30056], ['한 바퀴', 40075]] }
+  },
+  cfg: function(ex){ const j = (ex && ex.journey) || {}; return { course: this.COURSES[j.course] ? j.course : 'busan', base: Math.max(0, Number(j.base) || 0) }; },
+  km: function(n){ return n >= 100000 ? Math.round(n / 1000).toLocaleString() : (n / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }); },
+  html: function(total, ex){
+    const c = this.cfg(ex), co = this.COURSES[c.course];
+    const m = Math.max(0, total - c.base), goal = co.km * 1000;
+    const laps = Math.floor(m / goal), cur = m - laps * goal, pct = Math.min(100, cur / goal * 100);
+    let at = co.stops[0][0], next = co.stops[co.stops.length - 1];
+    co.stops.forEach(function(s){ if (cur >= s[1] * 1000) at = s[0]; });
+    for (let i = 0; i < co.stops.length; i++) if (co.stops[i][1] * 1000 > cur) { next = co.stops[i]; break; }
+    const stops = co.stops.map(function(s, i){ const x = s[1] / co.km * 100; return '<span class="jr-stop' + (cur >= s[1] * 1000 ? ' on' : '') + (i === 0 ? ' first' : i === co.stops.length - 1 ? ' last' : '') + '" style="left:' + x + '%"><i></i><b>' + s[0] + '</b></span>'; }).join('');
+    return '<div class="jr-head"><div><span class="jr-tag">우리 반 줄넘기 여행</span><h2>' + co.name + ' <small>약 ' + co.km.toLocaleString() + 'km</small></h2></div>' +
+      '<div class="jr-num"><b class="mono">' + this.km(cur) + 'km</b> 왔어요' + (laps ? ' · <b>' + laps + '번</b> 완주!' : '') + '</div></div>' +
+      '<div class="jr-track"><div class="jr-fill" style="width:' + pct.toFixed(2) + '%"></div><span class="jr-me" style="left:' + pct.toFixed(2) + '%">🏃</span>' + stops + '</div>' +
+      '<p class="hint" style="margin:30px 0 0;">지금 <b>' + at + '</b> 지나는 중 · 다음 <b>' + next[0] + '</b>까지 <b class="mono">' + Math.max(0, next[1] * 1000 - cur).toLocaleString() + '회</b> 남았어요 (줄넘기 1회 = 1m)</p>';
   }
 };
 
@@ -670,6 +818,12 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
     </div>
 
+    <div class="card jr-card" id="journeyCard" style="display:none;"></div>
+    <div class="card" id="levelCard" style="display:none;">
+      <h2>우리 반 급수</h2>
+      <div class="lv-dist" id="levelDist"></div>
+    </div>
+
     <div class="note-panel">
       <div class="note-eyebrow">오늘의 한마디</div>
       <p class="ai-message" id="aiMessage">문구를 불러오는 중...</p>
@@ -745,6 +899,10 @@ document.addEventListener('DOMContentLoaded', function(){
   </div>
 
   <div id="dataArea" style="display:none;">
+    <div class="card" id="myLevelCard" style="display:none;">
+      <h2>나의 급수</h2>
+      <div id="myLevel"></div>
+    </div>
     <div class="chart-wrap"><canvas id="lineChart" height="120"></canvas></div>
 
     <div class="card">
@@ -814,6 +972,9 @@ document.addEventListener('DOMContentLoaded', function(){
       <button type="button" data-tab="camera"><span class="ico"></span>카메라 판정기</button>
       <button type="button" data-tab="ai"><span class="ico"></span>AI 한마디</button>
       <button type="button" data-tab="national"><span class="ico"></span>전국 현황판</button>
+      <button type="button" data-tab="levels"><span class="ico"></span>급수 인증<span class="new-dot">베타</span></button>
+      <button type="button" data-tab="certs"><span class="ico"></span>인증서 · 상장<span class="new-dot">베타</span></button>
+      <button type="button" data-tab="journey"><span class="ico"></span>우리 반 여행<span class="new-dot">베타</span></button>
       <button type="button" data-tab="theme"><span class="ico"></span>테마 · 색상</button>
       <button type="button" data-tab="security"><span class="ico"></span>비밀번호 · 초기화</button>
       <button type="button" data-tab="updates"><span class="ico"></span>업데이트 내역<span class="new-dot" id="updatesDot" style="display:none;">NEW</span></button>
@@ -1011,6 +1172,57 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
     </section>
 
+    <section class="tab-pane" data-tab="levels">
+    <div class="card">
+      <h2>급수 인증</h2>
+      <div id="lvNoShell" class="warn-box" style="display:none;">급수 인증은 학교 껍데기 <b>3판</b>이 필요해요. (베타 시험 중: 시험용 시트에 beta/Shell.gs 를 붙여 넣고 "새 버전"으로 배포하세요)</div>
+      <p class="hint" style="margin-top:0;">학생이 선생님 앞에서 <b>걸리지 않고</b> 기준 횟수를 성공하면 그 항목을 체크하고 <b>저장</b>하세요. 한 급수의 항목을 모두 통과하면 다음 급수로 올라갑니다. (흰 → 노랑 → 초록 → 파랑 → 밤 → 주황 → 빨강 → 검은 → 와이어)</p>
+      <div class="form-row">
+        <label>반 <select id="lvClass"></select></label>
+        <label>급수 <select id="lvLevel"></select></label>
+        <label>통과 날짜 <input type="date" id="lvDate"></label>
+      </div>
+      <div class="lv-grid" id="lvGrid"></div>
+      <div style="display:flex; gap:8px; align-items:center; margin-top:10px;"><button type="button" id="lvSave">저장</button><span id="lvMsg" class="hint"></span></div>
+    </div>
+    <div class="card">
+      <h2>급수표</h2>
+      <p class="hint" style="margin-top:0;">기본은 <b>한국줄넘기협회 급수표</b>예요. 고치려면 급수마다 첫 줄에 <code>이름 색깔코드</code>(예: <code>노랑 #FFD60A</code>), 다음 줄부터 <code>항목, 기준</code>을 적고 급수 사이는 빈 줄로 나눠 주세요. 기준을 비워 두면 "성공하면 통과"예요. 항목 순서를 바꾸면 이미 체크한 기록이 다른 항목으로 보일 수 있어요.</p>
+      <textarea id="lvTableText" rows="14" style="width:100%; font-family:inherit; font-size:0.92em;"></textarea>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;"><button type="button" id="lvTableSave">급수표 저장</button><button type="button" class="btn-outline" id="lvTableReset">협회 기준표로 되돌리기</button><span id="lvTableMsg" class="hint"></span></div>
+    </div>
+    </section>
+
+    <section class="tab-pane" data-tab="certs">
+    <div class="card">
+      <h2>인증서 · 상장 출력</h2>
+      <div class="form-row">
+        <label>종류 <select id="certKind"><option value="level">급수 인증서</option><option value="nat">전국 현황판 순위 상장</option></select></label>
+        <label id="certClassRow">반 <select id="certClass"></select></label>
+        <label id="certMonthRow" style="display:none;">달 <select id="certMonth"></select></label>
+      </div>
+      <div class="form-row">
+        <label>학교 이름 <input id="certSchool" maxlength="40" placeholder="예: 햇살초등학교"></label>
+        <label>선생님 <input id="certTeacher" maxlength="30" placeholder="예: 홍길동"></label>
+        <label>주는 날짜 <input type="date" id="certDate"></label>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;"><button type="button" id="certMake">미리 보기</button><button type="button" class="btn-outline" id="certPrint">인쇄 · PDF 저장</button><span id="certMsg" class="hint"></span></div>
+      <p class="hint">급수 인증서는 학생마다 <b>지금 딴 급수</b> 한 장씩, 전국 현황판 상장은 그 달 <b>기록실</b>에 오른 우리 학교·학생(전국 1~3등, 우리 학교 안 1~3등)에게 나옵니다. 인쇄 창에서 "PDF로 저장"을 고르면 파일로 받을 수 있어요.</p>
+    </div>
+    <div id="certPreview" class="cert-preview"></div>
+    </section>
+
+    <section class="tab-pane" data-tab="journey">
+    <div class="card">
+      <h2>우리 반 줄넘기 여행</h2>
+      <p class="hint" style="margin-top:0;">우리 반이 뛴 줄넘기를 <b>1회 = 1m</b>로 바꿔 여행 코스를 따라 나아가요. 켜면 메인 화면에 진행 막대가 보입니다. (승인된 기록만)</p>
+      <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="jrOn" style="width:auto; margin:0;"> 메인 화면에 보이기</label>
+      <label style="max-width:320px;">코스 <select id="jrCourse"></select></label>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;"><button type="button" id="jrSave">저장</button><button type="button" class="btn-outline" id="jrRestart">지금부터 새로 출발</button><span id="jrMsg" class="hint"></span></div>
+    </div>
+    <div class="card jr-card" id="jrPreview"></div>
+    </section>
+
     <section class="tab-pane" data-tab="theme">
     <div class="card">
       <h2>테마 · 색상</h2>
@@ -1175,6 +1387,16 @@ google.script.run.withSuccessHandler(function(list){
     const opt = document.createElement('option');
     opt.value = g; opt.textContent = g + '학년';
     gradeSelect.appendChild(opt);
+  });
+  // 우리 반 급수 (껍데기 3판 + 통과 기록이 있을 때)
+  if (LEVELS.supported()) LEVELS.load().then(function(){
+    if (!Object.keys(LEVELS.passes).length) return;
+    const cnt = {};
+    list.forEach(function(st){ const lv = LEVELS.of(st.id).level; cnt[lv] = (cnt[lv] || 0) + 1; });
+    let html = '';
+    for (let i = LEVELS.table.length - 1; i >= -1; i--) if (cnt[i]) html += '<span>' + LEVELS.chip(i) + '<span class="n">' + cnt[i] + '명</span></span>';
+    document.getElementById('levelDist').innerHTML = html;
+    document.getElementById('levelCard').style.display = '';
   });
 }).getAllStudentsPublic();
 
@@ -1382,6 +1604,12 @@ function drawChart(summary) {
 
   const totalSum = summaryCache.list.reduce(function(a, s){ return a + s.total; }, 0);
   document.getElementById('statTotal').textContent = totalSum.toLocaleString();
+  // 우리 반 줄넘기 여행 (선생님이 켰을 때)
+  LEVELS.load().then(function(){
+    const j = LEVELS.extra.journey, card = document.getElementById('journeyCard');
+    if (!card) return;
+    if (j && j.on) { card.innerHTML = JOURNEY.html(totalSum, LEVELS.extra); card.style.display = ''; } else card.style.display = 'none';
+  });
   renderChart();
 }
 
@@ -1498,6 +1726,19 @@ function handleResult(detail) {
 function render(detail) {
   document.getElementById('pageTitle').textContent =
     detail.info.grade + '학년 ' + detail.info.cls + '반 ' + detail.info.name + ' 학생';
+  // 나의 급수 (껍데기 3판): 지금 급수 + 다음 급수 항목별 통과 여부
+  if (LEVELS.supported()) LEVELS.load().then(function(){
+    const me = LEVELS.of(studentId);
+    const nx = LEVELS.table[me.next];
+    let html = '<p style="margin:0 0 6px;">지금 급수: ' + LEVELS.chip(me.level) + (me.level >= 0 && me.dates[me.level] ? ' <span class="hint">(' + me.dates[me.level] + ' 인증)</span>' : '') + '</p>';
+    if (me.done) html += '<p class="hint" style="margin:0;">마지막 급수까지 모두 땄어요! 대단해요.</p>';
+    else if (nx) {
+      html += '<p class="hint" style="margin:8px 0 0;">다음 도전: ' + LEVELS.chip(me.next) + ' — 선생님 앞에서 걸리지 않고 성공하면 선생님이 체크해 줘요.</p><div class="lv-items">' +
+        nx.items.map(function(it, j){ const ok = me.passed[me.next + '|' + j] !== undefined; return '<div class="' + (ok ? 'ok' : '') + '">' + (ok ? '✔ ' : '') + it[0] + ' <b>' + LEVELS.goal(it[1]) + '</b></div>'; }).join('') + '</div>';
+    }
+    document.getElementById('myLevel').innerHTML = html;
+    document.getElementById('myLevelCard').style.display = '';
+  });
   const approvedOnly = detail.daily.filter(d => d.status === 'approved');
 
   // 날짜별 누적: 전체 합계 선 + 종류별 선
@@ -2348,6 +2589,226 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
   });
   NAT.refreshUI = fill;
   NAT.load().then(function(){ fill(); return sync(false); });
+})();
+
+/* ---- 급수 인증 (2.2 베타) ---- */
+(function(){
+  const $ = function(id){ return document.getElementById(id); };
+  const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  const today = function(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  let students = [], orig = {};
+  $('lvDate').value = today();
+  function classes(){ const m = {}; students.forEach(function(s){ m[s.grade + '|' + s.cls] = 1; }); return Object.keys(m).sort(function(a, b){ return a.localeCompare(b, 'ko', { numeric: true }); }); }
+  function inClass(){ const k = $('lvClass').value; return students.filter(function(s){ return (s.grade + '|' + s.cls) === k; }); }
+  function fillLevels(pick){
+    $('lvLevel').innerHTML = LEVELS.table.map(function(l, i){ return '<option value="' + i + '">' + esc(LEVELS.label(i)) + '</option>'; }).join('');
+    if (pick != null) $('lvLevel').value = String(pick);
+  }
+  function commonNext(){
+    const c = {}; let best = 0, bn = -1;
+    inClass().forEach(function(s){ const n = LEVELS.of(s.id).next; c[n] = (c[n] || 0) + 1; if (c[n] > bn) { bn = c[n]; best = n; } });
+    return best;
+  }
+  function grid(){
+    const lv = Number($('lvLevel').value) || 0, L = LEVELS.table[lv];
+    const list = inClass();
+    orig = {};
+    if (!L || !list.length) { $('lvGrid').innerHTML = '<p class="hint">학생이 없어요.</p>'; return; }
+    let h = '<table><thead><tr><th>번호</th><th>이름</th><th>지금 급수</th>' + L.items.map(function(it, j){ return '<th class="it">' + esc(it[0]) + '<br><b>' + esc(LEVELS.goal(it[1])) + '</b><br><input type="checkbox" class="lvAll" data-j="' + j + '" title="모두 체크"></th>'; }).join('') + '</tr></thead><tbody>';
+    list.forEach(function(s){
+      const me = LEVELS.of(s.id);
+      h += '<tr><td>' + esc(s.number) + '</td><td>' + esc(s.name) + '</td><td>' + LEVELS.chip(me.level, true) + '</td>' + L.items.map(function(it, j){
+        const d = me.passed[lv + '|' + j]; const on = d !== undefined; orig[s.id + '|' + j] = on;
+        return '<td class="ck' + (on ? ' done' : '') + '" title="' + (on ? esc(d) + ' 통과' : '') + '"><input type="checkbox" class="lvCk" data-id="' + esc(s.id) + '" data-j="' + j + '"' + (on ? ' checked' : '') + '></td>';
+      }).join('') + '</tr>';
+    });
+    $('lvGrid').innerHTML = h + '</tbody></table>';
+    Array.prototype.forEach.call(document.querySelectorAll('.lvAll'), function(a){
+      a.addEventListener('change', function(){ const j = this.dataset.j, on = this.checked; Array.prototype.forEach.call(document.querySelectorAll('.lvCk[data-j="' + j + '"]'), function(c){ c.checked = on; }); });
+    });
+  }
+  function render(keepLevel){
+    const cs = classes(), cur = $('lvClass').value;
+    $('lvClass').innerHTML = cs.map(function(k){ const p = k.split('|'); return '<option value="' + esc(k) + '">' + esc(p[0]) + '학년 ' + esc(p[1]) + '반</option>'; }).join('');
+    if (cur && cs.indexOf(cur) >= 0) $('lvClass').value = cur;
+    fillLevels(keepLevel != null ? keepLevel : commonNext());
+    grid();
+    $('lvTableText').value = LEVELS.toText();
+  }
+  $('lvClass').addEventListener('change', function(){ fillLevels(commonNext()); grid(); });
+  $('lvLevel').addEventListener('change', grid);
+  $('lvSave').addEventListener('click', function(){
+    const lv = Number($('lvLevel').value) || 0, date = $('lvDate').value || today(), changes = [];
+    const before = {}; inClass().forEach(function(s){ before[s.id] = LEVELS.of(s.id).level; });
+    Array.prototype.forEach.call(document.querySelectorAll('.lvCk'), function(c){
+      const k = c.dataset.id + '|' + c.dataset.j;
+      if (!!orig[k] !== c.checked) changes.push({ id: c.dataset.id, level: lv, item: Number(c.dataset.j), pass: c.checked, date: date });
+    });
+    if (!changes.length) { $('lvMsg').textContent = '바뀐 것이 없어요.'; return; }
+    $('lvMsg').textContent = '저장 중...';
+    rpc('saveLevelPasses', [token, changes]).then(function(passes){
+      LEVELS.passes = passes || {};
+      const up = inClass().filter(function(s){ return LEVELS.of(s.id).level > before[s.id]; });
+      $('lvMsg').textContent = '저장했어요. (' + changes.length + '칸)' + (up.length ? ' 급수가 오른 학생: ' + up.map(function(s){ return s.name + '(' + LEVELS.label(LEVELS.of(s.id).level) + ')'; }).join(', ') : '');
+      grid();
+    }).catch(function(err){ $('lvMsg').textContent = '저장하지 못했어요: ' + (err.message || err); });
+  });
+  $('lvTableSave').addEventListener('click', function(){
+    const t = LEVELS.fromText($('lvTableText').value);
+    if (!t.length) { $('lvTableMsg').textContent = '급수표를 읽지 못했어요. 형식을 확인해 주세요.'; return; }
+    rpc('setExtraSettings', [token, { levels: t }]).then(function(r){
+      if (!r || !r.ok) throw new Error((r && r.message) || '저장 실패');
+      LEVELS.table = t; LEVELS.custom = true; $('lvTableMsg').textContent = '급수표를 저장했어요. (' + t.length + '개 급수)'; render(Number($('lvLevel').value) || 0);
+    }).catch(function(err){ $('lvTableMsg').textContent = '저장하지 못했어요: ' + (err.message || err); });
+  });
+  $('lvTableReset').addEventListener('click', function(){
+    if (!confirm('협회 기준표로 되돌릴까요? (체크해 둔 통과 기록은 그대로 남아요)')) return;
+    rpc('setExtraSettings', [token, { levels: null }]).then(function(){
+      LEVELS.table = LEVELS.DEFAULT; LEVELS.custom = false; $('lvTableMsg').textContent = '협회 기준표로 되돌렸어요.'; render(0);
+    }).catch(function(err){ $('lvTableMsg').textContent = '오류: ' + (err.message || err); });
+  });
+  const ok = LEVELS.supported();
+  $('lvNoShell').style.display = ok ? 'none' : '';
+  ['lvSave', 'lvTableSave', 'lvTableReset'].forEach(function(id){ $(id).disabled = !ok; });
+  Promise.all([rpc('getAllStudentsPublic'), LEVELS.load()]).then(function(r){ students = r[0] || []; LEVELS.students = students; render(); });
+})();
+
+/* ---- 인증서 · 상장 (2.2 베타) ---- */
+(function(){
+  const $ = function(id){ return document.getElementById(id); };
+  const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  const d0 = new Date();
+  $('certDate').value = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
+  const dateKo = function(d){ const p = String(d || '').split('-'); return p.length === 3 ? Number(p[0]) + '년 ' + Number(p[1]) + '월 ' + Number(p[2]) + '일' : ''; };
+  const mLabel = function(m){ return Number(m.slice(0, 4)) + '년 ' + Number(m.slice(5, 7)) + '월'; };
+  let students = [], hall = null;
+  NAT.load().then(function(){
+    const c = NAT.cfg || {}, ct = NAT.contact();
+    if (!$('certSchool').value) $('certSchool').value = c.name || '';
+    if (!$('certTeacher').value) $('certTeacher').value = ct.teacher || '';
+  });
+  function page(o){
+    return '<div class="cert ' + o.cls + '"><div class="cert-in">' +
+      '<div class="cert-title">' + o.title + '</div>' +
+      (o.badge || '') +
+      '<div class="cert-who">' + o.who + '</div>' +
+      '<div class="cert-body">' + o.body + '</div>' +
+      '<div class="cert-date">' + esc(dateKo($('certDate').value)) + '</div>' +
+      '<div class="cert-from">' + esc($('certSchool').value || '') + (($('certTeacher').value || '') ? '<br>담임 ' + esc($('certTeacher').value) : '') + '</div>' +
+      '</div></div>';
+  }
+  function classOpts(){
+    const m = {}; students.forEach(function(s){ m[s.grade + '|' + s.cls] = 1; });
+    $('certClass').innerHTML = '<option value="">전체</option>' + Object.keys(m).sort(function(a, b){ return a.localeCompare(b, 'ko', { numeric: true }); }).map(function(k){ const p = k.split('|'); return '<option value="' + esc(k) + '">' + esc(p[0]) + '학년 ' + esc(p[1]) + '반</option>'; }).join('');
+  }
+  function levelCerts(){
+    if (!LEVELS.supported()) return { html: '', msg: '급수 인증서는 학교 껍데기 3판이 필요해요.' };
+    const k = $('certClass').value;
+    const list = students.filter(function(s){ return !k || (s.grade + '|' + s.cls) === k; });
+    const pages = [];
+    list.forEach(function(s){
+      const me = LEVELS.of(s.id);
+      if (me.level < 0) return;
+      const L = LEVELS.table[me.level];
+      pages.push(page({ cls: 'cert-level', title: '줄넘기 급수 인증서',
+        badge: '<div class="cert-badge">' + LEVELS.chip(me.level) + '</div>',
+        who: esc(s.grade) + '학년 ' + esc(s.cls) + '반 <b>' + esc(s.name) + '</b>',
+        body: '위 학생은 줄넘기 <b>' + esc(LEVELS.label(me.level)) + '</b> 급수의 모든 과제<br><span class="cert-items">' + L.items.map(function(it){ return esc(it[0]) + ' ' + esc(LEVELS.goal(it[1])); }).join(' · ') + '</span><br>를 걸리지 않고 성공하였기에 이 인증서를 드립니다.' + (me.dates[me.level] ? '<br><span class="cert-small">인증일 ' + esc(dateKo(me.dates[me.level])) + '</span>' : '') }));
+    });
+    return { html: pages.join(''), msg: pages.length ? pages.length + '장 (급수를 딴 학생만)' : '이 반에는 아직 급수를 딴 학생이 없어요.' };
+  }
+  function natCerts(){
+    if (!NAT.collector || !NAT.cfg.key) return Promise.resolve({ html: '', msg: '전국 현황판에 참여한 학교만 쓸 수 있어요.' });
+    const month = $('certMonth').value;
+    return Promise.all([NAT.publicId(NAT.cfg.key), fetch(NAT.collector + '?api=hall' + (month ? '&month=' + month : ''), { cache: 'no-store' }).then(function(r){ return r.json(); })]).then(function(r){
+      const pid = r[0], j = r[1];
+      if (!j.ok) throw new Error(j.error || '기록실을 불러오지 못했어요');
+      const res = j.result, m = res.month || (res.months || []).filter(function(x){ return x.month === month; })[0] || (res.months || [])[0];
+      if (res.list) $('certMonth').innerHTML = res.list.map(function(x){ return '<option value="' + x + '">' + mLabel(x) + '</option>'; }).join('');
+      if (!m) return { html: '', msg: '아직 기록실에 오른 달이 없어요.' };
+      $('certMonth').value = m.month;
+      // 학생 키 → 실명 (우리 학교 학생만, 학교 안에서 계산)
+      return Promise.all(students.map(function(s){ return NAT.sha('jr-student|' + NAT.cfg.key + '|' + String(s.id).trim()).then(function(h){ return [h.slice(0, 10), s]; }); })).then(function(pairs){
+        const byKey = {}; pairs.forEach(function(p){ byKey[p[0]] = p[1]; });
+        const nameOf = function(x){ const s = x.k && byKey[x.k]; return s ? esc(s.grade) + '학년 ' + esc(s.cls) + '반 <b>' + esc(s.name) + '</b>' : '<b>' + esc(x.n) + '</b>' + (x.g ? ' (' + esc(x.g) + '학년)' : ''); };
+        const pages = [], ml = mLabel(m.month), school = $('certSchool').value || '우리 학교';
+        const kinds = { total: ['학교 합계', function(s){ return Number(s.total).toLocaleString() + '회'; }], avg: ['1인당 평균', function(s){ return Number(s.avg).toLocaleString() + '회'; }], rate: ['참여율', function(s){ return s.rate + '%'; }] };
+        Object.keys(kinds).forEach(function(k){
+          (m.schools[k] || []).filter(function(s){ return s.pid === pid; }).forEach(function(s){
+            pages.push(page({ cls: 'cert-award', title: '상　　장', badge: '<div class="cert-rank">전국 ' + s.rank + '위</div>', who: '<b>' + esc(school) + '</b>',
+              body: ml + ' 전국 줄넘기 현황판에서 <b>' + kinds[k][0] + ' 전국 ' + s.rank + '위</b>(' + kinds[k][1](s) + ')를 차지하여<br>이 상장을 드립니다.' }));
+          });
+        });
+        (m.students || []).filter(function(x){ return (x.pid && x.pid === pid) || (x.k && byKey[x.k]); }).forEach(function(x){
+          pages.push(page({ cls: 'cert-award', title: '상　　장', badge: '<div class="cert-rank">전국 ' + x.rank + '위</div>', who: nameOf(x),
+            body: ml + ' 전국 줄넘기 현황판 <b>학생 순위 전국 ' + x.rank + '위</b>(' + Number(x.c).toLocaleString() + '회)에 올라<br>꾸준히 노력한 모범이 되었기에 이 상장을 드립니다.' }));
+        });
+        const ins = (m.inSchool || []).filter(function(s){ return s.pid === pid; })[0];
+        if (ins) {
+          let r = 0;
+          ins.top.forEach(function(x, i){
+            r = (i > 0 && ins.top[i - 1].c === x.c) ? r : i + 1;
+            pages.push(page({ cls: 'cert-award', title: '상　　장', badge: '<div class="cert-rank">우리 학교 ' + r + '위</div>', who: nameOf(x),
+              body: ml + ' 줄넘기 기록에서 <b>' + esc(school) + ' ' + r + '위</b>(' + Number(x.c).toLocaleString() + '회)를 차지하여<br>이 상장을 드립니다.' }));
+          });
+        }
+        return { html: pages.join(''), msg: pages.length ? ml + ' · ' + pages.length + '장' : ml + ' 기록실에 우리 학교가 없어요.' };
+      });
+    });
+  }
+  function make(){
+    const kind = $('certKind').value;
+    if (!$('certSchool').value) $('certSchool').value = (NAT.cfg && NAT.cfg.name) || '';
+    if (!$('certTeacher').value) $('certTeacher').value = NAT.contact().teacher || '';
+    $('certMsg').textContent = '만드는 중...';
+    const p = kind === 'level' ? LEVELS.load().then(levelCerts) : natCerts();
+    return p.then(function(r){ $('certPreview').innerHTML = r.html; $('certMsg').textContent = r.msg; return r; })
+      .catch(function(err){ $('certPreview').innerHTML = ''; $('certMsg').textContent = '만들지 못했어요: ' + (err.message || err); });
+  }
+  $('certKind').addEventListener('change', function(){
+    const nat = this.value === 'nat';
+    $('certClassRow').style.display = nat ? 'none' : ''; $('certMonthRow').style.display = nat ? '' : 'none';
+    $('certPreview').innerHTML = ''; $('certMsg').textContent = '';
+  });
+  $('certMonth').addEventListener('change', make);
+  $('certMake').addEventListener('click', make);
+  $('certPrint').addEventListener('click', function(){
+    (document.querySelector('#certPreview .cert') ? Promise.resolve() : make()).then(function(){
+      if (!document.querySelector('#certPreview .cert')) return;
+      document.body.classList.add('printing-cert'); window.print();
+      setTimeout(function(){ document.body.classList.remove('printing-cert'); }, 500);
+    });
+  });
+  rpc('getAllStudentsPublic').then(function(list){ students = list || []; classOpts(); });
+})();
+
+/* ---- 우리 반 줄넘기 여행 (2.2 베타) ---- */
+(function(){
+  const $ = function(id){ return document.getElementById(id); };
+  let total = 0, ex = {};
+  $('jrCourse').innerHTML = Object.keys(JOURNEY.COURSES).map(function(k){ const c = JOURNEY.COURSES[k]; return '<option value="' + k + '">' + c.name + ' (약 ' + c.km.toLocaleString() + 'km)</option>'; }).join('');
+  function cur(){ return { on: $('jrOn').checked, course: $('jrCourse').value, base: JOURNEY.cfg(ex).base }; }
+  function preview(){ $('jrPreview').innerHTML = JOURNEY.html(total, { journey: cur() }); }
+  function save(j, msg){
+    $('jrMsg').textContent = '저장 중...';
+    return rpc('setExtraSettings', [token, { journey: j }]).then(function(r){
+      if (!r || !r.ok) throw new Error((r && r.message) || '저장 실패');
+      ex = r.settings || ex; LEVELS._ready = null; preview(); $('jrMsg').textContent = msg;
+    }).catch(function(err){ $('jrMsg').textContent = '저장하지 못했어요: ' + (err.message || err); });
+  }
+  $('jrCourse').addEventListener('change', preview);
+  $('jrSave').addEventListener('click', function(){ save(cur(), '저장했어요.' + ($('jrOn').checked ? ' 메인 화면에 보여요.' : '')); });
+  $('jrRestart').addEventListener('click', function(){
+    if (!confirm('지금까지 뛴 기록은 그대로 두고, 여행만 출발점에서 다시 시작할까요?')) return;
+    const j = cur(); j.base = total; save(j, '지금부터 새로 출발해요!');
+  });
+  Promise.all([rpc('getExtraSettings'), rpc('getStudentsSummary')]).then(function(r){
+    ex = r[0] || {};
+    const sum = r[1] && r[1].list;
+    total = (Array.isArray(sum) ? sum : []).reduce(function(a, s){ return a + (Number(s.total) || 0); }, 0);
+    const c = JOURNEY.cfg(ex); $('jrOn').checked = !!(ex.journey && ex.journey.on); $('jrCourse').value = c.course;
+    preview();
+  });
 })();
 
 /* ---- 업데이트 내역 ---- */
