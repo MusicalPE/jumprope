@@ -21,14 +21,26 @@ python3 test_site.py                              # playwright 전체 흐름 시
 ```
 `gas-emu.js` 는 Apps Script 흉내(SpreadsheetApp/Properties/Cache/ContentService 등)로 `../Shell.gs` 를 그대로 실행.
 
-## 다음 할 일 (2.1 — 전국 현황판)
-- 각 학교 화면이 하루 집계(학교 합계·참여 인원·학교 안 1~3등)를 **선생님 소유 중앙 수집 시트**(별도 Apps Script)로 보냄
-- GitHub 현황판 페이지: 학교 순위 + 학교 안 학생 순위, **한 달 단위 집계(매달 1일 새로 시작)**
-- **기록실** 페이지: 지난 달들의 학교·학생 1~3등
-- 개인정보: 다른 학교에 보이는 학생 이름은 가림(김*늘), 참여·학교 이름 공개는 설정에서 켬(기본 꺼짐)
-- 공정함: 합계 순위 + 1인당 평균·참여율 순위, 카메라 인증 횟수 따로 표시
-- 학교 고유번호·참여 여부는 EXTRA_SETTINGS 에 (껍데기 1판 그대로)
-- 2.1 완성 후 인디스쿨 참여 안내 글 작성
+## 2.1 — 전국 현황판 (beta 에만 올라감, 정식판 아직)
+- 껍데기(Shell.gs)는 **그대로 1판**. 참여 설정은 `EXTRA_SETTINGS.nat = { on, key, name, showName }`
+- `Collector.gs` (루트): 운영자 소유 **중앙 수집 시트**용 별도 Apps Script. 시트 Schools / Daily
+  - POST `{fn:'report'|'leave', args:[payload]}`, GET `?api=board&month=YYYY-MM` · `?api=hall`
+  - 학교 공개 번호 = sha256('jr-school|'+key) 앞 10자리, 학생 키 = sha256('jr-student|'+key+'|'+학생ID) 앞 10자리
+  - 이번 달·지난 달 날짜만 받음(늦은 입력 반영), 같은 학교·같은 날은 덮어씀. 이름은 서버에서도 다시 가림
+  - Schools 시트 Hidden 칸에 1 → 그 학교 숨김(장난 보고 대응)
+  - 1인당 평균·참여율 순위는 등록 학생 5명 이상 학교만 (MIN_REGISTERED_FOR_RATIO)
+- `beta/national.json` 의 `collector` 에 수집기 주소 (**지금은 비어 있음 → 화면에 "준비 중"**)
+- `beta/index.html`: `NAT` 모듈
+  - 메인: 저장 직후 + 20분마다 오늘 집계 보고(공개 함수 getTodaySummaryPublic·getAllStudentsPublic·getRecentRecordsPublic 사용, 카메라는 최근 30건 한계 → camPartial)
+  - 관리자: "전국 현황판" 탭(참여·학교 이름 공개·학교 이름, 지금 보내기, 미리보기), 관리자 메뉴 열면 1시간에 한 번 getAllDataAdmin 으로 이번 달+지난 달 전체 동기화. 참여 끄면 `leave` 로 수집기 자료 삭제
+- `beta/board.html` 현황판(달 선택·합계/1인당 평균/참여율 정렬·학교 누르면 학교 안 학생 순위·전국 학생 TOP30·`?me=` 우리 학교 강조), `beta/hall.html` 기록실(지난 달별 학교·학생 1~3등, 학교별 1~3등)
+- 시험: `node devserver.js` 가 `/collector` 로 Collector.gs 도 흉내 내고 national.json 을 로컬 주소로 바꿔 줌. `python3 test_national.py` (playwright 1.56 이 설치된 chromium 과 맞음)
+- 알려진 한계: 학교 키가 getExtraSettings(공개)로 보임 → 껍데기 주소를 아는 사람은 그 학교 이름으로 보고 가능. 껍데기 2판에서 숨길 수 있음
+
+## 다음 할 일
+- Collector.gs 배포 → beta/national.json 에 주소 → beta 에서 실제 확인
+- 정식판으로 복사: beta/index.html·board.html·hall.html·national.json → 루트, changelog 맨 위 2.1.0 추가
+- 인디스쿨 참여 안내 글 작성
 
 ## 관련
 - 줄넘기 판정기: MusicalPE/jump-rope-checker (현재 v0.7.4, ?app= 서버 연동 + mode=post 오프라인 연동)

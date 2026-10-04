@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>전국 줄넘기 현황판</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    --bg: #F3F5F8; --surface: #FFFFFF; --ink: #1F2937; --ink-2: #374151; --muted: #6B7280; --faint: #9CA3AF;
+    --line: #E5E7EB; --line-2: #EEF0F3; --coral: #F26A3D; --coral-dark: #DC5B31; --coral-tint: #FFF1EC;
+    --coral-grad: linear-gradient(135deg, #F26A3D 0%, #FF8A65 100%);
+    --gold: #F59E0B; --silver: #94A3B8; --bronze: #B45309; --green: #16A34A; --green-tint: #DCFCE7;
+    --r-sm: 10px; --r-md: 14px; --r-lg: 18px;
+    --shadow: 0 1px 2px rgba(17,24,39,0.04), 0 4px 16px rgba(17,24,39,0.05);
+  }
+  * { box-sizing: border-box; }
+  body { font-family: 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background: var(--bg); margin: 0; color: var(--ink); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  .container { max-width: 980px; margin: 0 auto; padding: 22px 16px 70px; }
+  .mono { font-variant-numeric: tabular-nums; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .brand { font-weight: 800; font-size: 1.05em; color: var(--ink); text-decoration: none; }
+  .nav { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { display: inline-block; text-decoration: none; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 0.88em; cursor: pointer; font-family: inherit; }
+  .btn:hover, .btn.on { border-color: var(--coral); color: var(--coral-dark); background: var(--coral-tint); }
+  .hero { background: var(--coral-grad); color: #fff; border-radius: var(--r-lg); padding: 22px 24px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .hero h1 { margin: 0 0 4px; font-size: 1.55em; }
+  .hero p { margin: 0; opacity: .92; }
+  .hero-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .hero select { font: inherit; font-weight: 700; border: 0; border-radius: 999px; padding: 8px 14px; color: var(--ink); background: #fff; }
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: var(--surface); border-radius: var(--r-md); padding: 12px 14px; box-shadow: var(--shadow); }
+  .kpi span { color: var(--muted); font-size: 0.82em; font-weight: 700; }
+  .kpi b { display: block; font-size: 1.45em; }
+  .card { background: var(--surface); border-radius: var(--r-lg); padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .card h2 { margin: 0 0 4px; font-size: 1.15em; }
+  .card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .seg { display: inline-flex; background: var(--bg); border-radius: 999px; padding: 3px; }
+  .seg button { border: 0; background: transparent; font: inherit; font-weight: 700; font-size: 0.86em; padding: 6px 12px; border-radius: 999px; color: var(--muted); cursor: pointer; }
+  .seg button.on { background: var(--surface); color: var(--coral-dark); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .hint { color: var(--muted); font-size: 0.85em; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; color: var(--muted); font-size: 0.8em; font-weight: 700; padding: 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 10px 8px; border-bottom: 1px solid var(--line-2); font-size: 0.93em; word-break: keep-all; }
+  th.num, td.num { text-align: right; white-space: nowrap; }
+  tr.school { cursor: pointer; }
+  tr.school:hover td { background: #FAFAFB; }
+  tr.me td { background: var(--coral-tint) !important; }
+  tr.detail td { background: #FAFAFB; padding: 4px 8px 14px; }
+  .rank { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 50%; font-weight: 800; background: var(--bg); color: var(--ink-2); font-size: 0.9em; }
+  .rank.r1 { background: var(--gold); color: #fff; } .rank.r2 { background: var(--silver); color: #fff; } .rank.r3 { background: var(--bronze); color: #fff; }
+  .sub { color: var(--faint); font-size: 0.8em; margin-left: 4px; }
+  .tag-me { display: inline-block; background: var(--coral); color: #fff; font-size: 0.72em; font-weight: 800; padding: 1px 7px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+  .anon { color: var(--muted); }
+  .mini { width: 100%; margin-top: 4px; }
+  .mini td, .mini th { padding: 6px 8px; font-size: 0.88em; }
+  .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+  .err { background: #FEF3C7; color: #92400E; border-radius: var(--r-sm); padding: 12px 14px; font-weight: 700; }
+  .loading { text-align: center; color: var(--muted); padding: 40px; }
+  .foot { text-align: center; color: var(--faint); font-size: 0.8em; margin-top: 24px; }
+  .hide-sm { }
+  @media (max-width: 640px) {
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hide-sm { display: none; }
+    .hero h1 { font-size: 1.3em; }
+    td, th { padding-left: 5px; padding-right: 5px; }
+    td { font-size: 0.88em; }
+    .tag-me { display: block; width: fit-content; margin: 2px 0 0; }
+    td.num .sub { display: block; margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="topbar">
+    <a class="brand" id="homeLink" href="./">🏆 줄넘기 기록</a>
+    <nav class="nav">
+      <a class="btn on" href="#">전국 현황판</a>
+      <a class="btn" id="hallLink" href="hall.html">🏅 기록실</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div class="hero-row">
+      <div>
+        <h1>전국 줄넘기 현황판</h1>
+        <p id="heroSub">매달 1일에 새로 시작해요</p>
+      </div>
+      <select id="monthSel" aria-label="달 고르기"></select>
+    </div>
+  </div>
+
+  <div id="body"><div class="loading">현황판을 불러오는 중…</div></div>
+  <p class="foot">학생 이름은 가려서 보여 줍니다 (예: 김*늘) · 학교 이름은 학교가 공개를 켠 경우에만 보여요<br>Made by <b>음악적체육인</b></p>
+</div>
+
+<script>
+(function(){
+  const q = {}; new URLSearchParams(location.search).forEach(function(v, k){ q[k] = v; });
+  const me = q.me || '';
+  let collector = '', data = null, sortBy = 'total', openPid = me;
+  const $ = function(id){ return document.getElementById(id); };
+  const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  const n = function(v){ return (Number(v) || 0).toLocaleString('ko-KR'); };
+  const mLabel = function(m){ return Number(m.slice(0, 4)) + '년 ' + Number(m.slice(5, 7)) + '월'; };
+  const rankHtml = function(r){ return r ? '<span class="rank r' + r + '">' + r + '</span>' : '<span class="rank">–</span>'; };
+  const kst = function(){ return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }); };
+
+  // 우리 학교 프로그램으로 돌아가는 링크 (이 기기에서 쓰던 학교)
+  try { const s = localStorage.getItem('jr_shell'); if (s) $('homeLink').href = './?s=' + encodeURIComponent(s); } catch (e) {}
+  if (me) $('hallLink').href = 'hall.html?me=' + encodeURIComponent(me);
+
+  function load(month){
+    $('body').innerHTML = '<div class="loading">현황판을 불러오는 중…</div>';
+    fetch(collector + '?api=board' + (month ? '&month=' + encodeURIComponent(month) : ''), { cache: 'no-store' })
+      .then(function(r){ if (!r.ok) throw new Error('응답 오류 ' + r.status); return r.json(); })
+      .then(function(j){ if (!j.ok) throw new Error(j.error || '불러오기 실패'); data = j.result; draw(); })
+      .catch(function(err){ $('body').innerHTML = '<div class="err">현황판을 불러오지 못했어요: ' + esc(err.message || err) + '</div>'; });
+  }
+
+  function heroSub(){
+    if (data.month === data.current) {
+      const t = kst(), y = Number(t.slice(0, 4)), m = Number(t.slice(5, 7)), d = Number(t.slice(8, 10));
+      const last = new Date(y, m, 0).getDate();
+      return '이번 달 ' + d + '일째 · ' + (last - d === 0 ? '오늘이 마지막 날!' : '마감까지 ' + (last - d) + '일') + ' · 다음 달 1일에 새로 시작해요';
+    }
+    return mLabel(data.month) + ' 최종 기록 · 1~3등은 기록실에 남아 있어요';
+  }
+
+  function draw(){
+    const sel = $('monthSel'), months = (data.months || []).slice();
+    if (months.indexOf(data.current) === -1) months.unshift(data.current);
+    sel.innerHTML = months.map(function(m){ return '<option value="' + m + '"' + (m === data.month ? ' selected' : '') + '>' + mLabel(m) + (m === data.current ? ' (이번 달)' : '') + '</option>'; }).join('');
+    $('heroSub').textContent = heroSub();
+    const s = data.summary || {};
+    let html = '<div class="kpis">' +
+      '<div class="kpi"><span>참여 학교</span><b class="mono">' + n(s.schools) + '</b></div>' +
+      '<div class="kpi"><span>전체 횟수</span><b class="mono">' + n(s.total) + '</b></div>' +
+      '<div class="kpi"><span>참여 학생</span><b class="mono">' + n(s.participants) + '</b></div>' +
+      '<div class="kpi"><span>📷 카메라 인증</span><b class="mono">' + n(s.camera) + '</b></div></div>';
+
+    // 학교 순위
+    const schools = (data.schools || []).slice();
+    const key = { total: 'total', avg: 'avg', rate: 'rate' }[sortBy];
+    schools.sort(function(a, b){
+      const ra = a.rank[key], rb = b.rank[key];
+      if (ra && rb) return ra - rb; if (ra) return -1; if (rb) return 1; return b.total - a.total;
+    });
+    html += '<div class="card"><div class="card-head"><div><h2>학교 순위</h2><span class="hint">학교 줄을 누르면 그 학교 안 학생 순위가 보여요</span></div>' +
+      '<div class="seg" id="sortSeg"><button data-k="total"' + (sortBy === 'total' ? ' class="on"' : '') + '>합계</button><button data-k="avg"' + (sortBy === 'avg' ? ' class="on"' : '') + '>1인당 평균</button><button data-k="rate"' + (sortBy === 'rate' ? ' class="on"' : '') + '>참여율</button></div></div>';
+    if (!schools.length) html += '<div class="empty">' + mLabel(data.month) + ' 기록이 아직 없어요. 첫 기록의 주인공이 되어 보세요!</div>';
+    else {
+      html += '<div class="table-wrap"><table><thead><tr><th>순위</th><th>학교</th><th class="num">합계</th><th class="num">1인당 평균</th><th class="num">참여율</th><th class="num hide-sm">📷 카메라</th></tr></thead><tbody>';
+      schools.forEach(function(sc){
+        const isMe = sc.pid === me;
+        html += '<tr class="school' + (isMe ? ' me' : '') + '" data-pid="' + esc(sc.pid) + '">' +
+          '<td>' + rankHtml(sc.rank[key]) + '</td>' +
+          '<td><span class="' + (sc.named ? '' : 'anon') + '">' + esc(sc.label) + '</span>' + (isMe ? '<span class="tag-me">우리 학교</span>' : '') + '</td>' +
+          '<td class="num mono">' + n(sc.total) + '</td>' +
+          '<td class="num mono">' + n(sc.avg) + '</td>' +
+          '<td class="num mono">' + sc.rate + '%<span class="sub">' + sc.participants + '/' + sc.registered + '</span></td>' +
+          '<td class="num mono hide-sm">' + n(sc.camera) + '</td></tr>';
+        if (openPid === sc.pid) html += '<tr class="detail"><td colspan="6">' + schoolDetail(sc) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      html += '<p class="hint" style="margin-bottom:0;">1인당 평균 = 합계 ÷ 등록 학생 수 · 참여율 = 이번 달 한 번이라도 뛴 학생 ÷ 등록 학생 수. 두 순위는 등록 학생 ' + (data.minRegistered || 5) + '명 이상인 학교만 매겨요. 📷 카메라는 줄넘기 판정기로 인증된 횟수예요.</p>';
+    }
+    html += '</div>';
+
+    // 전국 학생 순위
+    const st = data.students || [];
+    html += '<div class="card"><div class="card-head"><div><h2>전국 학생 순위</h2><span class="hint">' + mLabel(data.month) + ' 동안 뛴 횟수 합계</span></div></div>';
+    if (!st.length) html += '<div class="empty">아직 기록이 없어요.</div>';
+    else {
+      html += '<div class="table-wrap"><table><thead><tr><th>순위</th><th>이름</th><th>학교</th><th class="num">횟수</th><th class="num hide-sm">📷</th></tr></thead><tbody>';
+      let r = 0;
+      st.forEach(function(x, i){
+        r = (i > 0 && st[i - 1].c === x.c) ? r : i + 1;
+        html += '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(r) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    html += '</div>';
+    html += '<p class="hint" style="text-align:center;">집계는 몇 분마다 새로 고쳐져요 · 마지막 갱신 ' + new Date(data.updated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + '</p>';
+    $('body').innerHTML = html;
+
+    $('sortSeg') && $('sortSeg').addEventListener('click', function(e){ const b = e.target.closest('button'); if (b) { sortBy = b.dataset.k; draw(); } });
+    Array.prototype.forEach.call(document.querySelectorAll('tr.school'), function(tr){
+      tr.addEventListener('click', function(){ openPid = openPid === tr.dataset.pid ? '' : tr.dataset.pid; draw(); });
+    });
+  }
+
+  function schoolDetail(sc){
+    const st = sc.students || [];
+    if (!st.length) return '<p class="hint">학생 기록이 없어요.</p>';
+    let r = 0;
+    return '<table class="mini"><thead><tr><th>학교 안 순위</th><th>이름</th><th class="num">횟수</th><th class="num">뛴 날</th><th class="num">📷</th></tr></thead><tbody>' +
+      st.map(function(x, i){
+        r = (i > 0 && st[i - 1].c === x.c) ? r : i + 1;
+        return '<tr><td>' + rankHtml(r) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + x.days + '일</td><td class="num mono">' + n(x.cam) + '</td></tr>';
+      }).join('') + '</tbody></table>' +
+      (sc.participants > st.length ? '<p class="hint" style="margin:6px 0 0;">상위 ' + st.length + '명까지 보여요 (참여 ' + sc.participants + '명)</p>' : '');
+  }
+
+  $('monthSel').addEventListener('change', function(){ openPid = me; load(this.value); });
+
+  fetch('national.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return {}; }).then(function(cfg){
+    collector = q.c || (cfg && cfg.collector) || '';
+    if (!collector) { $('body').innerHTML = '<div class="err">전국 현황판이 아직 준비 중이에요. 곧 열립니다!</div>'; return; }
+    load(q.month || '');
+  });
+})();
+</script>
+</body>
+</html>

@@ -333,6 +333,13 @@
   .cl-item summary::before { content: '▸'; color: var(--muted); transition: transform .15s; }
   .cl-item[open] summary::before { transform: rotate(90deg); }
   .cl-item summary::-webkit-details-marker { display: none; }
+  .nat-share { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 14px; font-size: 0.88em; color: var(--ink-2); }
+  .nat-share > div { background: var(--bg); border-radius: var(--r-sm); padding: 10px 12px; }
+  .nat-share > div:last-child { background: var(--green-tint); }
+  @media (max-width: 560px) { .nat-share { grid-template-columns: 1fr; } }
+  .nat-kpis { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .nat-kpis div { background: var(--bg); border-radius: var(--r-sm); padding: 8px 12px; font-size: 0.88em; color: var(--muted); }
+  .nat-kpis b { display: block; color: var(--ink); font-size: 1.25em; }
   .warn-box { background: var(--amber-tint); border: 1px solid #FCD34D; color: #92400E; border-radius: var(--r-sm); padding: 10px 14px; font-weight: 700; font-size: 0.9em; margin-bottom: 12px; }
   .boot-wrap { max-width: 520px; margin: 40px auto; padding: 0 20px; }
   .boot-wrap .card > h2:first-child::before { display: none; }
@@ -403,7 +410,7 @@ window.JRQR = {
 </script>
 <script>
 /* ===================== 줄넘기 기록 관리 v2 — 시작 ===================== */
-const APP = { version: '2.0.0', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.1.0', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -428,6 +435,120 @@ function makeRunner(ok, fail){
   } });
 }
 window.google = { script: { run: makeRunner(null, null), url: { getLocation: function(cb){ cb({ parameter: Object.assign({}, APP.q), hash: location.hash }); } } } };
+
+/* ===== 전국 현황판 (2.1) =====
+   껍데기는 그대로 두고, 참여 설정은 EXTRA_SETTINGS.nat = { on, key, name, showName } 에 둔다.
+   학교 밖으로 나가는 것: 가린 이름(김*늘)·학년·날짜별 횟수·카메라 횟수·등록 학생 수 (반·번호·실명·비밀번호는 안 나감)
+   수집기 주소는 national.json 의 "collector" (운영자가 Collector.gs 를 배포한 주소) */
+const NAT = {
+  collector: '', cfg: {}, _ready: null,
+  load: function(){
+    if (!this._ready) this._ready = Promise.all([
+      fetch('national.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return {}; }),
+      rpc('getExtraSettings').catch(function(){ return {}; })
+    ]).then(function(r){ NAT.collector = (r[0] && r[0].collector) || ''; NAT.cfg = (r[1] && r[1].nat) || {}; return NAT; });
+    return this._ready;
+  },
+  active: function(){ return !!(this.collector && this.cfg.on && this.cfg.key); },
+  mask: function(n){
+    const c = Array.from(String(n == null ? '' : n).trim());
+    if (c.length <= 1) return c.join('');
+    if (c.length === 2) return c[0] + '*';
+    return c[0] + new Array(c.length - 1).join('*') + c[c.length - 1];
+  },
+  sha: function(text){
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function(buf){
+      return Array.from(new Uint8Array(buf)).map(function(b){ return (b < 16 ? '0' : '') + b.toString(16); }).join('');
+    });
+  },
+  publicId: function(key){ return this.sha('jr-school|' + key).then(function(h){ return h.slice(0, 10); }); },
+  newKey: function(){
+    try { if (crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+    return Array.from(crypto.getRandomValues(new Uint8Array(16))).map(function(b){ return (b < 16 ? '0' : '') + b.toString(16); }).join('');
+  },
+  pageUrl: function(page, pid){ return new URL(page, location.href).href.split('?')[0] + (pid ? '?me=' + pid : ''); },
+  post: function(fn, payload){
+    return fetch(this.collector, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: [payload] }), redirect: 'follow' })
+      .then(function(r){ if (!r.ok) throw new Error('현황판 응답 오류 (' + r.status + ')'); return r.json(); })
+      .then(function(j){ if (!j.ok) throw new Error(j.error || '현황판 요청 실패'); return j.result; });
+  },
+  /* 학생 목록 + {studentId: {date: [count, cam]}} → 보고용 days */
+  buildDays: function(students, perStudent){
+    const key = this.cfg.key, byId = {}, days = {};
+    students.forEach(function(s){ byId[String(s.id).trim()] = s; });
+    const jobs = Object.keys(perStudent).filter(function(id){ return byId[id]; }).map(function(id){
+      return NAT.sha('jr-student|' + key + '|' + id).then(function(h){
+        const s = byId[id], sk = h.slice(0, 10);
+        Object.keys(perStudent[id]).forEach(function(d){
+          const v = perStudent[id][d]; if (!v[0]) return;
+          (days[d] = days[d] || []).push([sk, NAT.mask(s.name), String(s.grade || ''), v[0], Math.min(v[1], v[0])]);
+        });
+      });
+    });
+    return Promise.all(jobs).then(function(){
+      return Object.keys(days).sort().map(function(d){ return { date: d, students: days[d] }; });
+    });
+  },
+  meta: function(registered){
+    return { key: this.cfg.key, name: this.cfg.showName ? (this.cfg.name || '') : '', showName: !!this.cfg.showName, registered: registered, app: APP.version };
+  },
+  _lsKey: function(k){ return 'jr_nat_' + k + '|' + APP.shellUrl; },
+  _due: function(k, ms){ try { return Date.now() - Number(localStorage.getItem(this._lsKey(k)) || 0) > ms; } catch (e) { return true; } },
+  _mark: function(k){ try { localStorage.setItem(this._lsKey(k), String(Date.now())); } catch (e) {} },
+  /* 누구나(학생 화면): 오늘 하루 집계만 보냄. gapMs = 마지막으로 보낸 뒤 이만큼 지났을 때만 (0 = 기록 저장 직후, 항상)
+     보내는 중에 또 부르면 끝난 뒤 한 번 더 보냄 */
+  _busy: null, _again: false,
+  reportToday: function(gapMs){
+    if (this._busy) { if (!gapMs) this._again = true; return this._busy; }
+    const done = function(){ NAT._busy = null; if (NAT._again) { NAT._again = false; return NAT.reportToday(0); } return null; };
+    this._busy = this._reportToday(gapMs || 0).then(done, done);
+    return this._busy;
+  },
+  _reportToday: function(gapMs){
+    return this.load().then(function(){
+      if (!NAT.active() || (gapMs && !NAT._due('today', gapMs))) return null;
+      NAT._mark('today');
+      return Promise.all([rpc('getAllStudentsPublic'), rpc('getTodaySummaryPublic'), rpc('getRecentRecordsPublic').catch(function(){ return []; })]).then(function(r){
+        const students = r[0] || [], today = (r[1] && r[1].list) || [], recent = r[2] || [];
+        const d = (function(){ const x = new Date(); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); })();
+        const per = {}, idOf = {};
+        students.forEach(function(s){ idOf[[s.grade, s.cls, s.number, s.name].join('|')] = String(s.id).trim(); });
+        today.forEach(function(t){ per[String(t.id).trim()] = {}; per[String(t.id).trim()][d] = [Number(t.total) || 0, 0]; });
+        recent.forEach(function(x){
+          if (x.source !== 'camera' || x.status !== 'approved' || x.date !== d) return;
+          const id = idOf[[x.grade, x.cls, x.number, x.name].join('|')];
+          if (id && per[id] && per[id][d]) per[id][d][1] += Number(x.count) || 0;
+        });
+        return NAT.buildDays(students, per).then(function(days){
+          if (!days.length) return null;
+          return NAT.post('report', Object.assign(NAT.meta(students.length), { days: days, camPartial: recent.length >= 30 }));
+        });
+      });
+    }).catch(function(err){ console.warn('전국 현황판 보내기 실패', err); return null; });
+  },
+  /* 관리자: 이번 달 + 지난 달 전체를 정확히 다시 보냄 (늦게 넣은 기록·승인 반영). 평소엔 1시간에 한 번 */
+  syncAll: function(token, force){
+    return this.load().then(function(){
+      if (!NAT.active() || (!force && !NAT._due('sync', 60 * 60 * 1000))) return null;
+      return rpc('getAllDataAdmin', [token]).then(function(all){
+        const now = new Date(), pm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const from = pm.getFullYear() + '-' + String(pm.getMonth() + 1).padStart(2, '0') + '-01';
+        const per = {};
+        (all.records || []).forEach(function(r){
+          if (r.status !== 'approved' || !r.date || r.date < from) return;
+          const v = ((per[r.studentId] = per[r.studentId] || {})[r.date] = per[r.studentId][r.date] || [0, 0]);
+          v[0] += r.count; if (r.source === 'camera') v[1] += r.count;
+        });
+        return NAT.buildDays(all.students || [], per).then(function(days){
+          return NAT.post('report', Object.assign(NAT.meta((all.students || []).length), { days: days })).then(function(res){
+            NAT._mark('sync'); NAT._mark('today');
+            return { result: res, days: days };
+          });
+        });
+      });
+    });
+  }
+};
 
 function applyTheme(t){
   if (!t || !t.accent) return;
@@ -483,6 +604,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <span class="brand-word">줄넘기 기록</span>
       </a>
       <div class="topbar-nav">
+        <a class="btn-outline" id="navBoard" style="display:none;" target="_blank" rel="noopener">🏆 전국 현황판</a>
         <button type="button" class="btn-outline" id="navQr" title="학생들이 휴대폰으로 찍어서 들어오는 QR">📱 접속 QR</button>
         <a class="btn-outline" id="navApproval" style="display:none;" href="{{BASE}}&page=adminLogin&next=approval">기록 승인</a>
         <a class="btn-outline" id="navAdmin" href="{{BASE}}&page=adminLogin&next=admin">관리자 메뉴</a>
@@ -677,6 +799,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <button type="button" data-tab="register"><span class="ico"></span>학생 등록</button>
       <button type="button" data-tab="camera"><span class="ico"></span>카메라 판정기</button>
       <button type="button" data-tab="ai"><span class="ico"></span>AI 한마디</button>
+      <button type="button" data-tab="national"><span class="ico"></span>전국 현황판</button>
       <button type="button" data-tab="theme"><span class="ico"></span>테마 · 색상</button>
       <button type="button" data-tab="security"><span class="ico"></span>비밀번호 · 초기화</button>
       <button type="button" data-tab="updates"><span class="ico"></span>업데이트 내역<span class="new-dot" id="updatesDot" style="display:none;">NEW</span></button>
@@ -838,6 +961,33 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
     </section>
 
+    <section class="tab-pane" data-tab="national">
+    <div class="card">
+      <h2>전국 현황판 참여</h2>
+      <p class="hint" style="margin-top:0;">켜면 우리 학교 기록이 <b>전국 현황판</b>에 모여 다른 학교와 <b>한 달 단위</b>로 순위를 겨뤄요. 매달 1일에 새로 시작하고, 지난 달 1~3등은 <b>기록실</b>에 남습니다. (기본: 꺼짐)</p>
+      <div id="natNoCollector" class="warn-box" style="display:none;">전국 현황판 수집 주소가 아직 준비되지 않았어요. 준비되면 여기서 바로 켤 수 있습니다.</div>
+      <div class="nat-share">
+        <div><b>현황판에 보내는 것</b><br>가린 이름(예: 김*늘) · 학년 · 날짜별 뛴 횟수 · 카메라 인증 횟수 · 등록 학생 수</div>
+        <div><b>보내지 않는 것</b><br>실명 · 반 · 번호 · 비밀번호 · 그 밖의 학교 시트 내용</div>
+      </div>
+      <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="natOn" style="width:auto; margin:0;"> 전국 현황판에 참여하기</label>
+      <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="natShowName" style="width:auto; margin:0;"> 학교 이름 공개 <span class="hint">(끄면 "익명 학교 ABCD" 로 표시)</span></label>
+      <label id="natNameRow" style="max-width:320px;">학교 이름 <input id="natName" maxlength="40" placeholder="예: 햇살초등학교"></label>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:6px;">
+        <button type="button" id="saveNatBtn">저장</button>
+        <button type="button" class="btn-outline" id="natSyncBtn">지금 보내기</button>
+        <a class="btn-outline" id="natBoardLink" target="_blank" rel="noopener">현황판 보기 →</a>
+        <a class="btn-outline" id="natHallLink" target="_blank" rel="noopener">기록실 →</a>
+      </div>
+      <p id="natMsg" class="hint"></p>
+      <p class="hint" style="margin-bottom:0;">학생이 기록을 저장할 때마다 오늘 집계가 보내지고, 관리자 메뉴를 열면 이번 달·지난 달 전체를 한 번 더 맞춥니다(늦게 넣은 기록·승인 반영). 참여를 끄면 현황판에 올라간 우리 학교 기록은 지워져요.</p>
+    </div>
+    <div class="card" id="natPreviewCard" style="display:none;">
+      <h2>이번 달 우리 학교 (현황판에 보이는 모습)</h2>
+      <div id="natPreview"></div>
+    </div>
+    </section>
+
     <section class="tab-pane" data-tab="theme">
     <div class="card">
       <h2>테마 · 색상</h2>
@@ -989,6 +1139,7 @@ document.addEventListener('visibilitychange', function(){
   if (document.getElementById('cameraBtn').style.display === 'none') return;
   google.script.run.withSuccessHandler(drawChart).getStudentsSummary();
   loadPending(); loadTodaySummary(); loadWeekSummary(); loadStreakSummary();
+  NAT.reportToday(60 * 1000);
 });
 
 /* ---- 입력 폼: 학년/반/이름 캐스케이드 ---- */
@@ -1065,6 +1216,7 @@ document.getElementById('recordForm').addEventListener('submit', function(e){
       loadTodaySummary();
       loadWeekSummary();
       loadStreakSummary();
+      NAT.reportToday(0);
     } else {
       document.getElementById('formMsg').textContent = res.message;
     }
@@ -1097,6 +1249,16 @@ loadPending();
 loadTodaySummary();
 loadWeekSummary();
 loadStreakSummary();
+
+/* ---- 전국 현황판: 참여 중이면 링크를 보이고 오늘 집계를 보냄 ---- */
+NAT.load().then(function(){
+  if (!NAT.active()) return;
+  NAT.publicId(NAT.cfg.key).then(function(pid){
+    const a = document.getElementById('navBoard'); if (!a) return;
+    a.href = NAT.pageUrl('board.html', pid); a.style.display = '';
+  });
+  NAT.reportToday(20 * 60 * 1000);
+});
 
 function loadPending() {
   const on = !!APP.settings.approvalOn;
@@ -2068,6 +2230,67 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
   }).withFailureHandler(function(err){ msg.textContent = '오류: ' + String(err); })
   .setAppSettings(token, { approvalOn: document.getElementById('approvalOn').checked });
 });
+
+/* ---- 전국 현황판 참여 (2.1) ---- */
+(function(){
+  const $ = function(id){ return document.getElementById(id); };
+  const msg = $('natMsg');
+  function esc(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function fill(){
+    const c = NAT.cfg || {};
+    $('natOn').checked = !!c.on; $('natShowName').checked = !!c.showName; $('natName').value = c.name || '';
+    $('natNameRow').style.display = $('natShowName').checked ? '' : 'none';
+    $('natSyncBtn').style.display = NAT.active() ? '' : 'none';
+    const noCol = !NAT.collector;
+    $('natNoCollector').style.display = noCol ? '' : 'none';
+    ['natOn', 'natShowName', 'natName', 'saveNatBtn'].forEach(function(id){ $(id).disabled = noCol; });
+    const setLinks = function(pid){ $('natBoardLink').href = NAT.pageUrl('board.html', pid); $('natHallLink').href = NAT.pageUrl('hall.html', pid); };
+    setLinks(''); if (c.key && c.on) NAT.publicId(c.key).then(setLinks);
+  }
+  function preview(days){
+    const month = (function(){ const x = new Date(); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0'); })();
+    const st = {};
+    let total = 0, cam = 0;
+    (days || []).filter(function(d){ return d.date.slice(0, 7) === month; }).forEach(function(d){
+      d.students.forEach(function(s){ const x = st[s[0]] = st[s[0]] || { n: s[1], g: s[2], c: 0 }; x.c += s[3]; total += s[3]; cam += s[4]; });
+    });
+    const list = Object.keys(st).map(function(k){ return st[k]; }).sort(function(a, b){ return b.c - a.c; });
+    $('natPreviewCard').style.display = '';
+    $('natPreview').innerHTML = '<div class="nat-kpis"><div>학교 이름<b>' + esc(NAT.cfg.showName ? NAT.cfg.name : '익명 학교') + '</b></div><div>이번 달 합계<b class="mono">' + total.toLocaleString() + '</b></div><div>참여 학생<b class="mono">' + list.length + '명</b></div><div>📷 카메라 인증<b class="mono">' + cam.toLocaleString() + '</b></div></div>' +
+      (list.length ? '<table><thead><tr><th>순위</th><th>이름</th><th>학년</th><th>횟수</th></tr></thead><tbody>' + list.slice(0, 5).map(function(s, i){ return '<tr><td>' + (i + 1) + '</td><td>' + esc(s.n) + '</td><td>' + esc(s.g) + '</td><td class="mono">' + s.c.toLocaleString() + '</td></tr>'; }).join('') + '</tbody></table>' : '<p class="hint">이번 달 기록이 아직 없어요.</p>');
+  }
+  function sync(force){
+    if (!NAT.active()) return Promise.resolve(null);
+    if (force) msg.textContent = '현황판에 보내는 중...';
+    return NAT.syncAll(token, force).then(function(r){
+      if (r) { preview(r.days); if (force) msg.textContent = '보냈어요. (' + r.days.length + '일치) 현황판에는 몇 분 안에 반영됩니다.'; }
+      return r;
+    }).catch(function(err){ msg.textContent = '현황판에 보내지 못했어요: ' + (err.message || err); });
+  }
+  $('natShowName').addEventListener('change', function(){ $('natNameRow').style.display = this.checked ? '' : 'none'; });
+  $('natSyncBtn').addEventListener('click', function(){ sync(true); });
+  $('saveNatBtn').addEventListener('click', function(){
+    const on = $('natOn').checked, showName = $('natShowName').checked, name = $('natName').value.trim();
+    if (on && showName && !name) { msg.textContent = '학교 이름을 넣어 주세요. (이름을 숨기려면 "학교 이름 공개"를 끄세요)'; return; }
+    const wasOn = NAT.active();
+    if (wasOn && !on && !confirm('참여를 끄면 현황판에 올라간 우리 학교 기록이 지워집니다. 끌까요?')) return;
+    const next = { on: on, key: NAT.cfg.key || NAT.newKey(), name: name, showName: showName };
+    msg.textContent = '저장 중...';
+    google.script.run.withSuccessHandler(function(res){
+      if (!res || !res.ok) { msg.textContent = (res && res.message) || '저장하지 못했어요.'; return; }
+      NAT.cfg = (res.settings && res.settings.nat) || next;
+      fill();
+      if (on) { msg.textContent = '저장했어요. 현황판에 보내는 중...'; sync(true); }
+      else if (wasOn) {
+        $('natPreviewCard').style.display = 'none';
+        NAT.post('leave', { key: next.key }).then(function(){ msg.textContent = '참여를 껐어요. 현황판에서 우리 학교 기록을 지웠습니다.'; })
+          .catch(function(err){ msg.textContent = '참여는 껐지만 현황판 기록을 지우지 못했어요: ' + (err.message || err); });
+      } else msg.textContent = '저장했어요.';
+    }).withFailureHandler(function(err){ msg.textContent = '오류: ' + String(err); })
+    .setExtraSettings(token, { nat: next });
+  });
+  NAT.load().then(function(){ fill(); return sync(false); });
+})();
 
 /* ---- 업데이트 내역 ---- */
 (function(){

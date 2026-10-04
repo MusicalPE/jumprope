@@ -33,6 +33,7 @@ function createGas(opts){
     SpreadsheetApp: { getActiveSpreadsheet: () => ss },
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => (k in props ? props[k] : null), setProperty: (k, v) => { props[k] = String(v); }, deleteProperty: k => { delete props[k]; } }) },
     CacheService: { getScriptCache: () => ({ get: k => cache[k] || null, put: (k, v) => { cache[k] = String(v); }, remove: k => { delete cache[k]; } }) },
+    Intl,
     Utilities: {
       getUuid: () => crypto.randomUUID(),
       DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' },
@@ -49,6 +50,7 @@ function createGas(opts){
       if (/models\?/.test(url)) return { getResponseCode: () => ok ? 200 : 400, getContentText: () => JSON.stringify(ok ? { models: [{ name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent'] }] } : { error: { message: 'API key not valid' } }) };
       return { getResponseCode: () => ok ? 200 : 400, getContentText: () => JSON.stringify(ok ? { candidates: [{ content: { parts: [{ text: '오늘도 한 번 더 뛰는 우리 반, 꾸준함이 최고야!' }] } }] } : { error: { message: 'API key not valid. Please pass a valid API key.' } }) };
     } },
+    LockService: { getScriptLock: () => ({ waitLock: () => {}, tryLock: () => true, releaseLock: () => {} }) },
     Logger: { log: () => {} }
   };
   ctx.globalThis = ctx;

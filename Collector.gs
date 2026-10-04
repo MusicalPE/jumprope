@@ -1,0 +1,344 @@
+/*************************************************************
+ * 줄넘기 기록 관리 v2.1 — 전국 현황판 중앙 수집기 (Collector.gs)
+ * ------------------------------------------------------------
+ * 운영자(선생님) 한 명만 설치합니다. 학교들은 설치할 필요가 없어요.
+ *  1) 새 스프레드시트 → 확장 프로그램 → Apps Script → 이 파일 내용 붙여넣기
+ *  2) 배포 → 새 배포 → 웹 앱 (실행: 나 / 액세스: 모든 사용자)
+ *  3) 나온 …/exec 주소를 저장소의 national.json 의 "collector" 에 넣기
+ *
+ * 각 학교 화면이 하루 집계(학생별 합계, 이름은 가린 채)를 보내면 여기 쌓이고,
+ * 현황판(board.html)·기록실(hall.html)은 여기서 한 달 단위로 묶은 결과를 받아 갑니다.
+ *
+ * 시트
+ *  - Schools : PublicId, Name, ShowName, Registered, FirstSeen, LastSeen, Hidden
+ *              (Hidden 칸에 1 을 넣으면 그 학교는 현황판·기록실에서 빠집니다)
+ *  - Daily   : PublicId, Date, Total, Participants, Camera, Students(JSON), UpdatedAt
+ *              Students = [[학생키, 가린이름, 학년, 횟수, 카메라횟수], ...]
+ *************************************************************/
+
+const COLLECTOR_VERSION = 1;
+const TZ_ = 'Asia/Seoul';
+const SH_SCHOOLS = 'Schools';
+const SH_DAILY = 'Daily';
+const MAX_STUDENTS_PER_DAY = 1200;
+const MAX_COUNT_PER_STUDENT_DAY = 30000;
+const MIN_REGISTERED_FOR_RATIO = 5;  // 1인당 평균·참여율 순위는 등록 학생 5명 이상 학교만
+const BOARD_CACHE_SEC = 300;
+
+/************ 입구 ************/
+function doGet(e) {
+  const q = (e && e.parameter) || {};
+  let out;
+  try {
+    if (q.api === 'board') out = getBoard_(q.month);
+    else if (q.api === 'hall') out = getHall_();
+    else out = { collector: COLLECTOR_VERSION, today: today_() };
+    out = { ok: true, result: out };
+  } catch (err) {
+    out = { ok: false, error: String((err && err.message) || err) };
+  }
+  return json_(out);
+}
+
+// 학교 화면에서 오는 보고: {"fn":"report"|"leave","args":[payload]}
+function doPost(e) {
+  let out;
+  try {
+    const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    const p = (body.args && body.args[0]) || {};
+    if (body.fn === 'report') out = report_(p);
+    else if (body.fn === 'leave') out = leave_(p);
+    else throw new Error('알 수 없는 요청');
+    out = { ok: true, result: out };
+  } catch (err) {
+    out = { ok: false, error: String((err && err.message) || err) };
+  }
+  return json_(out);
+}
+
+function json_(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/************ 공통 ************/
+function today_() { return Utilities.formatDate(new Date(), TZ_, 'yyyy-MM-dd'); }
+function month_(d) { return String(d).slice(0, 7); }
+function prevMonth_(m) {
+  let y = Number(m.slice(0, 4)), mo = Number(m.slice(5, 7)) - 1;
+  if (mo === 0) { y--; mo = 12; }
+  return y + '-' + (mo < 10 ? '0' : '') + mo;
+}
+function hex_(s) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8)
+    .map(function (b) { const v = (b + 256) % 256; return (v < 16 ? '0' : '') + v.toString(16); }).join('');
+}
+// 학교 비밀키 → 공개 번호 (화면의 natPublicId 와 같은 계산)
+function publicId_(key) { return hex_('jr-school|' + key).slice(0, 10); }
+// 김하늘 → 김*늘, 이준 → 이*, 남궁민수 → 남**수 (이미 가린 이름이 와도 같은 결과)
+function maskName_(n) {
+  const c = Array.from(String(n || '').trim());
+  if (c.length <= 1) return c.join('');
+  if (c.length === 2) return c[0] + '*';
+  return c[0] + new Array(c.length - 1).join('*') + c[c.length - 1];
+}
+function int_(v, max) { const n = Math.round(Number(v)); return (isFinite(n) && n > 0) ? Math.min(n, max) : 0; }
+function cleanText_(s, max) { return String(s == null ? '' : s).replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, max); }
+
+function sheet_(name, header) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(name);
+  if (!sh) { sh = ss.insertSheet(name); sh.appendRow(header); }
+  return sh;
+}
+function schoolsSheet_() { return sheet_(SH_SCHOOLS, ['PublicId', 'Name', 'ShowName', 'Registered', 'FirstSeen', 'LastSeen', 'Hidden']); }
+function dailySheet_() { return sheet_(SH_DAILY, ['PublicId', 'Date', 'Total', 'Participants', 'Camera', 'Students', 'UpdatedAt']); }
+
+/************ 보고 받기 ************/
+// p = { key, name, showName, registered, camPartial, days: [{ date, students: [[sk, name, grade, count, cam], ...] }] }
+function report_(p) {
+  const key = cleanText_(p.key, 80);
+  if (key.length < 16) throw new Error('학교 키가 올바르지 않습니다.');
+  const pid = publicId_(key);
+  const today = today_();
+  const curM = month_(today), prevM = prevMonth_(curM);
+  const days = (Array.isArray(p.days) ? p.days : []).slice(0, 70).filter(function (d) {
+    const ds = String(d && d.date || '');
+    return /^\d{4}-\d{2}-\d{2}$/.test(ds) && ds <= today && (month_(ds) === curM || month_(ds) === prevM);
+  });
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    // 학교 정보
+    const ssh = schoolsSheet_();
+    const sv = ssh.getDataRange().getValues();
+    let srow = -1;
+    for (let i = 1; i < sv.length; i++) if (String(sv[i][0]) === pid) { srow = i + 1; break; }
+    const showName = !!p.showName;
+    const name = showName ? cleanText_(p.name, 40) : '';
+    const reg = int_(p.registered, 5000);
+    const now = new Date();
+    if (srow === -1) ssh.appendRow([pid, name, showName ? 1 : 0, reg, now, now, '']);
+    else {
+      ssh.getRange(srow, 2, 1, 3).setValues([[name, showName ? 1 : 0, reg]]);
+      ssh.getRange(srow, 6).setValue(now);
+    }
+
+    // 날짜별 집계 (같은 학교·같은 날은 새 값으로 덮어씀)
+    const dsh = dailySheet_();
+    const dv = dsh.getDataRange().getValues();
+    const rowOf = {};
+    for (let i = 1; i < dv.length; i++) if (String(dv[i][0]) === pid) rowOf[fmtDate_(dv[i][1])] = i + 1;
+    days.forEach(function (d) {
+      const prevCam = {};
+      if (p.camPartial && rowOf[d.date]) {
+        try { JSON.parse(dv[rowOf[d.date] - 1][5] || '[]').forEach(function (s) { prevCam[s[0]] = s[4] || 0; }); } catch (e) {}
+      }
+      const seen = {};
+      const list = [];
+      (Array.isArray(d.students) ? d.students : []).forEach(function (s) {
+        if (!Array.isArray(s) || list.length >= MAX_STUDENTS_PER_DAY) return;
+        const sk = cleanText_(s[0], 16);
+        const c = int_(s[3], MAX_COUNT_PER_STUDENT_DAY);
+        if (!sk || !c || seen[sk]) return;
+        seen[sk] = 1;
+        let cam = Math.min(int_(s[4], MAX_COUNT_PER_STUDENT_DAY), c);
+        if (p.camPartial) cam = Math.min(Math.max(cam, prevCam[sk] || 0), c);
+        list.push([sk, maskName_(cleanText_(s[1], 20)), cleanText_(s[2], 4), c, cam]);
+      });
+      const total = list.reduce(function (a, s) { return a + s[3]; }, 0);
+      const cam = list.reduce(function (a, s) { return a + s[4]; }, 0);
+      const row = [pid, d.date, total, list.length, cam, JSON.stringify(list), now];
+      if (rowOf[d.date]) dsh.getRange(rowOf[d.date], 1, 1, 7).setValues([row]);
+      else if (list.length) { dsh.appendRow(row); rowOf[d.date] = dsh.getLastRow(); }
+    });
+  } finally {
+    lock.releaseLock();
+  }
+  clearCache_();
+  return { publicId: pid, days: days.length };
+}
+
+// 참여를 끄면 그 학교 자료를 지운다
+function leave_(p) {
+  const key = cleanText_(p.key, 80);
+  if (key.length < 16) throw new Error('학교 키가 올바르지 않습니다.');
+  const pid = publicId_(key);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  let removed = 0;
+  try {
+    [schoolsSheet_(), dailySheet_()].forEach(function (sh) {
+      const v = sh.getDataRange().getValues();
+      for (let i = v.length - 1; i >= 1; i--) if (String(v[i][0]) === pid) { sh.deleteRow(i + 1); removed++; }
+    });
+  } finally {
+    lock.releaseLock();
+  }
+  clearCache_();
+  return { publicId: pid, removed: removed };
+}
+
+function fmtDate_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, TZ_, 'yyyy-MM-dd');
+  return String(v || '').slice(0, 10);
+}
+
+/************ 현황판 · 기록실 ************/
+function clearCache_() {
+  const c = CacheService.getScriptCache();
+  c.remove('hall');
+  const m = month_(today_());
+  c.remove('board|' + m); c.remove('board|' + prevMonth_(m));
+}
+
+function loadSchools_() {
+  const v = schoolsSheet_().getDataRange().getValues();
+  const map = {};
+  for (let i = 1; i < v.length; i++) {
+    const pid = String(v[i][0]);
+    if (!pid) continue;
+    const named = Number(v[i][2]) === 1 && String(v[i][1]).trim();
+    map[pid] = {
+      pid: pid,
+      label: named ? String(v[i][1]).trim() : '익명 학교 ' + pid.slice(0, 4).toUpperCase(),
+      named: !!named,
+      registered: Number(v[i][3]) || 0,
+      hidden: String(v[i][6]).trim() === '1'
+    };
+  }
+  return map;
+}
+
+// 한 달치를 학교별·학생별로 묶기
+function aggregateMonth_(month, schools, dv) {
+  const by = {};
+  for (let i = 1; i < dv.length; i++) {
+    const pid = String(dv[i][0]);
+    const d = fmtDate_(dv[i][1]);
+    if (month_(d) !== month || !schools[pid] || schools[pid].hidden) continue;
+    let s = by[pid];
+    if (!s) s = by[pid] = { total: 0, camera: 0, days: 0, st: {} };
+    let list = [];
+    try { list = JSON.parse(dv[i][5] || '[]'); } catch (e) {}
+    if (!list.length) continue;
+    s.days++;
+    list.forEach(function (r) {
+      const c = Number(r[3]) || 0, cam = Number(r[4]) || 0;
+      s.total += c; s.camera += cam;
+      const x = s.st[r[0]] || (s.st[r[0]] = { n: r[1], g: r[2], c: 0, cam: 0, days: 0 });
+      x.n = r[1]; x.g = r[2]; x.c += c; x.cam += cam; x.days++;
+    });
+  }
+  const list = Object.keys(by).map(function (pid) {
+    const s = by[pid], info = schools[pid];
+    const students = Object.keys(s.st).map(function (k) { return s.st[k]; }).sort(function (a, b) { return b.c - a.c; });
+    const participants = students.length;
+    const registered = Math.max(info.registered, participants);
+    return {
+      pid: pid, label: info.label, named: info.named,
+      total: s.total, camera: s.camera, days: s.days,
+      participants: participants, registered: registered,
+      avg: registered ? Math.round(s.total / registered) : 0,
+      rate: registered ? Math.round(participants / registered * 1000) / 10 : 0,
+      ratioOk: registered >= MIN_REGISTERED_FOR_RATIO,
+      students: students
+    };
+  }).filter(function (s) { return s.total > 0; });
+  rank_(list, 'total', function () { return true; });
+  rank_(list, 'avg', function (s) { return s.ratioOk; });
+  rank_(list, 'rate', function (s) { return s.ratioOk; });
+  list.sort(function (a, b) { return b.total - a.total; });
+  return list;
+}
+function rank_(list, field, ok) {
+  const arr = list.filter(ok).sort(function (a, b) { return b[field] - a[field] || b.total - a.total; });
+  list.forEach(function (s) { s.rank = s.rank || {}; s.rank[field] = null; });
+  arr.forEach(function (s, i) {
+    s.rank[field] = (i > 0 && arr[i - 1][field] === s[field]) ? arr[i - 1].rank[field] : i + 1;
+  });
+}
+function nationalStudents_(schools, n) {
+  const all = [];
+  schools.forEach(function (s) {
+    s.students.forEach(function (x) { all.push({ n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days, pid: s.pid, school: s.label }); });
+  });
+  all.sort(function (a, b) { return b.c - a.c; });
+  return all.slice(0, n);
+}
+function monthsIn_(dv) {
+  const m = {};
+  for (let i = 1; i < dv.length; i++) { const d = fmtDate_(dv[i][1]); if (d) m[month_(d)] = 1; }
+  return Object.keys(m).sort().reverse();
+}
+
+function getBoard_(month) {
+  const cur = month_(today_());
+  month = /^\d{4}-\d{2}$/.test(String(month || '')) ? String(month) : cur;
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('board|' + month);
+  if (hit) return JSON.parse(hit);
+  const dv = dailySheet_().getDataRange().getValues();
+  const schools = aggregateMonth_(month, loadSchools_(), dv);
+  const out = {
+    month: month, current: cur, updated: new Date().toISOString(),
+    months: monthsIn_(dv),
+    minRegistered: MIN_REGISTERED_FOR_RATIO,
+    summary: {
+      schools: schools.length,
+      total: schools.reduce(function (a, s) { return a + s.total; }, 0),
+      participants: schools.reduce(function (a, s) { return a + s.participants; }, 0),
+      camera: schools.reduce(function (a, s) { return a + s.camera; }, 0)
+    },
+    students: nationalStudents_(schools, 30),
+    schools: schools.map(function (s) {
+      const o = Object.assign({}, s);
+      o.students = s.students.slice(0, 30).map(function (x) { return { n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days }; });
+      delete o.ratioOk;
+      return o;
+    })
+  };
+  const text = JSON.stringify(out);
+  if (text.length < 90000) cache.put('board|' + month, text, BOARD_CACHE_SEC);
+  return out;
+}
+
+// 지난 달들(이번 달 제외)의 1~3등
+function getHall_() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('hall');
+  if (hit) return JSON.parse(hit);
+  const cur = month_(today_());
+  const dv = dailySheet_().getDataRange().getValues();
+  const schoolsInfo = loadSchools_();
+  const top3 = function (list, field) {
+    return list.filter(function (s) { return s.rank[field] && s.rank[field] <= 3; })
+      .sort(function (a, b) { return a.rank[field] - b.rank[field]; })
+      .map(function (s) { return { rank: s.rank[field], label: s.label, named: s.named, pid: s.pid, total: s.total, avg: s.avg, rate: s.rate, participants: s.participants, registered: s.registered, camera: s.camera }; });
+  };
+  const months = monthsIn_(dv).filter(function (m) { return m < cur; }).map(function (m) {
+    const schools = aggregateMonth_(m, schoolsInfo, dv);
+    const studs = nationalStudents_(schools, 50);
+    const st3 = [];
+    let r = 0;
+    studs.forEach(function (x, i) {
+      r = (i > 0 && studs[i - 1].c === x.c) ? r : i + 1;
+      if (r <= 3) st3.push({ rank: r, n: x.n, g: x.g, c: x.c, cam: x.cam, school: x.school });
+    });
+    return {
+      month: m,
+      schoolCount: schools.length,
+      total: schools.reduce(function (a, s) { return a + s.total; }, 0),
+      schools: { total: top3(schools, 'total'), avg: top3(schools, 'avg'), rate: top3(schools, 'rate') },
+      students: st3,
+      // 학교별 학생 1~3등 (학교 안 순위)
+      inSchool: schools.slice(0, 30).map(function (s) {
+        return { label: s.label, named: s.named, pid: s.pid, top: s.students.slice(0, 3).map(function (x) { return { n: x.n, g: x.g, c: x.c }; }) };
+      })
+    };
+  });
+  const out = { current: cur, updated: new Date().toISOString(), minRegistered: MIN_REGISTERED_FOR_RATIO, months: months };
+  const text = JSON.stringify(out);
+  if (text.length < 90000) cache.put('hall', text, 3600);
+  return out;
+}
