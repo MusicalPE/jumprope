@@ -1,10 +1,11 @@
 # 2.2 베타 시험 (급수 인증 · 인증서 · 우리 반 여행 · 학년별 순위 · 지구 한 바퀴)
-# SEED=1 SHELL_PATH=../beta/Shell.gs node devserver.js 를 새로 켠 뒤: python3 test_v22.py
+# 베타: SEED=1 SHELL_PATH=../beta/Shell.gs node devserver.js 를 새로 켠 뒤 python3 test_v22.py / 정식판: SEED=1 node devserver.js 후 CH= python3 test_v22.py
 from playwright.sync_api import sync_playwright
 import urllib.parse, json, urllib.request, re, os, datetime
 H='http://localhost:8890'
 EXEC=H+'/exec'
-APPU=H+'/jumprope/beta/?s='+urllib.parse.quote(EXEC, safe='')
+CH=os.environ.get('CH', 'beta/')   # 정식판: CH= python3 test_v22.py (SHELL_PATH 없이)
+APPU=H+'/jumprope/'+CH+'?s='+urllib.parse.quote(EXEC, safe='')
 V=os.path.dirname(os.path.abspath(__file__))+'/vendor/'
 OUT=os.environ.get('SHOTS', '.')
 def route(r):
@@ -39,8 +40,10 @@ with sync_playwright() as p:
     pg=ctx.new_page(); pg.set_default_timeout(8000); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('dialog', lambda d: d.accept())
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
     pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
+    check('새 탭에 NEW 표시', pg.locator('#adminNav .feat-new:visible').count()==3)
     # ── 급수 인증
     pg.click('#adminNav button[data-tab="levels"]'); pg.wait_for_timeout(800)
+    check('열어 본 탭은 NEW 사라짐', not pg.is_visible('#adminNav .feat-new[data-new="levels"]') and pg.is_visible('#adminNav .feat-new[data-new="certs"]'))
     check('껍데기 3판 안내 숨김', not pg.is_visible('#lvNoShell'))
     pg.select_option('#lvClass','6|1'); pg.wait_for_timeout(300)
     check('급수 기본 = 흰 줄넘기, 항목 5개', pg.input_value('#lvLevel')=='0' and pg.locator('#lvGrid th.it').count()==5, pg.input_value('#lvLevel'))
@@ -132,7 +135,7 @@ with sync_playwright() as p:
     recs=get(H+'/__state')['records']
     check('모두 승인 → 서버 반영', '3건 승인했어요' in pg.text_content('#approveMsg') and not [r for r in recs[1:] if r[5]=='pending'] and pg.is_visible('#emptyMsg'), pg.text_content('#approveMsg'))
     # ── 현황판: 학년 · 지구
-    pg.goto(H+'/jumprope/beta/board.html'); pg.wait_for_timeout(1800)
+    pg.goto(H+'/jumprope/'+CH+'board.html'); pg.wait_for_timeout(1800)
     check('지구 한 바퀴 카드', pg.locator('.earth').count()==1 and 'km' in pg.text_content('.earth'), pg.text_content('.earth')[:90])
     gopts=pg.eval_on_selector_all('#gradeSel option','e=>e.map(x=>x.value)')
     check('학년 고르기', '6' in gopts and '4' in gopts, str(gopts))

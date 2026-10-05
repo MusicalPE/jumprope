@@ -1,7 +1,7 @@
 # 줄넘기 기록 관리 v2 — 이어서 작업하기 위한 메모
 
 ## 구조
-- `Shell.gs` (저장소 루트): 학교 스프레드시트에 붙이는 껍데기. `SHELL_VERSION = 2` (2판은 선택 업데이트, requiredShell 은 1 그대로).
+- `Shell.gs` (저장소 루트): 학교 스프레드시트에 붙이는 껍데기. `SHELL_VERSION = 3` (2·3판은 선택 업데이트, requiredShell 은 1 그대로. 3판 = 급수 Levels 시트 + 학생 삭제 고침). beta/Shell.gs 와 같음
   - `doGet`: `?api=rope_x_who|rope_x_save` → 줄넘기 판정기 연동(JSON), 그 밖에는 "프로그램 열기" 설치 확인 화면
   - `doPost`: 본문 `{"fn","args"}` → `RPC_ALLOW_` 목록에 있는 함수만 실행 → `{"ok","result"|"error"}`
   - 설정은 1.x 와 같은 Script Properties 이름 그대로(DAILY_GOAL, JUMP_TYPES, ADMIN_HASH, GEMINI_KEY, THEME_*, CAMERA_*) + `APPROVAL_ON` + 자유 저장칸 `EXTRA_SETTINGS`(JSON, setExtraSettings) — 새 기능은 가능하면 이 칸과 getAllDataAdmin 으로 화면에서 처리해서 껍데기를 안 바꾸기
@@ -48,13 +48,14 @@ python3 test_site.py                              # playwright 전체 흐름 시
 - 시험: `node devserver.js` 가 `/collector` 로 Collector.gs 도 흉내 내고 national.json 을 로컬 주소로 바꿔 줌. `python3 test_national.py` (playwright 1.56 이 설치된 chromium 과 맞음)
 - 알려진 한계: 학교 키가 getExtraSettings(공개)로 보임 → 껍데기 주소를 아는 사람은 그 학교 이름으로 보고 가능. 껍데기 2판에서 숨길 수 있음
 
-## 2.2 베타 (beta/ 만, 정식판은 2.1.3) — 사용자가 시험한 뒤 괜찮은 것만 정식판으로
+## 2.2.0 (2026-10-05 정식판 반영, beta/ 와 같음)
 - `beta/Shell.gs` = 껍데기 3판: Levels 시트(StudentID, Level, Item, PassedAt, By) + getLevelsPublic / saveLevelPasses. 루트 Shell.gs 는 2판 그대로
 - 급수: LEVELS 모듈(협회 기준표 DEFAULT, EXTRA_SETTINGS.levels 로 덮어씀), 관리자 "급수 인증" 탭(반·급수 고르고 체크), 학생 화면 나의 급수, 메인 우리 반 급수
 - 인증서: 관리자 "인증서 · 상장" 탭. 급수 인증서 / 전국 현황판 상장(기록실 달: 우리 학교 전국 순위, 학생 전국 1~3등, 우리 학교 안 1~3등). 실명은 학생 키(k)를 학교 안에서 계산해 매칭. A4 가로 인쇄(body.printing-cert)
 - 우리 반 여행: JOURNEY 모듈, EXTRA_SETTINGS.journey = { on, course, base }, 관리자 "우리 반 여행" 탭, 메인 진행 막대 (1회=1m, 승인 누적 - base)
 - 수집기 4판(정식판과 공유, 예전 응답 유지): ?api=board&grade=, 응답에 grade·grades·allTime, 학교별 noReg, report 의 registeredByGrade → Schools RegByGrade 칸, 기록실 학생에 k·pid
-- 시험: `SEED=1 SHELL_PATH=../beta/Shell.gs node devserver.js` 후 `python3 test_v22.py`
+- 시험: 정식판 `SEED=1 node devserver.js` 후 `CH= python3 test_v22.py` / 베타 `SEED=1 SHELL_PATH=../beta/Shell.gs node devserver.js` 후 `python3 test_v22.py`
+- 관리자 새 탭 NEW 표시: localStorage `jr_seen_tabs_2.2`, 한 번 열면 사라짐
 - 학생 삭제 버그 고침(루트 Shell.gs 2판·beta 3판 모두): 예전엔 Records 의 Timestamp 칸과 비교해 기록이 안 지워졌음 → StudentID(3번째 칸)로, deleteRowsWhere_ 로 묶어서 삭제. 승인 목록은 없는 학생 기록 숨김.
   루트 Shell.gs 는 SHELL_VERSION 2 그대로 고친 것이라 share/ zip 은 아직 예전 껍데기 → 베타를 정식판으로 옮길 때 zip 도 다시 묶을 것
 - 껍데기 단위 시험: `node test_shell.js` (서버 필요 없음)

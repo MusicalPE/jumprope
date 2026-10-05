@@ -9,12 +9,13 @@
  * 배포 설정: 다음 사용자로 실행 = 나, 액세스 권한 = 모든 사용자
  *************************************************************/
 
-const SHELL_VERSION = 2;                      // 껍데기 판 (화면이 확인함)  2: 새 학교는 승인 절차 기본 켜짐, 카메라 기록은 기본 바로 승인
+const SHELL_VERSION = 3;                      // 껍데기 판 (화면이 확인함)  2: 새 학교는 승인 절차 기본 켜짐, 카메라 기록은 기본 바로 승인  3: 급수(Levels 시트)
 const APP_URL = 'https://musicalpe.github.io/jumprope/';
 const BETA_URL = 'https://musicalpe.github.io/jumprope/beta/';
 
 const SHEET_STUDENTS = 'Students';
 const SHEET_RECORDS  = 'Records';
+const SHEET_LEVELS   = 'Levels';   // 3판: 급수 인증 (교사가 통과시킨 항목 한 줄씩)
 const TOKEN_TTL_SEC   = 60 * 60; // 관리자 토큰 유효시간: 1시간
 const DEFAULT_DAILY_GOAL = 100;  // 하루 목표 줄넘기 횟수 (관리자가 바꾸지 않았을 때 기본값)
 
@@ -73,7 +74,7 @@ const RPC_ALLOW_ = [
   'getRecentRecordsPublic', 'getPendingRecords', 'approveRecord', 'rejectRecord', 'getStudentRecordsForAdmin',
   'updateRecordAdmin', 'deleteRecordAdmin', 'getTheme', 'setTheme', 'getCameraSettings', 'getCameraSettingsAdmin',
   'setCameraSettings', 'issueCameraToken', 'generateMotivationMessage', 'getGeminiModelList', 'getMotivationSettings',
-  'saveGeminiApiKey', 'regenerateMotivationNow'
+  'saveGeminiApiKey', 'regenerateMotivationNow', 'getLevelsPublic', 'saveLevelPasses'
 ];
 function doPost(e) {
   let out;
@@ -504,6 +505,9 @@ function deleteStudent(token, id) {
   }
   // 그 학생의 기록도 함께 지움 (StudentID 는 Records 의 3번째 칸)
   deleteRowsWhere_(getRecordsSheet_(), function (r) { return String(r[2]).trim() === sid; });
+  // 급수 인증 기록도 함께 지움 (3판)
+  const lsh = getSS_().getSheetByName(SHEET_LEVELS);
+  if (lsh) deleteRowsWhere_(lsh, function (r) { return String(r[0]).trim() === sid; });
   return { ok: true };
 }
 
@@ -1350,4 +1354,58 @@ function regenerateMotivationNow(token) {
   }
   p.setProperty('MOTIVATION_ERROR', result.error || '알 수 없는 오류');
   return { ok: false, message: result.error || '알 수 없는 오류' };
+}
+
+/************ 급수 인증 (3판) ************
+ * Levels 시트: StudentID, Level(급수 번호 0~), Item(항목 번호 0~), PassedAt(yyyy-MM-dd), By
+ * 급수표(이름·항목·횟수)는 화면이 EXTRA_SETTINGS.levels 에 두고, 여기는 "누가 몇 급 몇 번 항목을 언제 통과했는지"만 저장
+ * 지금 급수는 화면이 계산 (앞 급수부터 모든 항목을 통과한 만큼) */
+const LEVELS_HEADER_ = ['StudentID', 'Level', 'Item', 'PassedAt', 'By'];
+function getLevelsSheet_() {
+  const ss = getSS_();
+  let sh = ss.getSheetByName(SHEET_LEVELS);
+  if (!sh) { sh = ss.insertSheet(SHEET_LEVELS); sh.appendRow(LEVELS_HEADER_); }
+  return sh;
+}
+// 누구나: { 학생ID: [[급수, 항목, 날짜], ...] } (학생 화면·메인 화면의 급수 띠에 씀)
+function getLevelsPublic() {
+  const v = getLevelsSheet_().getDataRange().getValues();
+  const out = {};
+  for (let i = 1; i < v.length; i++) {
+    const id = String(v[i][0]).trim();
+    if (!id) continue;
+    const d = v[i][3] instanceof Date ? formatDate_(v[i][3]) : String(v[i][3] || '').slice(0, 10);
+    (out[id] = out[id] || []).push([Number(v[i][1]), Number(v[i][2]), d]);
+  }
+  return out;
+}
+// 관리자: changes = [{ id, level, item, pass: true/false, date? }] → 통과는 한 줄 추가(이미 있으면 그대로), 취소는 그 줄 삭제
+function saveLevelPasses(token, changes) {
+  if (!checkAdminToken_(token)) throw new Error('권한이 없습니다.');
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const sh = getLevelsSheet_();
+    const v = sh.getDataRange().getValues();
+    const rowOf = {};
+    for (let i = 1; i < v.length; i++) rowOf[String(v[i][0]).trim() + '|' + Number(v[i][1]) + '|' + Number(v[i][2])] = i + 1;
+    const today = formatDate_(new Date());
+    const add = [], del = [];
+    (Array.isArray(changes) ? changes : []).slice(0, 2000).forEach(function (c) {
+      const id = String(c && c.id || '').trim();
+      const lv = Math.round(Number(c.level)), it = Math.round(Number(c.item));
+      if (!id || !(lv >= 0 && lv < 30) || !(it >= 0 && it < 30)) return;
+      const k = id + '|' + lv + '|' + it;
+      if (c.pass) {
+        if (rowOf[k]) return;
+        const d = /^\d{4}-\d{2}-\d{2}$/.test(String(c.date || '')) ? String(c.date) : today;
+        add.push([id, lv, it, d, 'teacher']); rowOf[k] = -1;
+      } else if (rowOf[k] > 0) del.push(rowOf[k]);
+    });
+    del.sort(function (a, b) { return b - a; }).forEach(function (r) { sh.deleteRow(r); });
+    if (add.length) sh.getRange(sh.getLastRow() + 1, 1, add.length, LEVELS_HEADER_.length).setValues(add);
+  } finally {
+    lock.releaseLock();
+  }
+  return getLevelsPublic();
 }

@@ -28,6 +28,13 @@
   .hero p { margin: 0; opacity: .92; }
   .hero-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
   .hero select { font: inherit; font-weight: 700; border: 0; border-radius: 999px; padding: 8px 14px; color: var(--ink); background: #fff; }
+  .hero-sels { display: flex; gap: 8px; flex-wrap: wrap; }
+  .earth { display: flex; gap: 16px; align-items: center; }
+  .earth .globe { font-size: 44px; line-height: 1; }
+  .earth .eb { flex: 1; min-width: 0; }
+  .earth h2 { margin: 0 0 2px; font-size: 1.1em; }
+  .earth .bar { position: relative; height: 14px; background: var(--bg); border-radius: 999px; overflow: hidden; margin: 10px 0 6px; }
+  .earth .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #0EA5E9, #16A34A); border-radius: 999px; }
   .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
   .kpi { background: var(--surface); border-radius: var(--r-md); padding: 12px 14px; box-shadow: var(--shadow); }
   .kpi span { color: var(--muted); font-size: 0.82em; font-weight: 700; }
@@ -87,7 +94,7 @@
         <h1>전국 줄넘기 현황판</h1>
         <p id="heroSub">매달 1일에 새로 시작해요</p>
       </div>
-      <select id="monthSel" aria-label="달 고르기"></select>
+      <div class="hero-sels"><select id="gradeSel" aria-label="학년 고르기"><option value="">전체 학년</option></select><select id="monthSel" aria-label="달 고르기"></select></div>
     </div>
   </div>
 
@@ -99,7 +106,8 @@
 (function(){
   const q = {}; new URLSearchParams(location.search).forEach(function(v, k){ q[k] = v; });
   const me = q.me || '';
-  let collector = '', data = null, sortBy = 'total', openPid = me;
+  let collector = '', data = null, sortBy = 'total', openPid = me, grade = q.grade || '';
+  const EARTH_M = 40075000;   // 지구 둘레 40,075km, 줄넘기 1회 = 1m
   const $ = function(id){ return document.getElementById(id); };
   const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   const n = function(v){ return (Number(v) || 0).toLocaleString('ko-KR'); };
@@ -113,7 +121,7 @@
 
   function load(month){
     $('body').innerHTML = '<div class="loading">현황판을 불러오는 중…</div>';
-    fetch(collector + '?api=board' + (month ? '&month=' + encodeURIComponent(month) : ''), { cache: 'no-store' })
+    fetch(collector + '?api=board' + (month ? '&month=' + encodeURIComponent(month) : '') + (grade ? '&grade=' + encodeURIComponent(grade) : ''), { cache: 'no-store' })
       .then(function(r){ if (!r.ok) throw new Error('응답 오류 ' + r.status); return r.json(); })
       .then(function(j){ if (!j.ok) throw new Error(j.error || '불러오기 실패'); data = j.result; draw(); })
       .catch(function(err){ $('body').innerHTML = '<div class="err">현황판을 불러오지 못했어요: ' + esc(err.message || err) + '</div>'; });
@@ -132,9 +140,25 @@
     const sel = $('monthSel'), months = (data.months || []).slice();
     if (months.indexOf(data.current) === -1) months.unshift(data.current);
     sel.innerHTML = months.map(function(m){ return '<option value="' + m + '"' + (m === data.month ? ' selected' : '') + '>' + mLabel(m) + (m === data.current ? ' (이번 달)' : '') + '</option>'; }).join('');
-    $('heroSub').textContent = heroSub();
+    $('heroSub').textContent = heroSub() + (data.grade ? ' · ' + data.grade + '학년만' : '');
+    const gs = data.grades;
+    if (Array.isArray(gs)) {
+      const gsel = $('gradeSel'), list = gs.slice();
+      if (grade && list.indexOf(grade) === -1) list.push(grade);
+      gsel.innerHTML = '<option value="">전체 학년</option>' + list.map(function(g){ return '<option value="' + esc(g) + '"' + (g === grade ? ' selected' : '') + '>' + esc(g) + '학년</option>'; }).join('');
+      gsel.style.display = '';
+    } else $('gradeSel').style.display = 'none';   // 예전 수집기
     const s = data.summary || {};
-    let html = '<div class="kpis">' +
+    let html = '';
+    // 모두 함께 지구 한 바퀴 (지금까지 모든 학교 합계)
+    if (data.allTime) {
+      const t = Number(data.allTime.total) || 0, laps = Math.floor(t / EARTH_M), cur = t - laps * EARTH_M, pct = cur / EARTH_M * 100;
+      html += '<div class="card earth"><div class="globe">🌏</div><div class="eb"><h2>모두 함께 지구 한 바퀴' + (laps ? ' <span class="tag-me">' + laps + '바퀴 완주!</span>' : '') + '</h2>' +
+        '<span class="hint">참여한 모든 학교가 지금까지 뛴 줄넘기 <b class="mono">' + n(t) + '회</b> = <b class="mono">' + (t / 1000).toLocaleString('ko-KR', { maximumFractionDigits: 1 }) + 'km</b> (1회 = 1m)</span>' +
+        '<div class="bar"><i style="width:' + Math.max(pct, 0.3).toFixed(3) + '%"></i></div>' +
+        '<span class="hint">' + (laps ? (laps + 1) + '바퀴째 ' : '') + pct.toFixed(pct < 1 ? 2 : 1) + '% · 한 바퀴(40,075km)까지 <b class="mono">' + n(EARTH_M - cur) + '회</b> 남았어요</span></div></div>';
+    }
+    html += '<div class="kpis">' +
       '<div class="kpi"><span>참여 학교</span><b class="mono">' + n(s.schools) + '</b></div>' +
       '<div class="kpi"><span>전체 횟수</span><b class="mono">' + n(s.total) + '</b></div>' +
       '<div class="kpi"><span>참여 학생</span><b class="mono">' + n(s.participants) + '</b></div>' +
@@ -158,13 +182,14 @@
           '<td>' + rankHtml(sc.rank[key]) + '</td>' +
           '<td><span class="' + (sc.named ? '' : 'anon') + '">' + esc(sc.label) + '</span>' + (isMe ? '<span class="tag-me">우리 학교</span>' : '') + '</td>' +
           '<td class="num mono">' + n(sc.total) + '</td>' +
+          (sc.noReg ? '<td class="num mono">–</td><td class="num mono">–</td>' :
           '<td class="num mono">' + n(sc.avg) + '</td>' +
-          '<td class="num mono">' + sc.rate + '%<span class="sub">' + sc.participants + '/' + sc.registered + '</span></td>' +
+          '<td class="num mono">' + sc.rate + '%<span class="sub">' + sc.participants + '/' + sc.registered + '</span></td>') +
           '<td class="num mono hide-sm">' + n(sc.camera) + '</td></tr>';
         if (openPid === sc.pid) html += '<tr class="detail"><td colspan="6">' + schoolDetail(sc) + '</td></tr>';
       });
       html += '</tbody></table></div>';
-      html += '<p class="hint" style="margin-bottom:0;">1인당 평균 = 합계 ÷ 등록 학생 수 · 참여율 = 이번 달 한 번이라도 뛴 학생 ÷ 등록 학생 수. 두 순위는 등록 학생 ' + (data.minRegistered || 5) + '명 이상인 학교만 매겨요. 📷 카메라는 줄넘기 판정기로 인증된 횟수예요.</p>';
+      html += '<p class="hint" style="margin-bottom:0;">1인당 평균 = 합계 ÷ 등록 학생 수 · 참여율 = 이번 달 한 번이라도 뛴 학생 ÷ 등록 학생 수. 두 순위는 등록 학생 ' + (data.minRegistered || 5) + '명 이상인 학교만 매겨요.' + (data.grade ? ' 학년별로 볼 때는 학년별 학생 수를 보낸 학교(2.2 이상)만 1인당 평균·참여율 순위에 들어가요.' : '') + ' 📷 카메라는 줄넘기 판정기로 인증된 횟수예요.</p>';
     }
     html += '</div>';
 
@@ -204,6 +229,7 @@
   }
 
   $('monthSel').addEventListener('change', function(){ openPid = me; load(this.value); });
+  $('gradeSel').addEventListener('change', function(){ grade = this.value; openPid = me; load($('monthSel').value); });
 
   fetch('national.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return {}; }).then(function(cfg){
     collector = q.c || (cfg && cfg.collector) || '';
