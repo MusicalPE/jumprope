@@ -114,6 +114,17 @@ with sync_playwright() as p:
     pg.goto(APPU+'&page=student&id='+sid); pg.wait_for_timeout(1000)
     pg.fill('#authPw','1234'); pg.click('#authForm button[type=submit]'); pg.wait_for_timeout(1500)
     check('학생 화면 나의 급수 + 다음 도전 노랑', pg.is_visible('#myLevelCard') and '흰 줄넘기' in pg.text_content('#myLevel') and '노랑 줄넘기' in pg.text_content('#myLevel'), pg.text_content('#myLevel')[:90])
+    # ── 승인: 누르는 즉시 반영 + 모두 승인
+    for c_ in (11, 12, 13, 14): rpc('addRecord', studs[1]['id'], datetime.date.today().isoformat(), c_, '10:00', '모아뛰기')
+    pg.goto(APPU+'&page=adminLogin&next=approval'); pg.wait_for_timeout(1200)
+    if pg.is_visible('#pw'):
+        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2500)
+    check('승인 대기 4건 + 모두 승인 버튼', pg.locator('#pendingTable tbody tr').count()==4 and pg.is_visible('#approveAllBtn'), pg.text_content('#pendingCount'))
+    pg.click('#pendingTable tbody tr:first-child button[data-action="approve"]'); pg.wait_for_timeout(150)
+    check('누르는 즉시 승인됨 표시', '승인됨' in pg.text_content('#pendingTable tbody tr:first-child') and '(3건)' in pg.text_content('#pendingCount'), pg.text_content('#pendingCount'))
+    pg.click('#approveAllBtn'); pg.wait_for_timeout(2500)
+    recs=get(H+'/__state')['records']
+    check('모두 승인 → 서버 반영', '3건 승인했어요' in pg.text_content('#approveMsg') and not [r for r in recs[1:] if r[5]=='pending'] and pg.is_visible('#emptyMsg'), pg.text_content('#approveMsg'))
     # ── 현황판: 학년 · 지구
     pg.goto(H+'/jumprope/beta/board.html'); pg.wait_for_timeout(1800)
     check('지구 한 바퀴 카드', pg.locator('.earth').count()==1 and 'km' in pg.text_content('.earth'), pg.text_content('.earth')[:90])

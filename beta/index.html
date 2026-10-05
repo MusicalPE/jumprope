@@ -360,6 +360,7 @@
   .lv-pick.none { cursor: default; }
   .lv-who { margin-top: 12px; padding: 10px 12px; background: var(--bg); border-radius: var(--r-sm); display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.92em; }
   .lv-who span { white-space: nowrap; }
+  #pendingTable tr.gone td { opacity: .45; transition: opacity .3s; }
   .lv-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-top: 10px; }
   .lv-items div { border: 1px solid var(--line-2); border-radius: var(--r-sm); padding: 8px 10px; font-size: 0.9em; }
   .lv-items div.ok { background: var(--green-tint); border-color: transparent; }
@@ -958,7 +959,11 @@ document.addEventListener('DOMContentLoaded', function(){
   <div id="body" style="display:none;">
     <p class="hint"><a class="back-link" href="{{BASE}}&page=admin&token={{TOKEN}}">관리자 메뉴로 이동 →</a></p>
     <div class="card">
-      <h2>승인 대기 중인 기록</h2>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+        <h2 style="margin:0;">승인 대기 중인 기록 <span class="hint" id="pendingCount"></span></h2>
+        <button type="button" id="approveAllBtn" style="display:none;">모두 승인</button>
+      </div>
+      <p id="approveMsg" class="hint" style="margin:6px 0 0;"></p>
       <table id="pendingTable">
         <thead><tr><th>학년</th><th>반</th><th>번호</th><th>이름</th><th>종류</th><th>날짜</th><th>횟수</th><th></th></tr></thead>
         <tbody></tbody>
@@ -1943,24 +1948,59 @@ function renderTable(list) {
       '<td><button data-action="approve">승인</button> <button data-action="reject">거절</button></td>';
     tbody.appendChild(tr);
   });
+  counts();
 }
 
+// 승인·거절: 누르는 즉시 화면에서 처리하고 서버에는 뒤에서 보냄 (목록을 다시 받아 오지 않아 빠름). 실패하면 줄을 되돌림
+function natSoon(){
+  // 승인한 기록을 전국 현황판에도 반영 (여러 개를 연달아 승인하면 마지막 뒤 한 번만)
+  clearTimeout(NAT._approveTimer);
+  NAT._approveTimer = setTimeout(function(){ NAT.syncAll(token, true).catch(function(){}); }, 2500);
+}
+function counts(){
+  const n = document.querySelectorAll('#pendingTable tbody tr:not(.gone)').length;
+  document.getElementById('pendingCount').textContent = n ? '(' + n + '건)' : '';
+  document.getElementById('approveAllBtn').style.display = n > 1 ? '' : 'none';
+  document.getElementById('emptyMsg').style.display = document.querySelectorAll('#pendingTable tbody tr').length ? 'none' : 'block';
+}
+function act(tr, approve){
+  const recordId = tr.dataset.recordId, cell = tr.lastElementChild, keep = cell.innerHTML;
+  tr.classList.add('gone'); cell.innerHTML = '<span class="hint">' + (approve ? '승인됨 ✓' : '거절됨') + '</span>';
+  counts();
+  return rpc(approve ? 'approveRecord' : 'rejectRecord', [token, recordId]).then(function(){
+    setTimeout(function(){ if (tr.parentNode) tr.parentNode.removeChild(tr); counts(); }, 800);
+    if (approve) natSoon();
+  }).catch(function(err){
+    tr.classList.remove('gone'); cell.innerHTML = keep; counts();
+    document.getElementById('approveMsg').textContent = '처리하지 못했어요: ' + (err.message || err) + ' (다시 눌러 주세요)';
+    throw err;
+  });
+}
 document.querySelector('#pendingTable tbody').addEventListener('click', function(e){
   const btn = e.target.closest('button');
   if (!btn) return;
   const tr = btn.closest('tr');
-  const recordId = tr.dataset.recordId;
-  if (btn.dataset.action === 'approve') {
-    google.script.run.withSuccessHandler(function(r){
-      loadList(r);
-      // 승인한 기록을 전국 현황판에도 반영 (여러 개를 연달아 승인하면 마지막 뒤 한 번만)
-      clearTimeout(NAT._approveTimer);
-      NAT._approveTimer = setTimeout(function(){ NAT.syncAll(token, true).catch(function(){}); }, 2500);
-    }).approveRecord(token, recordId);
-  } else if (btn.dataset.action === 'reject') {
+  if (tr.classList.contains('gone')) return;
+  if (btn.dataset.action === 'approve') act(tr, true).catch(function(){});
+  else if (btn.dataset.action === 'reject') {
     if (!confirm('이 기록을 거절하시겠습니까? (학생에게는 반영되지 않습니다)')) return;
-    google.script.run.withSuccessHandler(loadList).rejectRecord(token, recordId);
+    act(tr, false).catch(function(){});
   }
+});
+document.getElementById('approveAllBtn').addEventListener('click', function(){
+  const rows = Array.prototype.slice.call(document.querySelectorAll('#pendingTable tbody tr:not(.gone)'));
+  if (!rows.length || !confirm(rows.length + '건을 모두 승인할까요?')) return;
+  const msg = document.getElementById('approveMsg');
+  let done = 0, fail = 0, i = 0;
+  msg.textContent = '승인 중... (0/' + rows.length + ')';
+  function next(){   // 4건씩 동시에 보냄
+    if (i >= rows.length) return Promise.resolve();
+    const tr = rows[i++];
+    return act(tr, true).then(function(){ done++; }, function(){ fail++; }).then(function(){ msg.textContent = '승인 중... (' + (done + fail) + '/' + rows.length + ')'; return next(); });
+  }
+  Promise.all([next(), next(), next(), next()]).then(function(){
+    msg.textContent = done + '건 승인했어요.' + (fail ? ' ' + fail + '건은 실패했어요. 다시 눌러 주세요.' : '');
+  });
 });
 
 },
