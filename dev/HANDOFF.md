@@ -57,13 +57,13 @@ python3 test_site.py                              # playwright 전체 흐름 시
 - 시험: 정식판 `SEED=1 node devserver.js` 후 `CH= python3 test_v22.py` / 베타 `SEED=1 SHELL_PATH=../beta/Shell.gs node devserver.js` 후 `python3 test_v22.py`
 - 관리자 새 탭 NEW 표시: localStorage `jr_seen_tabs_2.2`, 한 번 열면 사라짐
 - 학생 삭제 버그 고침(루트 Shell.gs 2판·beta 3판 모두): 예전엔 Records 의 Timestamp 칸과 비교해 기록이 안 지워졌음 → StudentID(3번째 칸)로, deleteRowsWhere_ 로 묶어서 삭제. 승인 목록은 없는 학생 기록 숨김.
-  루트 Shell.gs 는 SHELL_VERSION 2 그대로 고친 것이라 share/ zip 은 아직 예전 껍데기 → 베타를 정식판으로 옮길 때 zip 도 다시 묶을 것
+  share/ zip 은 v2.2.0(껍데기 3판)으로 다시 묶음
 - 껍데기 단위 시험: `node test_shell.js` (서버 필요 없음)
 
 ## 다음 할 일
 - 수집기 주소 넣음 → 실제 학교 화면에서 참여 켜고 보고·현황판 확인, main 반영
-- 인디스쿨 공유: `share/` (줄넘기기록관리_v2.1.3.zip = Shell(껍데기).txt + 사용설명서.pdf, 인디스쿨_안내글.md)
-  - (2026-10-04 v2.1.3 기준으로 갱신: 줄넘기기록관리_v2.1.3.zip)
+- 인디스쿨 공유: `share/` (줄넘기기록관리_v2.2.0.zip = Shell(껍데기).txt + 사용설명서.pdf, 인디스쿨_안내글.md)
+  - (2026-10-05 v2.2.0 기준으로 갱신: 줄넘기기록관리_v2.2.0.zip)
   - 설명서 원본 `share/manual.html` (그림 `share/img/`), PDF 는 playwright page.pdf 로 만듦
 
 ## 관련
