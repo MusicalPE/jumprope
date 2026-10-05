@@ -28,6 +28,11 @@ def check(label, cond, extra=''):
 first=datetime.date.today().replace(day=1); prev=(first-datetime.timedelta(days=1)).replace(day=10).isoformat()
 studs=rpc('getAllStudentsPublic'); sid=studs[0]['id']
 rpc('addRecord', sid, prev, 900, '10:00', '모아뛰기'); rpc('addRecord', studs[1]['id'], prev, 400, '10:00', '모아뛰기')
+# 연속 기록 공동 1위 만들기: 지금 1위와 같은 날수만큼 다른 학생에게도 하루씩 기록 (날짜가 바뀌어도 늘 공동 1위)
+sk=rpc('getStreakSummaryPublic')['list']; top=sk[0]
+other=[x for x in studs if x['id']!=top['id']][0]
+for k in range(top['streak']): rpc('addRecord', other['id'], (datetime.date.today()-datetime.timedelta(days=k)).isoformat(), 5, '10:00', '모아뛰기')
+TOP_NAMES=[x['name'] for x in rpc('getStreakSummaryPublic')['list'] if x['streak']==top['streak']]
 with sync_playwright() as p:
     b=p.chromium.launch(); ctx=b.new_context(viewport={'width':1150,'height':900}, device_scale_factor=1.5)
     ctx.route(re.compile(r'https://cdn\.jsdelivr\.net/.*'), route)
@@ -94,6 +99,7 @@ with sync_playwright() as p:
     pg.emulate_media(media='screen'); pg.evaluate("document.body.classList.remove('printing-cert')")
     # ── 메인: 급수 · 여행
     pg.goto(APPU); pg.wait_for_timeout(2500)
+    check('연속 기록 공동 1위 모두 표시', len(TOP_NAMES)>=2 and all(n_ in pg.text_content('#streakLeadName') for n_ in TOP_NAMES[:3]) and ('공동 1위 %d명' % len(TOP_NAMES)) in pg.text_content('#streakLeadCount'), str(TOP_NAMES)+' / '+pg.text_content('#streakLeadName')+' / '+pg.text_content('#streakLeadCount'))
     check('메인 우리 반 급수', pg.is_visible('#levelCard') and '흰' in pg.text_content('#levelDist'), pg.text_content('#levelDist'))
     pg.click('#levelDist button.lv-pick'); pg.wait_for_timeout(200)
     check('급수 누르면 명단', pg.is_visible('#levelWho') and '김하늘' in pg.text_content('#levelWho'), pg.text_content('#levelWho'))

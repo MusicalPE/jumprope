@@ -120,7 +120,7 @@
     color: #fff; font-size: 0.92em;
   }
   .today-lead-tag { font-size: 0.74em; font-weight: 700; opacity: 0.9; letter-spacing: 0.01em; }
-  .today-lead-name { font-weight: 800; font-size: 1.12em; }
+  .today-lead-name { font-weight: 800; font-size: 1.12em; word-break: keep-all; }
   .today-lead-count { font-weight: 700; opacity: 0.95; font-size: 0.95em; }
   .lead-week, .lead-streak { background: rgba(255,255,255,0.2); border: 0; }
   .lead-week .today-lead-tag, .lead-streak .today-lead-tag, .lead-week .today-lead-count, .lead-streak .today-lead-count { color: #fff; }
@@ -809,6 +809,11 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
     </div>
 
+    <div class="note-panel">
+      <div class="note-eyebrow">오늘의 한마디</div>
+      <p class="ai-message" id="aiMessage">문구를 불러오는 중...</p>
+    </div>
+
     <div class="stat-grid">
       <div class="stat-card">
         <span class="stat-accent" style="background:var(--court)"></span>
@@ -837,11 +842,6 @@ document.addEventListener('DOMContentLoaded', function(){
       <h2>우리 반 급수</h2>
       <div class="lv-dist" id="levelDist"></div>
       <div class="lv-who" id="levelWho" style="display:none;"></div>
-    </div>
-
-    <div class="note-panel">
-      <div class="note-eyebrow">오늘의 한마디</div>
-      <p class="ai-message" id="aiMessage">문구를 불러오는 중...</p>
     </div>
 
     <div class="card">
@@ -1562,6 +1562,16 @@ function loadTodaySummary() {
   google.script.run.withSuccessHandler(renderTodaySummary).getTodaySummaryPublic();
 }
 
+// 1위가 여러 명(같은 기록)이면 모두 보여 줌: 3명까지는 이름을 다, 더 많으면 "○○ · ○○ 외 N명" (마우스를 올리면 전체)
+function showLead(prefix, list, key, countText){
+  const top = list.filter(function(s){ return s[key] === list[0][key]; });
+  const names = top.map(function(s){ return s.name; });
+  const el = document.getElementById(prefix + 'LeadName');
+  el.textContent = (names.length <= 3 ? names.join(' · ') : names.slice(0, 2).join(' · ') + ' 외 ' + (names.length - 2) + '명') + ' 학생';
+  el.title = names.length > 1 ? names.join(', ') : '';
+  document.getElementById(prefix + 'LeadCount').textContent = countText + (names.length > 1 ? ' · 공동 1위 ' + names.length + '명' : '');
+}
+
 function loadWeekSummary() {
   google.script.run.withSuccessHandler(renderWeekSummary).getWeekSummaryPublic();
 }
@@ -1572,8 +1582,7 @@ function renderWeekSummary(res) {
     document.getElementById('weekLeadName').textContent = '이번주 기록이 아직 없어요';
     document.getElementById('weekLeadCount').textContent = '월요일부터 시작해봐요!';
   } else {
-    document.getElementById('weekLeadName').textContent = list[0].name + ' 학생';
-    document.getElementById('weekLeadCount').textContent = '이번주 ' + list[0].total.toLocaleString() + '회';
+    showLead('week', list, 'total', '이번주 ' + list[0].total.toLocaleString() + '회');
   }
 }
 
@@ -1587,8 +1596,7 @@ function renderStreakSummary(res) {
     document.getElementById('streakLeadName').textContent = '아직 연속 기록이 없어요';
     document.getElementById('streakLeadCount').textContent = '이틀 연속 도전해봐요!';
   } else {
-    document.getElementById('streakLeadName').textContent = list[0].name + ' 학생';
-    document.getElementById('streakLeadCount').textContent = list[0].streak.toLocaleString() + '일 연속';
+    showLead('streak', list, 'streak', list[0].streak.toLocaleString() + '일 연속');
   }
 }
 
@@ -1602,8 +1610,7 @@ function renderTodaySummary(res) {
     document.getElementById('todayLeadName').textContent = '아직 오늘 승인된 기록이 없어요';
     document.getElementById('todayLeadCount').textContent = '첫 기록의 주인공이 되어보세요!';
   } else {
-    document.getElementById('todayLeadName').textContent = list[0].name + ' 학생';
-    document.getElementById('todayLeadCount').textContent = '오늘 ' + list[0].total.toLocaleString() + '회';
+    showLead('today', list, 'total', '오늘 ' + list[0].total.toLocaleString() + '회');
   }
 }
 
