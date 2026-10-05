@@ -34,6 +34,7 @@
   .earth .eb { flex: 1; min-width: 0; }
   .earth h2 { margin: 0 0 2px; font-size: 1.1em; }
   .earth .bar { position: relative; height: 14px; background: var(--bg); border-radius: 999px; overflow: hidden; margin: 10px 0 6px; }
+  .earth-prev { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line-2); font-size: 0.92em; color: var(--ink-2); }
   .earth .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #0EA5E9, #16A34A); border-radius: 999px; }
   .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
   .kpi { background: var(--surface); border-radius: var(--r-md); padding: 12px 14px; box-shadow: var(--shadow); }
@@ -150,13 +151,19 @@
     } else $('gradeSel').style.display = 'none';   // 예전 수집기
     const s = data.summary || {};
     let html = '';
-    // 모두 함께 지구 한 바퀴 (지금까지 모든 학교 합계)
+    // 모두 함께 지구 한 바퀴: 학년도마다(3월 1일) 새로 시작. 예전 수집기(학년도 정보 없음)면 지금까지 합계
     if (data.allTime) {
-      const t = Number(data.allTime.total) || 0, laps = Math.floor(t / EARTH_M), cur = t - laps * EARTH_M, pct = cur / EARTH_M * 100;
-      html += '<div class="card earth"><div class="globe">🌏</div><div class="eb"><h2>모두 함께 지구 한 바퀴' + (laps ? ' <span class="tag-me">' + laps + '바퀴 완주!</span>' : '') + '</h2>' +
-        '<span class="hint">참여한 모든 학교가 지금까지 뛴 줄넘기 <b class="mono">' + n(t) + '회</b> = <b class="mono">' + (t / 1000).toLocaleString('ko-KR', { maximumFractionDigits: 1 }) + 'km</b> (1회 = 1m)</span>' +
+      const at = data.allTime, byYear = at.years && at.year;
+      const t = byYear ? (Number(at.years[at.year]) || 0) : (Number(at.total) || 0), laps = Math.floor(t / EARTH_M), cur = t - laps * EARTH_M, pct = cur / EARTH_M * 100;
+      const prevY = byYear ? String(Number(at.year) - 1) : '', prevT = byYear ? Number(at.years[prevY]) || 0 : 0;
+      html += '<div class="card earth"><div class="globe">🌏</div><div class="eb"><h2>' + (byYear ? esc(at.year) + '학년도 ' : '') + '모두 함께 지구 한 바퀴' + (laps ? ' <span class="tag-me">' + laps + '바퀴 완주!</span>' : '') + '</h2>' +
+        '<span class="hint">참여한 모든 학교가 ' + (byYear ? '이번 학년도에' : '지금까지') + ' 뛴 줄넘기 <b class="mono">' + n(t) + '회</b> = <b class="mono">' + (t / 1000).toLocaleString('ko-KR', { maximumFractionDigits: 1 }) + 'km</b> (1회 = 1m)' +
+        (byYear ? ' · 3월 1일에 새로 시작' : '') + '</span>' +
         '<div class="bar"><i style="width:' + Math.max(pct, 0.3).toFixed(3) + '%"></i></div>' +
-        '<span class="hint">' + (laps ? (laps + 1) + '바퀴째 ' : '') + pct.toFixed(pct < 1 ? 2 : 1) + '% · 한 바퀴(40,075km)까지 <b class="mono">' + n(EARTH_M - cur) + '회</b> 남았어요</span></div></div>';
+        '<span class="hint">' + (laps ? (laps + 1) + '바퀴째 ' : '') + pct.toFixed(pct < 1 ? 2 : 1) + '% · 한 바퀴(40,075km)까지 <b class="mono">' + n(EARTH_M - cur) + '회</b> 남았어요</span>' +
+        // 학년도가 바뀌면 지난 학년도 기록을 한 줄로
+        (prevT ? '<div class="earth-prev">지난 ' + esc(prevY) + '학년도에는 모두 함께 <b class="mono">' + (prevT / 1000).toLocaleString('ko-KR', { maximumFractionDigits: 1 }) + 'km</b> 뛰었어요' + (prevT >= EARTH_M ? ' (지구 ' + Math.floor(prevT / EARTH_M) + '바퀴 완주!)' : ' (지구 한 바퀴의 ' + (prevT / EARTH_M * 100).toFixed(1) + '%)') + '</div>' : '') +
+        '</div></div>';
     }
     html += '<div class="kpis">' +
       '<div class="kpi"><span>참여 학교</span><b class="mono">' + n(s.schools) + '</b></div>' +

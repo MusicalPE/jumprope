@@ -31,6 +31,7 @@ python3 test_site.py                              # playwright 전체 흐름 시
   - 2.1.1: Schools 에 SchoolName·Teacher·Contact 칸(운영자만, 현황판 응답에 안 나감). 참여하려면 학교 이름·담당 교사 필수, 연락처 선택.
     교사·연락처는 EXTRA_SETTINGS(공개)에 두지 않고 관리자 기기 localStorage(`jr_nat_contact|<껍데기주소>`)에만, 관리자 화면 동기화(syncAll) 때만 보냄.
     수집기는 teacher 가 있을 때만 교사·연락처를 덮어씀 → 학생 화면 자동 보고가 지우지 않음. 예전 7칸 시트는 머리줄 자동 확장. COLLECTOR_VERSION = 2
+  - 2.2.1: 지구 한 바퀴는 학년도(3월 1일)마다. allTime.year·years(학년도별 합계), COLLECTOR_VERSION 5. 현황판에 "지난 ○○학년도에는 모두 함께 ○km 뛰었어요"
   - 2.1.2: 기록실 `?api=hall&month=` → { list: 최근 HALL_MONTHS(12)개 지난 달, month: 고른 달 상세 }. 달마다 캐시 'hall|YYYY-MM'(지난 달 1시간, 그 전 6시간),
     목록 캐시 'hall|list|<이번 달>'. Hidden 바꾼 뒤 바로 반영은 편집기에서 refreshCache 실행. hall.html 은 예전 응답(months 배열)도 읽음. COLLECTOR_VERSION = 3
   - 2.1.3: 전국 현황판 참여 = 승인 절차 필수. 참여 켜면 setAppSettings(approvalOn:true), 참여 중 승인 끄면 confirm → nat.on=false + leave.

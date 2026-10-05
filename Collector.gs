@@ -20,7 +20,7 @@
  *              Students = [[학생키, 가린이름, 학년, 횟수, 카메라횟수], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 4;   // 4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)
+const COLLECTOR_VERSION = 5;   // 4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -319,20 +319,25 @@ function gradesIn_(month, dv) {
   }
   return Object.keys(g).sort(function (a, b) { return (Number(a) || 99) - (Number(b) || 99) || a.localeCompare(b); });
 }
-// 지구 한 바퀴: 지금까지 모든 학교가 뛴 합계 (숨긴 학교 제외)
+// 학년도: 3월 1일에 시작 (2027-02-28 은 2026학년도)
+function schoolYear_(d) { const y = Number(String(d).slice(0, 4)), m = Number(String(d).slice(5, 7)); return String(m >= 3 ? y : y - 1); }
+// 지구 한 바퀴: 모든 학교가 뛴 합계 (숨긴 학교 제외). years = 학년도별 합계, year = 지금 학년도
 function allTime_(dv, schools) {
   const cache = CacheService.getScriptCache();
   const hit = cache.get('alltime');
   if (hit) return JSON.parse(hit);
   let total = 0, since = '';
+  const years = {};
   for (let i = 1; i < dv.length; i++) {
     const pid = String(dv[i][0]);
     if (!schools[pid] || schools[pid].hidden) continue;
-    total += Number(dv[i][2]) || 0;
+    const n = Number(dv[i][2]) || 0;
+    total += n;
     const d = fmtDate_(dv[i][1]);
     if (d && (!since || d < since)) since = d;
+    if (d) { const sy = schoolYear_(d); years[sy] = (years[sy] || 0) + n; }
   }
-  const out = { total: total, since: since };
+  const out = { total: total, since: since, year: schoolYear_(today_()), years: years };
   cache.put('alltime', JSON.stringify(out), 600);
   return out;
 }

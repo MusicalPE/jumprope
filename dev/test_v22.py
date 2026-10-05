@@ -136,7 +136,9 @@ with sync_playwright() as p:
     check('모두 승인 → 서버 반영', '3건 승인했어요' in pg.text_content('#approveMsg') and not [r for r in recs[1:] if r[5]=='pending'] and pg.is_visible('#emptyMsg'), pg.text_content('#approveMsg'))
     # ── 현황판: 학년 · 지구
     pg.goto(H+'/jumprope/'+CH+'board.html'); pg.wait_for_timeout(1800)
-    check('지구 한 바퀴 카드', pg.locator('.earth').count()==1 and 'km' in pg.text_content('.earth'), pg.text_content('.earth')[:90])
+    at=get(H+'/collector?api=board')['result']['allTime']
+    et=pg.text_content('.earth')
+    check('지구 한 바퀴: 이번 학년도만, 지난 학년도 함께 표시', at['year']+'학년도' in et and '{:,}회'.format(at['years'][at['year']]) in et and at['years'][at['year']] < at['total'] and ('지난 '+str(int(at['year'])-1)+'학년도에는 모두 함께') in et and '뛰었어요' in et, et[:140])
     gopts=pg.eval_on_selector_all('#gradeSel option','e=>e.map(x=>x.value)')
     check('학년 고르기', '6' in gopts and '4' in gopts, str(gopts))
     pg.select_option('#gradeSel','6'); pg.wait_for_timeout(1500)
