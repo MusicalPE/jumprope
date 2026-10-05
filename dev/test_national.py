@@ -105,6 +105,23 @@ with sync_playwright() as p:
     # 학생 화면 자동 보고에는 교사 정보가 안 실림 (관리자 기기 기억값 지우고 새 맥락)
     sc=get(H+'/__state')
     check('학교 시트 설정에 교사 정보 없음', '홍길동' not in json.dumps(sc['props'], ensure_ascii=False))
+    # 복사한 시트 알아채기: 저장된 배포 주소와 지금 주소가 다르면 경고 + 보고 멈춤 → 새 참여 번호
+    tok=json.loads(urllib.request.urlopen(urllib.request.Request(EXEC, data=json.dumps({'fn':'verifyAdminPassword','args':['1234']}).encode(), headers={'Content-Type':'text/plain'})).read())['result']['token']
+    ex=json.loads(get(H+'/__state')['props']['EXTRA_SETTINGS'])
+    check('참여할 때 배포 주소 기억', bool(ex['nat'].get('shell')), str(ex['nat'].get('shell')))
+    nat=dict(ex['nat']); nat['shell']='ANOTHER_DEPLOYMENT_ID_xxxxxxxxxxxx'
+    urllib.request.urlopen(urllib.request.Request(EXEC, data=json.dumps({'fn':'setExtraSettings','args':[tok,{'nat':nat}]}).encode(), headers={'Content-Type':'text/plain'})).read()
+    pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
+    if pg.is_visible('#pw'):
+        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
+    pg.click('#adminNav button[data-tab="national"]'); pg.wait_for_timeout(1500)
+    check('주소 다르면 경고', pg.is_visible('#natMovedWarn'))
+    before=[r[0] for r in col_state()['schools']]
+    pg.click('#natNewKeyBtn'); pg.wait_for_timeout(2500)
+    after=[r[0] for r in col_state()['schools']]
+    newp=[x for x in after if x not in before]
+    check('새 참여 번호 → 새 줄로 올라가고 예전 줄은 그대로', len(newp)==1 and pid in after and not pg.is_visible('#natMovedWarn'), pg.text_content('#natMsg'))
+    pid_old=pid; pid=newp[0] if newp else pid
     # 참여 끄기 → 기록 삭제
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
     if pg.is_visible('#pw'):
