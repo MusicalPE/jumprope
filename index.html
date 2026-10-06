@@ -77,9 +77,10 @@
     background: var(--coral-grad); position: relative;
     box-shadow: 0 4px 10px rgba(var(--accent-rgb),0.25);
   }
+  /* 줄넘기 하는 사람 (앱 아이콘과 같은 그림, 바탕은 테마 색) */
   .brand-mark::after {
-    content: ''; position: absolute; inset: 9px; border: 3px solid #fff; border-radius: 50%;
-    border-bottom-color: transparent; transform: rotate(-30deg);
+    content: ''; position: absolute; inset: 3px;
+    background: url("data:image/svg+xml,%3Csvg viewBox=%220 0 100 100%22 xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 stroke=%22%23fff%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M33 60 C 22 6, 78 6, 67 60%22 stroke-width=%225.5%22/%3E%3Ccircle cx=%2250%22 cy=%2231%22 r=%226.5%22 stroke-width=%225.5%22/%3E%3Cpath d=%22M50 38 L50 59%22 stroke-width=%226%22/%3E%3Cpath d=%22M50 45 L39 55 L33 60 M50 45 L61 55 L67 60%22 stroke-width=%225.5%22/%3E%3Cpath d=%22M50 59 L44 66 L46 75 M50 59 L56 66 L54 75%22 stroke-width=%225.5%22/%3E%3Cpath d=%22M34 84 L66 84%22 stroke-width=%225%22/%3E%3C/svg%3E") center / contain no-repeat;
   }
   .brand-word { font-weight: 800; font-size: 1.08em; letter-spacing: -0.01em; }
 
@@ -482,7 +483,7 @@ window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); 
 window.addEventListener('appinstalled', function(){ window._jrInstall = null; if (window._jrInstallUI) window._jrInstallUI('installed'); });
 try { if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js'); } catch (e) {}
 
-const APP = { version: '2.2.4', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.2.5', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
