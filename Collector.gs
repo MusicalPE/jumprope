@@ -22,7 +22,7 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 6;   // 6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 7;   // 7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -549,14 +549,20 @@ function getMatBoard_(month, game, diff, band) {
   const schools = loadSchools_();
   const mv = matSheet_().getDataRange().getValues();
   const st = {}, sc = {}, months = {}, diffs = {}, games = {};
+  const climbYears = {}; let climbSince = '';   // 다 함께 하늘까지: 모든 게임·난이도·학년의 정답 착지 합 (학년도별)
   for (let i = 1; i < mv.length; i++) {
     const pid = String(mv[i][0]);
     const d = fmtDate_(mv[i][1]);
     if (!schools[pid] || schools[pid].hidden) continue;
     if (d) months[month_(d)] = 1;
-    if (month_(d) !== month) continue;
     let rows = [];
     try { rows = JSON.parse(mv[i][2] || '[]'); } catch (e) {}
+    if (d) {
+      const sy = schoolYear_(d);
+      rows.forEach(function (r) { climbYears[sy] = (climbYears[sy] || 0) + (Number(r[5]) || 0); });
+      if (rows.length && (!climbSince || d < climbSince)) climbSince = d;
+    }
+    if (month_(d) !== month) continue;
     rows.forEach(function (r) {
       games[r[3]] = 1;
       if (r[3] !== game) return;
@@ -591,6 +597,7 @@ function getMatBoard_(month, game, diff, band) {
     game: game, diff: diff, band: band,
     months: Object.keys(months).sort().reverse(),
     games: Object.keys(games), diffs: Object.keys(diffs),
+    climb: { year: schoolYear_(today_()), years: climbYears, since: climbSince, unitM: 1 },
     summary: { schools: schoolList.length, students: all.length, correct: all.reduce(function (a, x) { return a + x.correct; }, 0), sec: all.reduce(function (a, x) { return a + x.sec; }, 0) },
     correct: ranked(byCorrect, function (x) { return x.correct; }),
     time: ranked(byTime, function (x) { return x.sec; }),
