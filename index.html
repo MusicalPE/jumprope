@@ -3048,7 +3048,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
       ? '<div class="cl-latest"><div class="cl-tag">최신</div><div class="cl-head">' + head + '</div><ul>' + items + '</ul></div>'
       : '<details class="cl-item"><summary>' + head + '</summary><ul>' + items + '</ul></details>';
   }
-  document.getElementById('versionInfo').innerHTML = '지금 쓰는 판: <b>v' + APP.version + '</b>' + (APP.channel === 'beta' ? ' (베타)' : '') + ' · 학교 껍데기 판: <b>' + APP.shell.shell + '</b> · 학교 시트: ' + esc(APP.shell.title || '');
+  document.getElementById('versionInfo').innerHTML = '지금 쓰는 판: <b>v' + APP.version + '</b>' + (APP.channel === 'beta' ? ' (베타)' : '') + ' · 학교 껍데기 판: <b>' + APP.shell.shell + '</b> · 학교 시트: ' + esc(APP.shell.title || '') + (/견본/.test(APP.shell.title || '') ? ' <span style="color:var(--amber)">← 구글 시트 왼쪽 위 파일 이름을 "6학년 1반 줄넘기"처럼 바꿔 두세요</span>' : '');
   if (APP.shell.shell >= APP.requiredShell && APP.shell.shell < 3) document.getElementById('shellNotice').innerHTML = '<div class="warn-box" style="background:var(--bg);">새 껍데기 <b>3판</b>이 나왔어요 (선택). <b>급수 인증</b>을 쓰려면 Shell(껍데기)를 다시 붙여 넣고 "새 버전"으로 배포하세요. 학생을 삭제할 때 기록도 함께 지워지는 고침도 들어 있어요.</div>';
   if (APP.shell.shell < APP.requiredShell) document.getElementById('shellNotice').innerHTML = '<div class="warn-box">학교 껍데기(Shell.gs)를 새 판으로 바꿔야 하는 기능이 있어요. 관리자 메뉴 안내에 따라 Shell.gs 를 다시 붙여넣고 "새 버전"으로 배포해 주세요.</div>';
   fetch('changelog.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(list){
