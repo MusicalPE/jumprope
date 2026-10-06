@@ -1,0 +1,80 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>줄넘기 기록 관리 — 저작권 등록용 프로그램 설명서</title>
+<style>
+@page { size: A4; margin: 16mm 15mm; }
+body { font-family: 'Noto Sans CJK KR','Noto Sans KR','Malgun Gothic',sans-serif; color:#1F2937; font-size:10.3pt; line-height:1.65; margin:0; }
+h1 { font-size:18pt; margin:0 0 4px; } h2 { font-size:12.5pt; border-bottom:2px solid #F26A3D; padding-bottom:3px; margin:18px 0 8px; break-after:avoid; }
+h3 { font-size:11pt; margin:12px 0 4px; }
+table { width:100%; border-collapse:collapse; margin:6px 0 10px; break-inside:avoid; } th, td { border:1px solid #D1D5DB; padding:5px 8px; text-align:left; vertical-align:top; } th { background:#FFF1EC; width:28%; }
+.fill { background:#FFF7CC; padding:0 4px; border-radius:3px; } .tip { background:#F3F5F8; border-left:4px solid #F26A3D; padding:8px 12px; margin:8px 0; break-inside:avoid; }
+pre { background:#F8FAFC; border:1px solid #E5E7EB; padding:8px 10px; font-size:8.8pt; line-height:1.45; white-space:pre-wrap; break-inside:avoid; }
+.small { font-size:9pt; color:#6B7280; } code { font-size:9pt; }
+</style></head><body>
+<h1>줄넘기 기록 관리 — 프로그램 설명서</h1>
+<p class="small">한국저작권위원회 컴퓨터프로그램저작물 등록 신청에 쓰기 위한 자료입니다. <span class="fill">노란 칸</span>은 신청하시는 분이 직접 채워 주세요. 제출 서류와 서식은 바뀔 수 있으니, 신청 전에 한국저작권위원회 저작권등록 누리집(www.cros.or.kr)의 최신 안내를 꼭 확인해 주세요.</p>
+
+<h2>1. 신청서에 옮겨 적을 내용</h2>
+<table>
+<tr><th>저작물의 종류</th><td>컴퓨터프로그램저작물</td></tr>
+<tr><th>제호(프로그램 명칭)</th><td>줄넘기 기록 관리 (판 2.2.5)</td></tr>
+<tr><th>저작자</th><td><span class="fill">실명 · 생년월일 · 주소</span> (필명: 음악적체육인 — 이명으로 함께 적을 수 있음)</td></tr>
+<tr><th>창작연월일</th><td><span class="fill">처음 만든 날 (1.x 판 첫 완성일)</span> · 지금 판(2.2.5) 완성: 2026년 10월 6일</td></tr>
+<tr><th>공표 여부 · 공표연월일</th><td>공표함 · <span class="fill">처음 공개한 날</span> (GitHub 공개 저장소에 올린 날: 2026년 10월 4일, 인디스쿨 게시일도 확인)</td></tr>
+<tr><th>공표 방법 · 장소</th><td>인터넷 공개: https://github.com/MusicalPE/jumprope , https://musicalpe.github.io/jumprope/ , 인디스쿨 게시글</td></tr>
+<tr><th>프로그램 분야</th><td>교육용 응용 프로그램 (학교 체육 · 기록 관리)</td></tr>
+<tr><th>개발 언어</th><td>JavaScript, HTML, CSS, Google Apps Script(JavaScript)</td></tr>
+<tr><th>실행 환경</th><td>웹 브라우저(크롬·엣지·사파리 등, 컴퓨터·휴대폰·태블릿), Google 스프레드시트 + Google Apps Script 웹 앱, GitHub Pages(화면 파일 제공)</td></tr>
+<tr><th>프로그램 규모</th><td>원본 파일 7개, 약 5,500줄 (아래 4장)</td></tr>
+</table>
+
+<h2>2. 프로그램 개요 (요약)</h2>
+<p>학생이 휴대폰으로 그날 뛴 줄넘기 횟수를 입력하면, 학교의 구글 스프레드시트에 저장되고 반 전체 그래프·학생별 누적·줄넘기왕 등을 바로 보여 주는 학교용 줄넘기 기록 관리 프로그램이다. 학교 시트에는 작은 서버 코드(껍데기) 하나만 설치하고, 화면은 인터넷에서 열려 새 판이 나오면 자동으로 바뀐다. 교사 승인 절차, 카메라 판정기 연동, 한국줄넘기협회 기준 급수 인증과 인증서 출력, 학급 줄넘기 여행(1회=1m), 참여 학교끼리 한 달 단위로 겨루는 전국 현황판과 기록실(학생 이름을 가린 요약만 모음)을 갖추었다.</p>
+
+<h2>3. 주요 기능</h2>
+<table>
+<tr><th>학생 기록 입력</th><td>QR로 접속 → 학년·반·이름·줄넘기 종류 선택 → 횟수 저장. 하루 여러 번 입력하면 합산. 학생 비밀번호로 본인 기록(날짜별·종류별 누적 그래프) 조회</td></tr>
+<tr><th>메인(교실) 화면</th><td>이번 주·오늘의 줄넘기왕, 연속 기록 1위(공동 1위 모두 표시), 학생별 누적 막대그래프(종류별 쌓기), 오늘의 한마디(AI 선택), 등록 학생에 따라 "우리 반/우리 N학년/우리 학교" 표시</td></tr>
+<tr><th>교사 관리</th><td>관리자 비밀번호, 학생 일괄 등록(엑셀 붙여넣기), 기록 수정·삭제, 승인 절차(즉시 반영 승인·모두 승인), 하루 목표·줄넘기 종류·테마 색 설정, 학생 접속 QR, 바탕화면 앱 설치</td></tr>
+<tr><th>카메라 판정기 연동</th><td>별도 판정기(카메라로 뛴 횟수를 셈)와 연동해 기록을 자동 저장, 카메라 기록 표시·자동 승인</td></tr>
+<tr><th>급수 인증</th><td>한국줄넘기협회 급수표(흰~와이어, 학교별 수정 가능)에 따라 교사가 항목별 통과를 체크, 앞 급수 미취득 학생 잠금, 학생·메인 화면 급수 표시</td></tr>
+<tr><th>인증서·상장 출력</th><td>급수 인증서, 전국 현황판 순위 상장을 A4로 인쇄·PDF 저장 (학교 안에서 해시 값으로 실명 매칭)</td></tr>
+<tr><th>우리 반 줄넘기 여행</th><td>누적 횟수를 1회=1m 거리로 바꿔 코스(서울→부산·국토 한 바퀴·지구 한 바퀴 등) 진행 막대 표시</td></tr>
+<tr><th>전국 현황판·기록실</th><td>참여 학교가 하루 집계(가린 이름·학년·횟수)를 중앙 수집기로 보내 한 달 단위 학교·학생 순위(합계·1인당 평균·참여율, 학년별), 학년도별 "모두 함께 지구 한 바퀴", 최근 12개월 기록실. 승인된 기록만 반영, 복사한 시트 감지, 참여 해제 시 자료 삭제</td></tr>
+</table>
+
+<h2>4. 구성 파일과 규모</h2>
+<table>
+<tr><th>파일</th><td><b>역할</b> (줄 수)</td></tr>
+<tr><th>index.html</th><td>화면 전체: 메인·학생·관리자·승인 화면, 급수·인증서·여행·전국 현황판 참여 (약 3,100줄)</td></tr>
+<tr><th>Shell.gs</th><td>학교 스프레드시트용 서버(Apps Script): 학생·기록·급수 시트 읽기/쓰기, 설정, 승인, 카메라 판정기 연동 API (약 1,400줄)</td></tr>
+<tr><th>Collector.gs</th><td>전국 현황판 중앙 수집기(Apps Script): 보고 받기, 순위·기록실·학년별·지구 한 바퀴 집계 (약 600줄 이상)</td></tr>
+<tr><th>board.html</th><td>전국 현황판 화면 (약 250줄)</td></tr>
+<tr><th>hall.html</th><td>기록실 화면 (약 190줄)</td></tr>
+<tr><th>sw.js · manifest.webmanifest</th><td>앱 설치(바탕화면 아이콘)용 파일 (약 35줄)</td></tr>
+</table>
+<p class="small">함께 제출할 소스 묶음은 같은 폴더의 <b>제출용_소스.zip</b> 에 있습니다. 외부 구성요소(Chart.js, qrcode-generator, Pretendard 글꼴)는 인터넷에서 불러 쓰는 남의 저작물이므로 등록 대상에서 빠집니다.</p>
+
+<h2>5. 구조</h2>
+<pre>
+ [학생 휴대폰 · 교실 화면 · 교사 PC]  ── 웹 브라우저
+        │  화면 파일(index.html 등)은 GitHub Pages 에서 받아 옴
+        ▼
+ [학교 구글 스프레드시트 + Shell.gs 웹 앱]  ←→  Students / Records / Levels 시트
+        │  (참여한 학교만) 하루 집계: 가린 이름·학년·횟수
+        ▼
+ [중앙 수집기 Collector.gs + 운영자 시트]  →  전국 현황판(board.html) · 기록실(hall.html)
+</pre>
+
+<h2>6. 저작자의 창작 내용 (기여 설명)</h2>
+<div class="tip">이 프로그램은 저작자가 기획·설계하고, 생성형 AI(코딩 도우미)를 도구로 활용해 코드를 작성·수정하며 완성했습니다. 우리나라 저작권 안내(한국저작권위원회 「생성형 AI 저작권 안내서」 등)에 따르면 <b>사람의 창작적 기여가 있는 부분</b>이 보호·등록 대상이 되므로, 신청서의 "창작의 내용" 등에는 아래처럼 <b>저작자가 직접 한 일</b>을 중심으로 사실대로 적는 것이 안전합니다. 정확한 기재 방법은 저작권위원회에 문의해 확인해 주세요.</div>
+<ul>
+<li>학교 현장의 필요에서 출발한 <b>프로그램 기획</b>: 학생 휴대폰 입력 → 학교 시트 저장 → 교실 화면 공유라는 전체 흐름과 화면 구성</li>
+<li><b>기능 설계와 선택</b>: 껍데기(학교 시트) + 자동 업데이트 화면 구조, 교사 승인 절차, 카메라 판정기 연동, 협회 기준 급수 인증(교사 인증 방식·앞 급수 잠금), 인증서 문구·직함, 학급 여행 코스, 학년도 단위 지구 한 바퀴</li>
+<li><b>전국 현황판 규칙 설계</b>: 한 달 단위 경쟁과 기록실, 합계·1인당 평균·참여율, 승인된 기록만 반영, 개인정보 보호(가린 이름·운영자만 보는 정보), 같은 학교 여러 반 처리</li>
+<li><b>화면·문구의 선택과 배열</b>, 시험 사용 후 반복 수정 지시(예: 급수표 줄바꿈, 승인 속도, 공동 1위 표시, 오늘의 한마디 위치, 아이콘)</li>
+<li>사용설명서·안내 글의 구성과 검수</li>
+</ul>
+<p class="small"><span class="fill">위 내용은 예시입니다. 실제로 하신 일에 맞게 고치거나 더해 주세요.</span></p>
+
+<h2>7. 주요 화면</h2>
+<p>사용설명서(사용설명서.pdf)의 화면 그림을 함께 내면 이해를 돕습니다: 메인 화면, 학생 입력 화면, 관리자 급수 인증, 급수 인증서, 전국 현황판, 기록실.</p>
+</body></html>
