@@ -31,6 +31,7 @@ python3 test_site.py                              # playwright 전체 흐름 시
   - 2.1.1: Schools 에 SchoolName·Teacher·Contact 칸(운영자만, 현황판 응답에 안 나감). 참여하려면 학교 이름·담당 교사 필수, 연락처 선택.
     교사·연락처는 EXTRA_SETTINGS(공개)에 두지 않고 관리자 기기 localStorage(`jr_nat_contact|<껍데기주소>`)에만, 관리자 화면 동기화(syncAll) 때만 보냄.
     수집기는 teacher 가 있을 때만 교사·연락처를 덮어씀 → 학생 화면 자동 보고가 지우지 않음. 예전 7칸 시트는 머리줄 자동 확장. COLLECTOR_VERSION = 2
+  - 2.2.4: 앱 설치(PWA) — manifest.webmanifest·sw.js·icons/ (beta/ 에도 따로, 이름 "줄넘기 베타"). beforeinstallprompt 를 window._jrInstall 에 기억 → 관리자 기본 설정 "앱 아이콘 만들기" 버튼. sw 는 같은 출처 파일만 인터넷 먼저(학교 시트·수집기는 안 건드림)
   - 2.2.3: ourLabel(list) → APP.ourLabel ("우리 반" / "우리 N학년" / "우리 학교"), data-our="{our} …" 표시를 applyOurLabel() 로 바꿈 (메인 제목·전체 누적·여행·급수)
   - 2.2.2: nat.shell = 참여 번호 만들 때의 배포 번호(…/s/<번호>/exec). 지금 주소와 다르면 NAT.moved() → 보고 멈춤 + "새 참여 번호로 바꾸기(이전 번호 자료는 안 지움) / 그대로 쓰기". 예전 참여 학교는 관리자 화면 열 때 shell 을 조용히 기록. 같은 학교 여러 반은 이름에 반을 붙이도록 안내(학교 묶어 보기는 아직 안 함)
   - 2.2.1: 지구 한 바퀴는 학년도(3월 1일)마다. allTime.year·years(학년도별 합계), COLLECTOR_VERSION 5. 현황판에 "지난 ○○학년도에는 모두 함께 ○km 뛰었어요"

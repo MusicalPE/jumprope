@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>줄넘기 기록 관리</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#F26A3D">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
@@ -472,7 +476,13 @@ window.JRQR = {
 </script>
 <script>
 /* ===================== 줄넘기 기록 관리 v2 — 시작 ===================== */
-const APP = { version: '2.2.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+/* 바탕화면·홈 화면에 앱으로 설치 (크롬·엣지·안드로이드): 브라우저가 설치 가능하다고 알려 주면 기억해 두었다가 관리자 메뉴의 버튼으로 띄움 */
+window._jrInstall = null;
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); window._jrInstall = e; if (window._jrInstallUI) window._jrInstallUI(); });
+window.addEventListener('appinstalled', function(){ window._jrInstall = null; if (window._jrInstallUI) window._jrInstallUI('installed'); });
+try { if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js'); } catch (e) {}
+
+const APP = { version: '2.2.4', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1064,13 +1074,19 @@ document.addEventListener('DOMContentLoaded', function(){
 
     <div class="card">
       <h2>승인 절차</h2>
-      <p class="hint">켜면 학생이 입력한 기록이 <b>선생님 승인 후</b> 그래프에 반영됩니다. 끄면 저장하는 즉시 반영돼요. (기본: 꺼짐)</p>
+      <p class="hint">켜면 학생이 입력한 기록이 <b>선생님 승인 후</b> 그래프에 반영됩니다. 끄면 저장하는 즉시 반영돼요. (새로 설치하면 기본 켜짐 · 전국 현황판에 참여하려면 켜져 있어야 해요)</p>
       <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="approvalOn" style="width:auto; margin:0;"> 승인 절차 사용 (학생 입력 → 선생님 승인 → 반영)</label>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
         <button type="button" id="saveApprovalBtn">저장</button>
         <a class="btn-outline" id="goApprovalLink" href="{{BASE}}&page=approval&token={{TOKEN}}">기록 승인 화면 →</a>
       </div>
       <p id="approvalMsg" class="hint"></p>
+    </div>
+    <div class="card">
+      <h2>바탕화면에 앱 아이콘 만들기</h2>
+      <p class="hint" style="margin-top:0;">교실 컴퓨터·TV·태블릿에 아이콘을 만들어 두면 주소창 없이 앱처럼 바로 열려요. 이 기기가 기억한 우리 학교 시트로 열립니다.</p>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;"><button type="button" id="installBtn">📲 앱 아이콘 만들기</button><span id="installMsg" class="hint"></span></div>
+      <p id="installHelp" class="hint" style="margin-bottom:0;"></p>
     </div>
     </section>
 
@@ -2594,6 +2610,37 @@ document.querySelector('#recordsTable tbody').addEventListener('click', function
 document.getElementById('closeRecordsPanel').addEventListener('click', function(){
   document.getElementById('recordsPanel').style.display = 'none';
 });
+
+/* ---- 바탕화면에 앱 아이콘 만들기 ---- */
+(function(){
+  const btn = document.getElementById('installBtn'), msg = document.getElementById('installMsg'), help = document.getElementById('installHelp');
+  const ua = navigator.userAgent || '';
+  const ios = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  function ui(state){
+    if (!document.body.contains(btn)) return;   // 다른 화면으로 옮겨 간 뒤
+    if (state === 'installed' || standalone) {
+      btn.style.display = 'none'; help.textContent = '';
+      msg.textContent = state === 'installed' ? '앱 아이콘을 만들었어요! 바탕화면이나 시작 메뉴에서 "줄넘기 기록"을 찾아 보세요.' : '지금 앱으로 열려 있어요. (아이콘이 이미 있어요)';
+      return;
+    }
+    btn.style.display = '';
+    if (window._jrInstall) { btn.disabled = false; help.textContent = ''; msg.textContent = ''; return; }
+    btn.disabled = true;
+    help.innerHTML = ios ? '아이폰·아이패드: 사파리 아래쪽 <b>공유 버튼(□↑)</b> → <b>홈 화면에 추가</b>를 누르세요.'
+      : '버튼이 눌리지 않으면: 크롬·엣지 주소창 오른쪽의 <b>설치 아이콘(⊕ 또는 모니터 모양)</b>을 누르거나, 메뉴(⋮) → <b>앱</b>(또는 저장 및 공유) → <b>이 사이트를 앱으로 설치 / 바로가기 만들기</b>를 고르세요. 이미 설치했다면 바탕화면·시작 메뉴에 아이콘이 있어요.';
+  }
+  window._jrInstallUI = ui;
+  btn.addEventListener('click', function(){
+    const ev = window._jrInstall; if (!ev) return;
+    ev.prompt();
+    (ev.userChoice || Promise.resolve({})).then(function(r){
+      window._jrInstall = null;
+      if (r && r.outcome === 'accepted') ui('installed'); else { msg.textContent = '취소했어요. 필요할 때 다시 눌러 주세요.'; ui(); }
+    });
+  });
+  ui();
+})();
 
 /* ---- 승인 절차 on/off ---- */
 function renderApprovalUI(){
