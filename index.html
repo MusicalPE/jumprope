@@ -472,7 +472,7 @@ window.JRQR = {
 </script>
 <script>
 /* ===================== 줄넘기 기록 관리 v2 — 시작 ===================== */
-const APP = { version: '2.2.2', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.2.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -704,6 +704,19 @@ const LEVELS = {
   }
 };
 
+/* ===== "우리 반 / 우리 N학년 / 우리 학교" — 등록된 학생으로 정함 =====
+   한 반만 → 우리 반, 한 학년의 여러 반 → 우리 N학년, 그 밖(여러 학년) → 우리 학교
+   바뀔 글자에는 data-our="{our} 급수" 처럼 표시해 두고, 학생 목록을 불러온 뒤 applyOurLabel() 로 한꺼번에 바꿈 */
+function ourLabel(list){
+  const classes = {}, grades = {};
+  (list || []).forEach(function(s){ const g = String(s.grade == null ? '' : s.grade).trim().replace(/학년$/, ''); classes[g + '-' + String(s.cls == null ? '' : s.cls).trim()] = 1; grades[g] = 1; });
+  const gs = Object.keys(grades);
+  if (Object.keys(classes).length <= 1) return '우리 반';
+  if (gs.length === 1 && gs[0]) return '우리 ' + gs[0] + '학년';
+  return '우리 학교';
+}
+function applyOurLabel(){ const w = APP.ourLabel || '우리 반'; document.querySelectorAll('[data-our]').forEach(function(el){ el.textContent = el.getAttribute('data-our').replace('{our}', w); }); }
+
 /* ===== 우리 반 줄넘기 여행 — 1회 = 1m =====
    EXTRA_SETTINGS.journey = { course, base } : base = 새로 시작할 때의 누적 횟수 (그 뒤로 뛴 만큼 나아감) */
 const JOURNEY = {
@@ -723,7 +736,7 @@ const JOURNEY = {
     co.stops.forEach(function(s){ if (cur >= s[1] * 1000) at = s[0]; });
     for (let i = 0; i < co.stops.length; i++) if (co.stops[i][1] * 1000 > cur) { next = co.stops[i]; break; }
     const stops = co.stops.map(function(s, i){ const x = s[1] / co.km * 100; return '<span class="jr-stop' + (cur >= s[1] * 1000 ? ' on' : '') + (i === 0 ? ' first' : i === co.stops.length - 1 ? ' last' : '') + '" style="left:' + x + '%"><i></i><b>' + s[0] + '</b></span>'; }).join('');
-    return '<div class="jr-head"><div><span class="jr-tag">우리 반 줄넘기 여행</span><h2>' + co.name + ' <small>약 ' + co.km.toLocaleString() + 'km</small></h2></div>' +
+    return '<div class="jr-head"><div><span class="jr-tag" data-our="{our} 줄넘기 여행">' + (APP.ourLabel || '우리 반') + ' 줄넘기 여행</span><h2>' + co.name + ' <small>약 ' + co.km.toLocaleString() + 'km</small></h2></div>' +
       '<div class="jr-num"><b class="mono">' + this.km(cur) + 'km</b> 왔어요' + (laps ? ' · <b>' + laps + '번</b> 완주!' : '') + '</div></div>' +
       '<div class="jr-track"><div class="jr-fill" style="width:' + pct.toFixed(2) + '%"></div><span class="jr-me" style="left:' + pct.toFixed(2) + '%">🏃</span>' + stops + '</div>' +
       '<p class="hint" style="margin:30px 0 0;">지금 <b>' + at + '</b> 지나는 중 · 다음 <b>' + next[0] + '</b>까지 <b class="mono">' + Math.max(0, next[1] * 1000 - cur).toLocaleString() + '회</b> 남았어요 (줄넘기 1회 = 1m)</p>';
@@ -792,7 +805,7 @@ document.addEventListener('DOMContentLoaded', function(){
     </header>
 
     <div class="hero">
-      <h1>우리 반 줄넘기 기록</h1>
+      <h1 data-our="{our} 줄넘기 기록">우리 반 줄넘기 기록</h1>
       <p class="hero-sub" id="clock"></p>
       <div class="lead-row">
       <div class="today-lead lead-week">
@@ -826,7 +839,7 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
       <div class="stat-card">
         <span class="stat-accent" style="background:var(--track)"></span>
-        <div class="stat-label">우리 반 전체 누적</div>
+        <div class="stat-label" data-our="{our} 전체 누적">우리 반 전체 누적</div>
         <div class="stat-value mono" id="statTotal">0</div>
       </div>
       <div class="stat-card">
@@ -843,7 +856,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     <div class="card jr-card" id="journeyCard" style="display:none;"></div>
     <div class="card" id="levelCard" style="display:none;">
-      <h2>우리 반 급수</h2>
+      <h2 data-our="{our} 급수">우리 반 급수</h2>
       <div class="lv-dist" id="levelDist"></div>
       <div class="lv-who" id="levelWho" style="display:none;"></div>
     </div>
@@ -1414,6 +1427,7 @@ document.addEventListener('visibilitychange', function(){
 google.script.run.withSuccessHandler(function(list){
   allStudents = list;
   document.getElementById('statStudents').textContent = list.length;
+  APP.ourLabel = ourLabel(list); applyOurLabel();   // 우리 반 / 우리 N학년 / 우리 학교
   const grades = [...new Set(list.map(s => s.grade))];
   const gradeSelect = document.getElementById('gradeSelect');
   grades.forEach(g => {

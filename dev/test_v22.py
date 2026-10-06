@@ -102,6 +102,10 @@ with sync_playwright() as p:
     pg.emulate_media(media='screen'); pg.evaluate("document.body.classList.remove('printing-cert')")
     # ── 메인: 급수 · 여행
     pg.goto(APPU); pg.wait_for_timeout(2500)
+    # 우리 반 / 우리 N학년 / 우리 학교 (시험 자료는 6학년 1반 + 5학년 2반 → 우리 학교)
+    check('여러 학년 → 우리 학교', pg.text_content('.hero h1').strip()=='우리 학교 줄넘기 기록' and '우리 학교 전체 누적' in pg.text_content('.stat-grid') and '우리 학교 급수' in pg.text_content('#levelCard h2') and '우리 학교 줄넘기 여행' in pg.text_content('#journeyCard'), pg.text_content('.hero h1'))
+    cases=pg.evaluate("""[ourLabel([]), ourLabel([{grade:6,cls:1},{grade:'6',cls:'1'}]), ourLabel([{grade:'6',cls:'1'},{grade:'6학년',cls:'2'}]), ourLabel([{grade:'5',cls:'1'},{grade:'6',cls:'1'}])]""")
+    check('ourLabel 규칙', cases==['우리 반','우리 반','우리 6학년','우리 학교'], str(cases))
     check('연속 기록 공동 1위 모두 표시', len(TOP_NAMES)>=2 and all(n_ in pg.text_content('#streakLeadName') for n_ in TOP_NAMES[:3]) and ('공동 1위 %d명' % len(TOP_NAMES)) in pg.text_content('#streakLeadCount'), str(TOP_NAMES)+' / '+pg.text_content('#streakLeadName')+' / '+pg.text_content('#streakLeadCount'))
     check('메인 우리 반 급수', pg.is_visible('#levelCard') and '흰' in pg.text_content('#levelDist'), pg.text_content('#levelDist'))
     pg.click('#levelDist button.lv-pick'); pg.wait_for_timeout(200)
