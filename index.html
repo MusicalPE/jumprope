@@ -483,7 +483,7 @@ window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); 
 window.addEventListener('appinstalled', function(){ window._jrInstall = null; if (window._jrInstallUI) window._jrInstallUI('installed'); });
 try { if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js'); } catch (e) {}
 
-const APP = { version: '2.2.5', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.2.6', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -493,10 +493,16 @@ new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 })();
 
 /* 학교 껍데기(Shell.gs)에 요청 보내기 */
-function rpc(fn, args){
+/* 구글이 잠깐 404·429·5xx 로 답하거나 연결이 끊기면 1.5초 뒤 한 번 더 보냄 (껍데기 자체 오류는 다시 보내지 않음) */
+function rpc(fn, args, _retried){
   return fetch(APP.shellUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args || [] }), redirect: 'follow' })
-    .then(function(r){ if (!r.ok) throw new Error('학교 시트 응답 오류 (' + r.status + ')'); return r.json(); })
-    .then(function(j){ if (!j.ok) throw new Error(j.error || '요청 실패'); return j.result; });
+    .then(function(r){ if (!r.ok) { const e = new Error('학교 시트 응답 오류 (' + r.status + ')'); e.retry = r.status === 404 || r.status === 429 || r.status >= 500; throw e; } return r.json(); },
+          function(err){ err.retry = true; throw err; })
+    .then(function(j){ if (!j.ok) throw new Error(j.error || '요청 실패'); return j.result; })
+    .catch(function(err){
+      if (!err.retry || _retried) throw err;
+      return new Promise(function(ok){ setTimeout(ok, 1500); }).then(function(){ return rpc(fn, args, true); });
+    });
 }
 /* 예전 화면 코드(google.script.run)가 그대로 돌아가도록 */
 function makeRunner(ok, fail){
@@ -786,12 +792,17 @@ function showSetup(msg){
 }
 document.addEventListener('DOMContentLoaded', function(){
   if (!APP.shellUrl) return showSetup('');
-  document.getElementById('app').innerHTML = '<div class="loading">학교 기록을 불러오는 중…</div>';
+  document.getElementById('app').innerHTML = '<div class="loading">학교 기록을 불러오는 중…<div id="bootSlow" class="hint" style="display:none;margin-top:10px;"></div></div>';
+  /* 구글 시트가 늦게 답할 때: 8초 뒤 안내, 25초 뒤 다시 시도 버튼 */
+  const slowT = [setTimeout(function(){ const el = document.getElementById('bootSlow'); if (el) { el.style.display = ''; el.textContent = '구글 시트가 평소보다 늦게 답하고 있어요. 조금만 기다려 주세요.'; } }, 8000),
+                 setTimeout(function(){ const el = document.getElementById('bootSlow'); if (el) el.innerHTML = '구글 쪽 응답이 많이 늦어요. 잠시 뒤 <button type="button" style="margin-top:8px;" onclick="location.reload()">다시 시도</button>'; }, 25000)];
   Promise.all([rpc('ping'), rpc('getAppSettingsPublic'), rpc('getTheme').catch(function(){ return null; })]).then(function(r){
+    slowT.forEach(clearTimeout);
     APP.shell = r[0]; APP.settings = r[1] || {};
     if (r[2]) { applyTheme(r[2]); try { localStorage.setItem('jr_theme', JSON.stringify({ accent: r[2].accent, bg: r[2].bg })); } catch (e) {} }
     render(APP.q.page || 'main');
   }).catch(function(err){
+    slowT.forEach(clearTimeout);
     showSetup('학교 시트에 연결하지 못했어요: ' + (err.message || err) + '<br>· 배포 설정의 "액세스 권한"이 <b>모든 사용자</b>인지 · 주소가 맞는지 확인해 주세요.');
   });
 });
