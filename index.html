@@ -483,7 +483,9 @@ window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); 
 window.addEventListener('appinstalled', function(){ window._jrInstall = null; if (window._jrInstallUI) window._jrInstallUI('installed'); });
 try { if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js'); } catch (e) {}
 
-const APP = { version: '2.2.6', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+/* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
+const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
+const APP = { version: '2.2.7', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -781,7 +783,8 @@ function showSetup(msg){
   document.getElementById('app').innerHTML =
     '<div class="boot-wrap"><div class="card"><div class="boot-hero"><h1>🏆 줄넘기 기록 관리</h1><p>학교 시트와 연결이 필요해요</p></div>' +
     (msg ? '<div class="warn-box">' + msg + '</div>' : '') +
-    '<p class="hint" style="margin-top:0;">학교 스프레드시트에 <b>Shell.gs</b> 를 넣고 웹앱으로 배포한 뒤 나온 주소(<code>https://script.google.com/macros/s/…/exec</code>)를 붙여넣으세요. 배포 주소를 브라우저로 열면 나오는 "프로그램 열기" 버튼으로 들어와도 됩니다.</p>' +
+    '<p class="hint" style="margin-top:0;">학교 시트 웹앱 주소(<code>https://script.google.com/macros/s/…/exec</code>)를 붙여넣으세요. 배포 주소를 브라우저로 열면 나오는 "프로그램 열기" 버튼으로 들어와도 됩니다.</p>' +
+    '<div class="tip-box" style="margin:0 0 14px;padding:12px 14px;border-radius:12px;background:var(--bg);font-size:14px;line-height:1.6;"><b>처음 설치하시나요?</b><br>① <a href="' + TEMPLATE_URL + '" target="_blank" rel="noopener"><b>견본 시트 사본 만들기</b></a> → ② 사본에서 확장 프로그램 → Apps Script → <b>배포 → 새 배포 → 웹 앱</b>(실행: 나 · 액세스: <b>모든 사용자</b>) → ③ 나온 주소를 여기에 붙여넣기</div>' +
     '<label>학교 시트 웹앱 주소 <input id="setupUrl" placeholder="https://script.google.com/macros/s/…/exec" value="' + (APP.shellUrl || '').replace(/"/g, '&quot;') + '"></label>' +
     '<button type="button" id="setupGo">연결하기</button></div></div>';
   document.getElementById('setupGo').onclick = function(){

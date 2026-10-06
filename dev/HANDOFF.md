@@ -75,3 +75,10 @@ python3 test_site.py                              # playwright 전체 흐름 시
 - 통합 프로그램(pe-assistant)도 같은 현황판에 보고하기로 함 → 작업 설명서 `dev/통합프로그램_현황판_연동.md` (작업은 사용자 채팅에서). 수집기 보고 형식을 바꾸면 통합판도 깨지니 주의
 - 줄넘기 판정기: MusicalPE/jump-rope-checker (현재 v0.7.4, ?app= 서버 연동 + mode=post 오프라인 연동)
 - 오프라인판 v1.6 은 별도 HTML(폴더 data/ 저장), 판정기와 postMessage 로 연동
+
+## 2026-10-06 추가
+- 2.2.6: rpc 일시 오류(404·429·5xx·끊김) 1.5초 뒤 한 번 재시도, 첫 불러오기 8초 안내·25초 다시 시도 버튼 (구글 웹앱이 잠깐 404 를 낸 일이 있었음 — 시트·배포는 정상이었음)
+- 2.2.7: 견본 시트(껍데기만 든 빈 시트, 소유: 운영자) 사본 설치. index.html 의 TEMPLATE_URL
+  https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy
+  - 껍데기 새 판이 나오면 견본 시트의 Apps Script 에도 붙여 넣고 저장(배포는 하지 않음)
+  - README·manual.html(PDF)·인디스쿨 안내글 설치 부분을 방법 A(견본)/B(직접 붙여넣기)로 바꿈, zip 재생성
