@@ -1060,6 +1060,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <button type="button" data-tab="levels"><span class="ico"></span>급수 인증<span class="new-dot feat-new" data-new="levels">NEW</span></button>
       <button type="button" data-tab="certs"><span class="ico"></span>인증서 · 상장<span class="new-dot feat-new" data-new="certs">NEW</span></button>
       <button type="button" data-tab="journey"><span class="ico"></span>우리 반 여행<span class="new-dot feat-new" data-new="journey">NEW</span></button>
+      <button type="button" data-tab="live"><span class="ico"></span>점프 라이브</button>
       <button type="button" data-tab="theme"><span class="ico"></span>테마 · 색상</button>
       <button type="button" data-tab="security"><span class="ico"></span>비밀번호 · 초기화</button>
       <button type="button" data-tab="updates"><span class="ico"></span>업데이트 내역<span class="new-dot" id="updatesDot" style="display:none;">NEW</span></button>
@@ -1322,6 +1323,16 @@ document.addEventListener('DOMContentLoaded', function(){
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;"><button type="button" id="jrSave">저장</button><button type="button" class="btn-outline" id="jrRestart">지금부터 새로 출발</button><span id="jrMsg" class="hint"></span></div>
     </div>
     <div class="card jr-card" id="jrPreview"></div>
+    </section>
+
+    <section class="tab-pane" data-tab="live">
+    <div class="card">
+      <h2>점프 라이브 (한 반이 함께 뛰기)</h2>
+      <p class="hint">학생이 1인 1기기로 카메라 판정기에서 뛰면, 선생님 화면에 반 학생들이 바둑판으로 모여 <b>지금 몇 개째인지</b> 실시간으로 보여요. 명단은 이 프로그램에서 가져오고, 끝나면 결과가 <b>승인된 카메라 기록</b>으로 바로 들어가요.</p>
+      <p class="hint">선생님 화면은 TV·칠판에 띄우고, 학생은 화면의 QR을 찍어 들어와 자기 번호를 누르면 돼요. 처음 한 번은 구글 계정 로그인이 필요해요.</p>
+      <button type="button" id="openLiveBtn">점프 라이브 열기 →</button>
+      <p id="liveMsg" class="hint"></p>
+    </div>
     </section>
 
     <section class="tab-pane" data-tab="theme">
@@ -2142,6 +2153,13 @@ loadTypes();
 /* ---- 탭 전환 (마지막에 본 탭을 기억) ---- */
 (function(){
   const nav = document.getElementById('adminNav');
+  // 점프 라이브: 점프 라이브용 껍데기(ping 이 live 를 알려 줌)를 설치한 학교에만 보임
+  if (!(APP.shell && APP.shell.live)) { Array.prototype.forEach.call(document.querySelectorAll('[data-tab="live"]'), function(el){ el.remove(); }); }
+  else { const lb = document.getElementById('openLiveBtn'); if (lb) lb.addEventListener('click', function(){
+    const w = window.open(location.origin + '/jumpropelive/monitor.html?s=' + encodeURIComponent(APP.shellUrl), '_blank');
+    if (!w) document.getElementById('liveMsg').textContent = '새 창이 막혔어요. 주소창 오른쪽에서 팝업을 허용해 주세요.'; });
+    // 점프 라이브가 결과를 시트에 넣으면 알려 줌 → 점퍼스(전국 현황판)에 바로 보냄 (카메라 인증 기록으로 집계)
+    window.addEventListener('message', function(e){ if (e.origin === location.origin && e.data && e.data.type === 'jumplive-saved') NAT.syncAll(token, true).catch(function(){}); }); }
   const btns = Array.prototype.slice.call(nav.querySelectorAll('button[data-tab]'));
   const panes = Array.prototype.slice.call(document.querySelectorAll('.tab-pane'));
   // 새로 생긴 탭의 NEW: 한 번 열어 보면 사라짐 (이 기기에 기억)
