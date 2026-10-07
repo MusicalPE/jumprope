@@ -84,3 +84,4 @@ python3 test_site.py                              # playwright 전체 흐름 시
   - README·manual.html(PDF)·인디스쿨 안내글 설치 부분을 방법 A(견본)/B(직접 붙여넣기)로 바꿈, zip 재생성
 - 2.2.8: 전국 현황판 이름 Jump Earth (점퍼스). 로고는 B 시안(줄넘기 줄이 궤도처럼 지구를 감쌈, share/brand/).
   board.html·hall.html 머리에 흰색판 SVG(인라인)·파비콘, index.html 의 jeLogo(h, white) 로 메인 버튼·관리자 탭·전국 순위 상장에 표시
+- 수집기 8판: 현황판 학생 50명, 기록실 students50·schools50(50등까지), 기록실 저장 키 hall8|. 현황판은 학생 10명만 보이고 "N등까지 보기" 팝업, 기록실은 학생·학교(합계/평균/참여율 탭) 50등 팝업. 8판 배포 전에는 버튼이 안 보이거나 30명까지만.

@@ -22,7 +22,7 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 7;   // 7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 8;   // 8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -368,7 +368,7 @@ function getBoard_(month, grade) {
       participants: schools.reduce(function (a, s) { return a + s.participants; }, 0),
       camera: schools.reduce(function (a, s) { return a + s.camera; }, 0)
     },
-    students: nationalStudents_(schools, 30),
+    students: nationalStudents_(schools, 50),
     schools: schools.map(function (s) {
       const o = Object.assign({}, s);
       o.students = s.students.slice(0, 30).map(function (x) { return { n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days }; });
@@ -400,12 +400,12 @@ function getHall_(month) {
   const want = list.indexOf(String(month || '')) >= 0 ? String(month) : (list[0] || '');
   let detail = null;
   if (want) {
-    const hit = cache.get('hall|' + want);
+    const hit = cache.get('hall8|' + want);
     if (hit) detail = JSON.parse(hit);
     else {
       detail = hallMonth_(want, loadSchools_(), rows());
       const text = JSON.stringify(detail);
-      if (text.length < 95000) cache.put('hall|' + want, text, want === prevMonth_(cur) ? 3600 : HALL_CACHE_SEC);
+      if (text.length < 95000) cache.put('hall8|' + want, text, want === prevMonth_(cur) ? 3600 : HALL_CACHE_SEC);
     }
   }
   return { current: cur, updated: new Date().toISOString(), minRegistered: MIN_REGISTERED_FOR_RATIO, list: list, month: detail };
@@ -419,18 +419,27 @@ function hallMonth_(m, schoolsInfo, dv) {
   };
   const schools = aggregateMonth_(m, schoolsInfo, dv);
   const studs = nationalStudents_(schools, 50);
-  const st3 = [];
+  const st3 = [], st50 = [];
   let r = 0;
   studs.forEach(function (x, i) {
     r = (i > 0 && studs[i - 1].c === x.c) ? r : i + 1;
     if (r <= 3) st3.push({ rank: r, k: x.k, pid: x.pid, n: x.n, g: x.g, c: x.c, cam: x.cam, school: x.school });
+    st50.push({ rank: r, pid: x.pid, n: x.n, g: x.g, c: x.c, cam: x.cam, school: x.school });
   });
+  // 50등까지 (기록실 팝업용)
+  const top50 = function (list, field) {
+    return list.filter(function (s) { return s.rank[field]; })
+      .sort(function (a, b) { return a.rank[field] - b.rank[field]; }).slice(0, 50)
+      .map(function (s) { return { rank: s.rank[field], label: s.label, named: s.named, pid: s.pid, total: s.total, avg: s.avg, rate: s.rate }; });
+  };
   return {
     month: m,
     schoolCount: schools.length,
     total: schools.reduce(function (a, s) { return a + s.total; }, 0),
     schools: { total: top3(schools, 'total'), avg: top3(schools, 'avg'), rate: top3(schools, 'rate') },
     students: st3,
+    students50: st50,
+    schools50: { total: top50(schools, 'total'), avg: top50(schools, 'avg'), rate: top50(schools, 'rate') },
     // 학교별 학생 1~3등 (학교 안 순위)
     inSchool: schools.slice(0, 30).map(function (s) {
       return { label: s.label, named: s.named, pid: s.pid, top: s.students.slice(0, 3).map(function (x) { return { k: x.k, n: x.n, g: x.g, c: x.c }; }) };
@@ -444,7 +453,7 @@ function refreshCache() {
   const months = monthsIn_(dailySheet_().getDataRange().getValues());
   const cur = month_(today_());
   const keys = ['hall|list|' + cur, 'board|' + cur, 'alltime'];
-  months.forEach(function (m) { keys.push('hall|' + m, 'board|' + m); GRADES_.forEach(function (g) { keys.push('board|' + m + '|' + g); }); });
+  months.forEach(function (m) { keys.push('hall|' + m, 'hall8|' + m, 'board|' + m); GRADES_.forEach(function (g) { keys.push('board|' + m + '|' + g); }); });
   c.removeAll(keys);
   return keys.length;
 }

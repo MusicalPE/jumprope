@@ -58,6 +58,23 @@
   .kpi { background: var(--surface); border-radius: var(--r-md); padding: 12px 14px; box-shadow: var(--shadow); }
   .kpi span { color: var(--muted); font-size: 0.82em; font-weight: 700; }
   .kpi b { display: block; font-size: 1.45em; }
+  .more-btn { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--coral-dark); border-radius: 999px; padding: 7px 14px; font: inherit; font-weight: 700; font-size: .88em; cursor: pointer; }
+  .more-btn:hover { border-color: var(--coral); background: var(--coral-tint); }
+  .modal-bg { position: fixed; inset: 0; background: rgba(17,24,39,.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .modal { background: var(--surface); border-radius: var(--r-lg); width: 100%; max-width: 680px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+  .modal-head h3 { margin: 0; font-size: 1.1em; }
+  .modal-head .hint { display: block; font-weight: 500; }
+  .modal-x { border: 0; background: var(--line-2); border-radius: 999px; width: 34px; height: 34px; font-size: 18px; line-height: 1; cursor: pointer; flex: none; }
+  .modal-tabs { display: flex; gap: 6px; padding: 10px 18px 0; flex-wrap: wrap; }
+  .modal-tabs button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font: inherit; font-weight: 700; font-size: .86em; cursor: pointer; color: var(--ink-2); }
+  .modal-tabs button.on { background: var(--coral); border-color: var(--coral); color: #fff; }
+  .modal-body { overflow: auto; padding: 8px 18px 18px; }
+  .modal-body table { width: 100%; border-collapse: collapse; font-size: .92em; }
+  .modal-body th, .modal-body td { padding: 8px 6px; border-bottom: 1px solid var(--line-2); text-align: left; }
+  .modal-body th { color: var(--muted); font-weight: 600; font-size: .9em; }
+  .modal-body .num { text-align: right; }
+  .modal-body tr.me td { background: var(--coral-tint); }
   .card { background: var(--surface); border-radius: var(--r-lg); padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
   .card h2 { margin: 0 0 4px; font-size: 1.15em; }
   .card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -149,8 +166,37 @@
   const n = function(v){ return (Number(v) || 0).toLocaleString('ko-KR'); };
   const mLabel = function(m){ return Number(m.slice(0, 4)) + '년 ' + Number(m.slice(5, 7)) + '월'; };
   const rankHtml = function(r){ return '<span class="rank r' + r + '">' + r + '</span>'; };
+  /* 50등까지 보기 팝업 */
+  function openModal(title, sub, bodyHtml, tabs){
+    closeModal();
+    const bg = document.createElement('div'); bg.className = 'modal-bg'; bg.id = 'rankModal';
+    bg.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h3>' + title + (sub ? '<span class="hint">' + sub + '</span>' : '') + '</h3><button type="button" class="modal-x" aria-label="닫기">×</button></div>' +
+      (tabs ? '<div class="modal-tabs">' + tabs + '</div>' : '') + '<div class="modal-body">' + bodyHtml + '</div></div>';
+    bg.addEventListener('click', function(e){ if (e.target === bg || e.target.closest('.modal-x')) closeModal(); });
+    document.addEventListener('keydown', escClose);
+    document.body.appendChild(bg); document.body.style.overflow = 'hidden';
+    return bg;
+  }
+  function escClose(e){ if (e.key === 'Escape') closeModal(); }
+  function closeModal(){ const m = document.getElementById('rankModal'); if (m) m.remove(); document.body.style.overflow = ''; document.removeEventListener('keydown', escClose); }
   try { const s = localStorage.getItem('jr_shell'); if (s) $('homeLink').href = './?s=' + encodeURIComponent(s); } catch (e) {}
   if (me) $('boardLink').href = 'board.html?me=' + encodeURIComponent(me);
+
+  function stuTable50(list){
+    return '<table><thead><tr><th>순위</th><th>이름</th><th>학교</th><th class="num">횟수</th></tr></thead><tbody>' + list.map(function(x){
+      return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num">' + n(x.c) + '회' + (x.cam ? ' <span class="sub">📷' + n(x.cam) + '</span>' : '') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  }
+  const SCH_KINDS = { total: ['🏫 학교 합계', function(s){ return n(s.total) + '회'; }], avg: ['⚖️ 1인당 평균', function(s){ return n(s.avg) + '회'; }], rate: ['🙋 참여율', function(s){ return s.rate + '%'; }] };
+  function schModal(m, k){
+    const list = (m.schools50 || {})[k] || [];
+    const tabs = Object.keys(SCH_KINDS).map(function(key){ return '<button type="button" data-k="' + key + '"' + (key === k ? ' class="on"' : '') + '>' + SCH_KINDS[key][0] + '</button>'; }).join('');
+    const body = list.length ? '<table><thead><tr><th>순위</th><th>학교</th><th class="num">' + SCH_KINDS[k][0].replace(/^\S+ /, '') + '</th></tr></thead><tbody>' + list.map(function(s){
+      return '<tr' + (s.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(s.rank) + '</td><td' + (s.named ? '' : ' class="anon"') + '><b>' + esc(s.label) + '</b></td><td class="num">' + SCH_KINDS[k][1](s) + '</td></tr>';
+    }).join('') + '</tbody></table>' : '<p class="hint">이 순위에 든 학교가 없어요. (등록 학생 ' + minReg + '명 이상인 학교만)</p>';
+    const bg = openModal('학교 순위 · ' + Math.min(50, m.schoolCount) + '등까지', mLabel(m.month), body, tabs);
+    Array.prototype.forEach.call(bg.querySelectorAll('.modal-tabs button'), function(t){ t.addEventListener('click', function(){ schModal(m, t.dataset.k); }); });
+  }
 
   function podium(title, list, val){
     return '<div class="podium"><h3>' + title + '</h3>' + (list.length ? list.map(function(s){
@@ -158,8 +204,9 @@
     }).join('') : '<p class="hint" style="margin:0;">해당 학교 없음</p>') + '</div>';
   }
 
-  let collector = '';
+  let collector = '', minReg = 5;
   function draw(data){
+    minReg = data.minRegistered || 5;
     // 새 수집기(판 3 이상): list + month(고른 달 하나). 예전 수집기: months(모든 달 상세)
     let list = data.list, months;
     if (Array.isArray(list)) months = data.month ? [data.month] : [];
@@ -182,9 +229,11 @@
           podium('⚖️ 1인당 평균', m.schools.avg || [], function(s){ return n(s.avg) + '회'; }) +
           podium('🙋 참여율', m.schools.rate || [], function(s){ return s.rate + '%'; }) +
         '</div>' +
+        ((m.schools50 && (m.schools50.total || []).length > 3) ? '<div style="text-align:center;margin:-4px 0 12px;"><button type="button" class="more-btn" data-more="sch" data-m="' + m.month + '">학교 순위 ' + Math.min(50, m.schoolCount) + '등까지 보기 →</button></div>' : '') +
         '<div class="podium stars"><h3>⭐ 전국 학생 1~3등</h3>' + (st.length ? st.map(function(x){
           return '<div class="pl">' + rankHtml(x.rank) + '<span class="who">' + esc(x.n) + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + ' <span class="sub">' + esc(x.school) + '</span></span><span class="val">' + n(x.c) + '회' + (x.cam ? ' · 📷' + n(x.cam) : '') + '</span></div>';
-        }).join('') : '<p class="hint" style="margin:0;">기록 없음</p>') + '</div>' +
+        }).join('') : '<p class="hint" style="margin:0;">기록 없음</p>') +
+        ((m.students50 || []).length > 3 ? '<div style="text-align:center;"><button type="button" class="more-btn" data-more="stu" data-m="' + m.month + '">전국 학생 ' + m.students50.length + '등까지 보기 →</button></div>' : '') + '</div>' +
         ((m.inSchool || []).length ? '<details class="ins"' + (me && m.inSchool.some(function(s){ return s.pid === me; }) ? ' open' : '') + '><summary>학교별 1~3등 보기 (' + m.inSchool.length + '개 학교)</summary><div class="ins-grid">' +
           m.inSchool.map(function(s){
             let r = 0;
@@ -195,6 +244,13 @@
           }).join('') + '</div></details>' : '') +
         '</div>';
     }).join('') + '<p class="hint" style="text-align:center;">1인당 평균·참여율은 등록 학생 ' + (data.minRegistered || 5) + '명 이상인 학교만 순위를 매겨요.</p>';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-more]'), function(b){
+      b.addEventListener('click', function(){
+        const m = months.filter(function(x){ return x.month === b.dataset.m; })[0]; if (!m) return;
+        if (b.dataset.more === 'stu') openModal('전국 학생 순위 · ' + m.students50.length + '등까지', mLabel(m.month) + ' 동안 뛴 횟수 합계', stuTable50(m.students50));
+        else schModal(m, 'total');
+      });
+    });
   }
 
   function load(month){

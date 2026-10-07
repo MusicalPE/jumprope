@@ -66,6 +66,23 @@
   .kpi { background: var(--surface); border-radius: var(--r-md); padding: 12px 14px; box-shadow: var(--shadow); }
   .kpi span { color: var(--muted); font-size: 0.82em; font-weight: 700; }
   .kpi b { display: block; font-size: 1.45em; }
+  .more-btn { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--coral-dark); border-radius: 999px; padding: 7px 14px; font: inherit; font-weight: 700; font-size: .88em; cursor: pointer; }
+  .more-btn:hover { border-color: var(--coral); background: var(--coral-tint); }
+  .modal-bg { position: fixed; inset: 0; background: rgba(17,24,39,.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .modal { background: var(--surface); border-radius: var(--r-lg); width: 100%; max-width: 680px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+  .modal-head h3 { margin: 0; font-size: 1.1em; }
+  .modal-head .hint { display: block; font-weight: 500; }
+  .modal-x { border: 0; background: var(--line-2); border-radius: 999px; width: 34px; height: 34px; font-size: 18px; line-height: 1; cursor: pointer; flex: none; }
+  .modal-tabs { display: flex; gap: 6px; padding: 10px 18px 0; flex-wrap: wrap; }
+  .modal-tabs button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font: inherit; font-weight: 700; font-size: .86em; cursor: pointer; color: var(--ink-2); }
+  .modal-tabs button.on { background: var(--coral); border-color: var(--coral); color: #fff; }
+  .modal-body { overflow: auto; padding: 8px 18px 18px; }
+  .modal-body table { width: 100%; border-collapse: collapse; font-size: .92em; }
+  .modal-body th, .modal-body td { padding: 8px 6px; border-bottom: 1px solid var(--line-2); text-align: left; }
+  .modal-body th { color: var(--muted); font-weight: 600; font-size: .9em; }
+  .modal-body .num { text-align: right; }
+  .modal-body tr.me td { background: var(--coral-tint); }
   .card { background: var(--surface); border-radius: var(--r-lg); padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
   .card h2 { margin: 0 0 4px; font-size: 1.15em; }
   .card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -141,6 +158,19 @@
   const n = function(v){ return (Number(v) || 0).toLocaleString('ko-KR'); };
   const mLabel = function(m){ return Number(m.slice(0, 4)) + '년 ' + Number(m.slice(5, 7)) + '월'; };
   const rankHtml = function(r){ return r ? '<span class="rank r' + r + '">' + r + '</span>' : '<span class="rank">–</span>'; };
+  /* 50등까지 보기 팝업 */
+  function openModal(title, sub, bodyHtml, tabs){
+    closeModal();
+    const bg = document.createElement('div'); bg.className = 'modal-bg'; bg.id = 'rankModal';
+    bg.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h3>' + title + (sub ? '<span class="hint">' + sub + '</span>' : '') + '</h3><button type="button" class="modal-x" aria-label="닫기">×</button></div>' +
+      (tabs ? '<div class="modal-tabs">' + tabs + '</div>' : '') + '<div class="modal-body">' + bodyHtml + '</div></div>';
+    bg.addEventListener('click', function(e){ if (e.target === bg || e.target.closest('.modal-x')) closeModal(); });
+    document.addEventListener('keydown', escClose);
+    document.body.appendChild(bg); document.body.style.overflow = 'hidden';
+    return bg;
+  }
+  function escClose(e){ if (e.key === 'Escape') closeModal(); }
+  function closeModal(){ const m = document.getElementById('rankModal'); if (m) m.remove(); document.body.style.overflow = ''; document.removeEventListener('keydown', escClose); }
   const kst = function(){ return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }); };
 
   // 우리 학교 프로그램으로 돌아가는 링크 (이 기기에서 쓰던 학교)
@@ -162,6 +192,17 @@
       return '이번 달 ' + d + '일째 · ' + (last - d === 0 ? '오늘이 마지막 날!' : '마감까지 ' + (last - d) + '일') + ' · 다음 달 1일에 새로 시작해요';
     }
     return mLabel(data.month) + ' 최종 기록 · 1~3등은 기록실에 남아 있어요';
+  }
+
+  const SHOW_STU = 10;   // 현황판에 바로 보이는 학생 수 (나머지는 팝업으로 50등까지)
+  function stuTable(rows, all){
+    let h = '<table><thead><tr><th>순위</th><th>이름</th><th>학교</th><th class="num">횟수</th><th class="num hide-sm">📷</th></tr></thead><tbody>', r = 0;
+    all.forEach(function(x, i){
+      r = (i > 0 && all[i - 1].c === x.c) ? r : i + 1;
+      if (i >= rows.length) return;
+      h += '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(r) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>';
+    });
+    return h + '</tbody></table>';
   }
 
   function draw(){
@@ -232,18 +273,14 @@
     html += '<div class="card"><div class="card-head"><div><h2>전국 학생 순위</h2><span class="hint">' + mLabel(data.month) + ' 동안 뛴 횟수 합계</span></div></div>';
     if (!st.length) html += '<div class="empty">아직 기록이 없어요.</div>';
     else {
-      html += '<div class="table-wrap"><table><thead><tr><th>순위</th><th>이름</th><th>학교</th><th class="num">횟수</th><th class="num hide-sm">📷</th></tr></thead><tbody>';
-      let r = 0;
-      st.forEach(function(x, i){
-        r = (i > 0 && st[i - 1].c === x.c) ? r : i + 1;
-        html += '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(r) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>';
-      });
-      html += '</tbody></table></div>';
+      html += '<div class="table-wrap">' + stuTable(st.slice(0, SHOW_STU), st) + '</div>';
+      if (st.length > SHOW_STU) html += '<div style="text-align:center;"><button type="button" class="more-btn" id="stuMore">전국 ' + st.length + '등까지 보기 →</button></div>';
     }
     html += '</div>';
     html += '<p class="hint" style="text-align:center;">집계는 몇 분마다 새로 고쳐져요 · 마지막 갱신 ' + new Date(data.updated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + '</p>';
     $('body').innerHTML = html;
 
+    $('stuMore') && $('stuMore').addEventListener('click', function(){ const st = data.students || []; openModal('전국 학생 순위 · ' + st.length + '등까지', mLabel(data.month) + (data.grade ? ' · ' + esc(data.grade) + '학년' : '') + ' 동안 뛴 횟수 합계', stuTable(st, st)); });
     $('sortSeg') && $('sortSeg').addEventListener('click', function(e){ const b = e.target.closest('button'); if (b) { sortBy = b.dataset.k; draw(); } });
     Array.prototype.forEach.call(document.querySelectorAll('tr.school'), function(tr){
       tr.addEventListener('click', function(){ openPid = openPid === tr.dataset.pid ? '' : tr.dataset.pid; draw(); });
