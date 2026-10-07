@@ -1,0 +1,17 @@
+Jump Earth (점퍼스) 로고 파일 · © 음악적체육인
+
+[일러스트레이터·인쇄용 (벡터, 크기를 키워도 깨지지 않음)]
+- jump-earth-logo.ai / .pdf / .svg          가로형 로고 (밝은 바탕용)
+- jump-earth-logo-white.ai / .pdf / .svg    가로형 로고 (주황·어두운 바탕용, 글자 흰색)
+- jump-earth-icon.ai / .pdf / .svg          아이콘만 (밝은 바탕용)
+- jump-earth-icon-white.ai / .pdf / .svg    아이콘만 (어두운 바탕용)
+  · .ai 는 PDF 호환 형식이라 일러스트레이터에서 바로 열고 고칠 수 있어요.
+  · 글자(Jump Earth, 점퍼스)는 외곽선으로 바꿔 두어 글꼴이 없어도 똑같이 보여요. (글꼴: Pretendard, OFL)
+
+[문서·발표·SNS용 (그림)]
+- jump-earth-logo-2000.png, jump-earth-logo-white-2000.png   가로형, 바탕 투명
+- jump-earth-icon-1024.png / -512.png, jump-earth-icon-white-1024.png   아이콘, 바탕 투명
+- jump-earth-logo-white-bg.jpg, jump-earth-icon-white-bg.jpg   흰 바탕 (상표 출원 등 jpg 가 필요할 때)
+- jump-earth-logo-on-coral.png   주황 바탕 위 모습
+
+색: 주황 #F26A3D · 남색 글자 #1F2937 · 바다 #6FD0F7→#0A78B8 · 땅 #3CCB6A
