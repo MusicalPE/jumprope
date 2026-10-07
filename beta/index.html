@@ -8,10 +8,15 @@
 <meta name="theme-color" content="#F26A3D">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <style>
+  /* 큰 제목·줄넘기왕·통계 숫자 글꼴: 한글·숫자 주아(Jua), 영어 도현(Do Hyeon), 나머지 Pretendard (모두 OFL) */
+  @font-face { font-family: 'JE Latin'; src: url(../fonts/do-hyeon-latin.woff2) format('woff2'); font-display: swap; unicode-range: U+0041-005A, U+0061-007A; }
+  body .hero h1, body .today-lead-name, body .today-lead-count, body .stat-value { font-family: 'JE Latin', 'Jua', 'Pretendard', sans-serif; font-weight: 400; }
+
   /* ---- 체육교사 보조 프로그램과 같은 계열의 디자인 (v1.5.1) ----
      바탕은 연회색, 카드는 흰색, 강조색은 줄넘기 모듈 색인 코랄 */
   :root {
@@ -491,7 +496,7 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const INSTALL_VIDEO = 'https://youtu.be/5JLZTvS4VPc';
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.2.9', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.2.10', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
