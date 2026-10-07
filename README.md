@@ -10,6 +10,8 @@ Made by 음악적체육인 · 학교·교육용 무료 (판매·광고 금지 �
 ## 처음 설치 (2분, 한 번만)
 
 ### 방법 A — 견본 시트 사본 만들기 (추천)
+▶ 설치 영상(1분): https://youtu.be/5JLZTvS4VPc
+
 1. 아래 링크를 눌러 **사본 만들기** → 내 드라이브에 껍데기가 들어 있는 시트가 생깁니다.
    시트 왼쪽 위 이름 `줄넘기 기록 관리(견본)의 사본` 을 눌러 `6학년 1반 줄넘기`처럼 **우리 반 이름으로 바꿔** 주세요.
    👉 https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy
