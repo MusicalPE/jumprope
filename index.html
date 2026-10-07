@@ -1214,7 +1214,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <section class="tab-pane" data-tab="national">
     <div class="card">
       <h2 style="display:flex;align-items:center;gap:8px;"><span class="je-slot" data-h="30"></span>Jump Earth (점퍼스) 참여 <span class="hint" style="font-weight:600;">전국 줄넘기 현황판</span></h2>
-      <p class="hint" style="margin-top:0;">켜면 우리 학교 기록이 <b>전국 현황판</b>에 모여 다른 학교와 <b>한 달 단위</b>로 순위를 겨뤄요. 매달 1일에 새로 시작하고, 지난 달 1~3등은 <b>기록실</b>에 남습니다. (기본: 꺼짐)</p>
+      <p class="hint" style="margin-top:0;">켜면 우리 학교 기록이 <b>전국 현황판</b>에 모여 다른 학교와 <b>한 달 단위</b>로 순위를 겨뤄요. 매달 1일에 새로 시작하고, 지난 달 1~3등은 <b>명예의 전당</b>에 남습니다. (기본: 꺼짐)</p>
       <div id="natNoCollector" class="warn-box" style="display:none;">전국 현황판 수집 주소가 아직 준비되지 않았어요. 준비되면 여기서 바로 켤 수 있습니다.</div>
       <div class="nat-share">
         <div><b>현황판에 보내는 것</b><br>가린 이름(예: 김*늘) · 학년 · 날짜별 뛴 횟수 · 카메라 인증 횟수 · 등록 학생 수</div>
@@ -1243,7 +1243,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <button type="button" id="saveNatBtn">저장</button>
         <button type="button" class="btn-outline" id="natSyncBtn">지금 보내기</button>
         <a class="btn-outline" id="natBoardLink" target="_blank" rel="noopener">현황판 보기 →</a>
-        <a class="btn-outline" id="natHallLink" target="_blank" rel="noopener">기록실 →</a>
+        <a class="btn-outline" id="natHallLink" target="_blank" rel="noopener">명예의 전당 →</a>
       </div>
       <p id="natMsg" class="hint"></p>
       <p class="hint" style="margin-bottom:0;">학생이 기록을 저장할 때마다 오늘 집계가 보내지고, 관리자 메뉴를 열면 이번 달·지난 달 전체를 한 번 더 맞춥니다(늦게 넣은 기록·승인 반영). 참여를 끄면 현황판에 올라간 우리 학교 기록은 지워져요.</p>
@@ -1292,7 +1292,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <label>주는 날짜 <input type="date" id="certDate"></label>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;"><button type="button" id="certMake">미리 보기</button><button type="button" class="btn-outline" id="certPrint">인쇄 · PDF 저장</button><span id="certMsg" class="hint"></span></div>
-      <p class="hint">급수 인증서는 학생마다 <b>지금 딴 급수</b> 한 장씩, 전국 현황판 상장은 그 달 <b>기록실</b>에 오른 우리 학교·학생(전국 1~3등, 우리 학교 안 1~3등)에게 나옵니다. 인쇄 창에서 "PDF로 저장"을 고르면 파일로 받을 수 있어요.</p>
+      <p class="hint">급수 인증서는 학생마다 <b>지금 딴 급수</b> 한 장씩, 전국 현황판 상장은 그 달 <b>명예의 전당</b>에 오른 우리 학교·학생(전국 1~3등, 우리 학교 안 1~3등)에게 나옵니다. 인쇄 창에서 "PDF로 저장"을 고르면 파일로 받을 수 있어요.</p>
     </div>
     <div id="certPreview" class="cert-preview"></div>
     </section>
@@ -2958,10 +2958,10 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
     const month = $('certMonth').value;
     return Promise.all([NAT.publicId(NAT.cfg.key), fetch(NAT.collector + '?api=hall' + (month ? '&month=' + month : ''), { cache: 'no-store' }).then(function(r){ return r.json(); })]).then(function(r){
       const pid = r[0], j = r[1];
-      if (!j.ok) throw new Error(j.error || '기록실을 불러오지 못했어요');
+      if (!j.ok) throw new Error(j.error || '명예의 전당을 불러오지 못했어요');
       const res = j.result, m = res.month || (res.months || []).filter(function(x){ return x.month === month; })[0] || (res.months || [])[0];
       if (res.list) $('certMonth').innerHTML = res.list.map(function(x){ return '<option value="' + x + '">' + mLabel(x) + '</option>'; }).join('');
-      if (!m) return { html: '', msg: '아직 기록실에 오른 달이 없어요.' };
+      if (!m) return { html: '', msg: '아직 명예의 전당에 오른 달이 없어요.' };
       $('certMonth').value = m.month;
       // 학생 키 → 실명 (우리 학교 학생만, 학교 안에서 계산)
       return Promise.all(students.map(function(s){ return NAT.sha('jr-student|' + NAT.cfg.key + '|' + String(s.id).trim()).then(function(h){ return [h.slice(0, 10), s]; }); })).then(function(pairs){
@@ -2988,7 +2988,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
               body: ml + ' 줄넘기 기록에서 <b>' + esc(school) + ' ' + r + '위</b>(' + Number(x.c).toLocaleString() + '회)를 차지하여<br>이 상장을 드립니다.' }));
           });
         }
-        return { html: pages.join(''), msg: pages.length ? ml + ' · ' + pages.length + '장' : ml + ' 기록실에 우리 학교가 없어요.' };
+        return { html: pages.join(''), msg: pages.length ? ml + ' · ' + pages.length + '장' : ml + ' 명예의 전당에 우리 학교가 없어요.' };
       });
     });
   }
