@@ -496,7 +496,7 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const INSTALL_VIDEO = 'https://youtu.be/5JLZTvS4VPc';
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.2.10', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.2.11', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -846,7 +846,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <span class="brand-word">줄넘기 기록</span>
       </a>
       <div class="topbar-nav">
-        <a class="btn-outline" id="navBoard" style="display:none;" target="_blank" rel="noopener" title="Jump Earth (점퍼스) · 전국 줄넘기 현황판"><span class="je-slot"></span>점퍼스</a>
+        <a class="btn-outline" id="navBoard" style="display:none;" title="Jump Earth (점퍼스) · 전국 줄넘기 현황판"><span class="je-slot"></span>점퍼스</a>
         <button type="button" class="btn-outline" id="navQr" title="학생들이 휴대폰으로 찍어서 들어오는 QR">📱 접속 QR</button>
         <a class="btn-outline" id="navApproval" style="display:none;" href="{{BASE}}&page=adminLogin&next=approval">기록 승인</a>
         <a class="btn-outline" id="navAdmin" href="{{BASE}}&page=adminLogin&next=admin">관리자 메뉴</a>
@@ -1259,8 +1259,8 @@ document.addEventListener('DOMContentLoaded', function(){
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:6px;">
         <button type="button" id="saveNatBtn">저장</button>
         <button type="button" class="btn-outline" id="natSyncBtn">지금 보내기</button>
-        <a class="btn-outline" id="natBoardLink" target="_blank" rel="noopener">현황판 보기 →</a>
-        <a class="btn-outline" id="natHallLink" target="_blank" rel="noopener">명예의 전당 →</a>
+        <a class="btn-outline" id="natBoardLink">현황판 보기 →</a>
+        <a class="btn-outline" id="natHallLink">명예의 전당 →</a>
       </div>
       <p id="natMsg" class="hint"></p>
       <p class="hint" style="margin-bottom:0;">학생이 기록을 저장할 때마다 오늘 집계가 보내지고, 관리자 메뉴를 열면 이번 달·지난 달 전체를 한 번 더 맞춥니다(늦게 넣은 기록·승인 반영). 참여를 끄면 현황판에 올라간 우리 학교 기록은 지워져요.</p>
