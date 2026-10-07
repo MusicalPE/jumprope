@@ -24,13 +24,24 @@
   .nav { display: flex; gap: 8px; flex-wrap: wrap; }
   .btn { display: inline-block; text-decoration: none; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 0.88em; cursor: pointer; font-family: inherit; }
   .btn:hover, .btn.on { border-color: var(--coral); color: var(--coral-dark); background: var(--coral-tint); }
-  .logo-banner { background: #fff; border-radius: var(--r-lg); box-shadow: var(--shadow); margin-bottom: 16px; padding: 10px 16px 6px; text-align: center; }
-  .logo-banner img { display: block; width: 100%; max-width: 440px; height: auto; margin: 0 auto; }
   .hero { background: var(--coral-grad); color: #fff; border-radius: var(--r-lg); padding: 22px 24px; box-shadow: var(--shadow); margin-bottom: 16px; }
   .hero h1 { margin: 0 0 4px; font-size: 1.55em; }
   .hero p { margin: 0; opacity: .92; }
   .hero-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
   .hero select { font: inherit; font-weight: 700; border: 0; border-radius: 999px; padding: 8px 14px; color: var(--ink); background: #fff; }
+  .hero-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); align-items: center; gap: 18px; }
+  .hero-logo { background: #fff; border-radius: var(--r-md); padding: 6px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.10); }
+  .hero-logo img { display: block; width: 100%; height: auto; }
+  .hero-mid { text-align: center; }
+  .hero-mid #heroSub { line-height: 1.75; }
+  .hero-grid .hero-sels { flex-direction: column; align-items: flex-end; gap: 10px; }
+  .hero-grid .hero-sels select { width: 220px; max-width: 100%; }
+  @media (max-width: 640px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 12px; }
+    .hero-logo { max-width: 280px; margin: 0 auto; }
+    .hero-grid .hero-sels { flex-direction: row; justify-content: center; align-items: center; flex-wrap: wrap; }
+    .hero-grid .hero-sels select { width: auto; }
+  }
   .hero-brand { display: flex; align-items: center; gap: 14px; }
   .hero-brand .je-logo { flex: none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.12)); }
   .hero h1 .ko { font-weight: 700; font-size: .78em; opacity: .92; }
@@ -97,14 +108,12 @@
     </nav>
   </header>
 
-  <div class="logo-banner"><img src="../img/jump-earth-logo.webp" width="1100" height="824" alt="Jump Earth 점퍼스 · 전국 줄넘기 현황판"></div>
   <div class="hero">
-    <div class="hero-row">
-      <div class="hero-brand"><svg class="je-logo" viewBox="-6 6 132 88" width="93" height="62" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Jump Earth (점퍼스)"><g transform="translate(60,50) rotate(-18)"><path d="M-48.9,-4.8 A52 14 0 0 1 52,0" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/></g><g transform="translate(60,50) scale(.75)"><defs><radialGradient id="och" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#6FD0F7"/><stop offset="1" stop-color="#0A78B8"/></radialGradient><clipPath id="gch"><circle r="40"/></clipPath></defs><circle r="40" fill="url(#och)"/><g clip-path="url(#gch)" fill="#3CCB6A"><path d="M-30,-22 C-22,-32 -6,-30 -4,-20 C-2,-12 -12,-10 -10,-2 C-8,6 -2,10 -6,18 C-10,26 -18,34 -22,28 C-26,20 -20,12 -26,4 C-32,-4 -38,-14 -30,-22Z"/><path d="M6,-34 C16,-38 30,-30 36,-20 C40,-12 30,-10 26,-4 C22,2 28,10 22,18 C16,26 10,22 10,14 C10,6 2,4 4,-4 C6,-12 -2,-28 6,-34Z"/><path d="M14,27 c6,-2 12,2 10,6 c-2,4 -10,4 -12,0 c-1,-3 0,-5 2,-6z"/></g><path d="M-27,-21 A34 34 0 0 1 -7,-34" stroke="#fff" stroke-opacity=".55" stroke-width="4" fill="none" stroke-linecap="round"/><circle r="40" fill="none" stroke="#fff" stroke-width="4"/></g><g transform="translate(60,50) rotate(-18)"><path d="M52,0 A52 14 0 0 1 -48.9,4.8" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M-50,-5.6 L-57,-13 M-50,5.6 L-57,13" stroke="#1F2937" stroke-width="6.5" stroke-linecap="round"/></g></svg>
-        <div>
-          <h1>전국 줄넘기 현황판</h1>
-          <p id="heroSub">매달 1일에 새로 시작해요</p>
-        </div>
+    <div class="hero-grid">
+      <div class="hero-logo"><img src="../img/jump-earth-logo.webp" width="1100" height="824" alt="Jump Earth 점퍼스 · 전국 줄넘기 현황판"></div>
+      <div class="hero-mid">
+        <h1>전국 줄넘기 현황판</h1>
+        <p id="heroSub">매달 1일에 새로 시작해요</p>
       </div>
       <div class="hero-sels"><select id="gradeSel" aria-label="학년 고르기"><option value="">전체 학년</option></select><select id="monthSel" aria-label="달 고르기"></select></div>
     </div>
@@ -152,7 +161,7 @@
     const sel = $('monthSel'), months = (data.months || []).slice();
     if (months.indexOf(data.current) === -1) months.unshift(data.current);
     sel.innerHTML = months.map(function(m){ return '<option value="' + m + '"' + (m === data.month ? ' selected' : '') + '>' + mLabel(m) + (m === data.current ? ' (이번 달)' : '') + '</option>'; }).join('');
-    $('heroSub').textContent = heroSub() + (data.grade ? ' · ' + data.grade + '학년만' : '');
+    $('heroSub').innerHTML = heroSub().split(' · ').concat(data.grade ? [data.grade + '학년만'] : []).map(function(t){ return String(t).replace(/[&<>]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }).join('<br>');
     const gs = data.grades;
     if (Array.isArray(gs)) {
       const gsel = $('gradeSel'), list = gs.slice();
