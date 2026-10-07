@@ -77,7 +77,7 @@ beta/index.html   시험판 (먼저 여기서 확인 → 정식판으로 복사)
 beta/changelog.json
 Shell.gs          학교 시트용 껍데기 (배포용 사본)
 Collector.gs      전국 현황판 중앙 수집기 (운영자 한 명만 설치)
-board.html        전국 현황판 · hall.html 기록실 · national.json 수집기 주소 (beta/ 에도 같은 구성)
+board.html        전국 현황판 Jump Earth(점퍼스) · hall.html 기록실 · national.json 수집기 주소 (beta/ 에도 같은 구성)
 share/            인디스쿨 공유 꾸러미 (zip·사용설명서·안내 글)
 ```
 

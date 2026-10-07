@@ -380,6 +380,8 @@
   .cert-body { font-size: 2.2cqw; line-height: 1.9; }
   .cert-items { font-size: 1.6cqw; color: #555; }
   .cert-small { font-size: 1.6cqw; color: #666; }
+  .cert-je { display: flex; align-items: center; gap: 1cqw; font-size: 1.6cqw; font-weight: 700; color: #6B7280; margin-bottom: 1cqw; }
+  .je-slot svg { vertical-align: -4px; margin-right: 4px; }
   .cert-date { font-size: 2cqw; margin-top: 2.6cqw; }
   .cert-from { font-size: 2.4cqw; font-weight: 700; margin-top: 1.2cqw; line-height: 1.5; }
   @media print {
@@ -485,7 +487,7 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.2.7', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.2.8', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -517,6 +519,10 @@ function makeRunner(ok, fail){
 }
 window.google = { script: { run: makeRunner(null, null), url: { getLocation: function(cb){ cb({ parameter: Object.assign({}, APP.q), hash: location.hash }); } } } };
 
+/* Jump Earth (점퍼스) 로고 — 전국 현황판 이름표 (h: 높이 px, white: 주황 바탕용) */
+const JE_SVG = { light: '<svg class="je-logo" viewBox="-6 6 132 88" width="132" height="88" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Jump Earth (점퍼스)"><g transform="translate(60,50) rotate(-18)"><path d="M-48.9,-4.8 A52 14 0 0 1 52,0" stroke="#F26A3D" stroke-width="5" fill="none" stroke-linecap="round"/></g><g transform="translate(60,50) scale(.75)"><defs><radialGradient id="oc__U__" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#6FD0F7"/><stop offset="1" stop-color="#0A78B8"/></radialGradient><clipPath id="gc__U__"><circle r="40"/></clipPath></defs><circle r="40" fill="url(#oc__U__)"/><g clip-path="url(#gc__U__)" fill="#3CCB6A"><path d="M-30,-22 C-22,-32 -6,-30 -4,-20 C-2,-12 -12,-10 -10,-2 C-8,6 -2,10 -6,18 C-10,26 -18,34 -22,28 C-26,20 -20,12 -26,4 C-32,-4 -38,-14 -30,-22Z"/><path d="M6,-34 C16,-38 30,-30 36,-20 C40,-12 30,-10 26,-4 C22,2 28,10 22,18 C16,26 10,22 10,14 C10,6 2,4 4,-4 C6,-12 -2,-28 6,-34Z"/><path d="M14,27 c6,-2 12,2 10,6 c-2,4 -10,4 -12,0 c-1,-3 0,-5 2,-6z"/></g><path d="M-27,-21 A34 34 0 0 1 -7,-34" stroke="#fff" stroke-opacity=".55" stroke-width="4" fill="none" stroke-linecap="round"/></g><g transform="translate(60,50) rotate(-18)"><path d="M52,0 A52 14 0 0 1 -48.9,4.8" stroke="#F26A3D" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M-50,-5.6 L-57,-13 M-50,5.6 L-57,13" stroke="#1F2937" stroke-width="6.5" stroke-linecap="round"/></g></svg>', white: '<svg class="je-logo" viewBox="-6 6 132 88" width="132" height="88" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Jump Earth (점퍼스)"><g transform="translate(60,50) rotate(-18)"><path d="M-48.9,-4.8 A52 14 0 0 1 52,0" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/></g><g transform="translate(60,50) scale(.75)"><defs><radialGradient id="oc__U__" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#6FD0F7"/><stop offset="1" stop-color="#0A78B8"/></radialGradient><clipPath id="gc__U__"><circle r="40"/></clipPath></defs><circle r="40" fill="url(#oc__U__)"/><g clip-path="url(#gc__U__)" fill="#3CCB6A"><path d="M-30,-22 C-22,-32 -6,-30 -4,-20 C-2,-12 -12,-10 -10,-2 C-8,6 -2,10 -6,18 C-10,26 -18,34 -22,28 C-26,20 -20,12 -26,4 C-32,-4 -38,-14 -30,-22Z"/><path d="M6,-34 C16,-38 30,-30 36,-20 C40,-12 30,-10 26,-4 C22,2 28,10 22,18 C16,26 10,22 10,14 C10,6 2,4 4,-4 C6,-12 -2,-28 6,-34Z"/><path d="M14,27 c6,-2 12,2 10,6 c-2,4 -10,4 -12,0 c-1,-3 0,-5 2,-6z"/></g><path d="M-27,-21 A34 34 0 0 1 -7,-34" stroke="#fff" stroke-opacity=".55" stroke-width="4" fill="none" stroke-linecap="round"/><circle r="40" fill="none" stroke="#fff" stroke-width="4"/></g><g transform="translate(60,50) rotate(-18)"><path d="M52,0 A52 14 0 0 1 -48.9,4.8" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M-50,-5.6 L-57,-13 M-50,5.6 L-57,13" stroke="#1F2937" stroke-width="6.5" stroke-linecap="round"/></g></svg>' };
+function jeLogo(h, white, style){ const u = 'je' + (jeLogo.n = (jeLogo.n || 0) + 1); h = h || 20;
+  return JE_SVG[white ? 'white' : 'light'].split('__U__').join(u).replace('width="132" height="88"', 'width="' + Math.round(h * 1.5) + '" height="' + h + '"' + (style ? ' style="' + style + '"' : '')); }
 /* ===== 전국 현황판 (2.1) =====
    껍데기는 그대로 두고, 참여 설정은 EXTRA_SETTINGS.nat = { on, key, name, showName } 에 둔다.
    담당 교사·연락처는 EXTRA_SETTINGS(누구나 읽을 수 있음)에 두지 않고 관리자 기기(localStorage)에만 두며,
@@ -778,6 +784,7 @@ function render(view){
   const name = tpl.id.slice(2);
   document.getElementById('app').innerHTML = tpl.innerHTML.split('{{BASE}}').join(APP.base).split('{{TOKEN}}').join(encodeURIComponent(APP.q.token || ''));
   VIEWS[name]();
+  document.querySelectorAll('.je-slot').forEach(function(el){ if (!el.firstChild) el.innerHTML = jeLogo(+el.getAttribute('data-h') || 20); });
 }
 function showSetup(msg){
   document.getElementById('app').innerHTML =
@@ -822,7 +829,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <span class="brand-word">줄넘기 기록</span>
       </a>
       <div class="topbar-nav">
-        <a class="btn-outline" id="navBoard" style="display:none;" target="_blank" rel="noopener">🏆 전국 현황판</a>
+        <a class="btn-outline" id="navBoard" style="display:none;" target="_blank" rel="noopener" title="Jump Earth (점퍼스) · 전국 줄넘기 현황판"><span class="je-slot"></span>점퍼스</a>
         <button type="button" class="btn-outline" id="navQr" title="학생들이 휴대폰으로 찍어서 들어오는 QR">📱 접속 QR</button>
         <a class="btn-outline" id="navApproval" style="display:none;" href="{{BASE}}&page=adminLogin&next=approval">기록 승인</a>
         <a class="btn-outline" id="navAdmin" href="{{BASE}}&page=adminLogin&next=admin">관리자 메뉴</a>
@@ -1032,7 +1039,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <button type="button" data-tab="register"><span class="ico"></span>학생 등록</button>
       <button type="button" data-tab="camera"><span class="ico"></span>카메라 판정기</button>
       <button type="button" data-tab="ai"><span class="ico"></span>AI 한마디</button>
-      <button type="button" data-tab="national"><span class="ico"></span>전국 현황판</button>
+      <button type="button" data-tab="national"><span class="ico"></span>점퍼스 · 전국</button>
       <button type="button" data-tab="levels"><span class="ico"></span>급수 인증<span class="new-dot feat-new" data-new="levels">NEW</span></button>
       <button type="button" data-tab="certs"><span class="ico"></span>인증서 · 상장<span class="new-dot feat-new" data-new="certs">NEW</span></button>
       <button type="button" data-tab="journey"><span class="ico"></span>우리 반 여행<span class="new-dot feat-new" data-new="journey">NEW</span></button>
@@ -1205,7 +1212,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     <section class="tab-pane" data-tab="national">
     <div class="card">
-      <h2>전국 현황판 참여</h2>
+      <h2 style="display:flex;align-items:center;gap:8px;"><span class="je-slot" data-h="30"></span>Jump Earth (점퍼스) 참여 <span class="hint" style="font-weight:600;">전국 줄넘기 현황판</span></h2>
       <p class="hint" style="margin-top:0;">켜면 우리 학교 기록이 <b>전국 현황판</b>에 모여 다른 학교와 <b>한 달 단위</b>로 순위를 겨뤄요. 매달 1일에 새로 시작하고, 지난 달 1~3등은 <b>기록실</b>에 남습니다. (기본: 꺼짐)</p>
       <div id="natNoCollector" class="warn-box" style="display:none;">전국 현황판 수집 주소가 아직 준비되지 않았어요. 준비되면 여기서 바로 켤 수 있습니다.</div>
       <div class="nat-share">
@@ -1213,7 +1220,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <div><b>운영자만 보는 것</b><br>학교 이름 · 담당 교사 · 연락처 (현황판에는 안 나옴)</div>
         <div><b>보내지 않는 것</b><br>학생 실명 · 반 · 번호 · 비밀번호 · 그 밖의 학교 시트 내용</div>
       </div>
-      <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="natOn" style="width:auto; margin:0;"> 전국 현황판에 참여하기</label>
+      <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="natOn" style="width:auto; margin:0;"> 점퍼스(전국 현황판)에 참여하기</label>
       <div class="nat-reg">
         <label>학교 이름 <span class="req">*</span><input id="natName" maxlength="40" placeholder="예: 햇살초등학교"></label>
         <label>담당 교사 <span class="req">*</span><input id="natTeacher" maxlength="30" placeholder="예: 홍길동"></label>
@@ -1272,7 +1279,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="card">
       <h2>인증서 · 상장 출력</h2>
       <div class="form-row">
-        <label>종류 <select id="certKind"><option value="level">급수 인증서</option><option value="nat">전국 현황판 순위 상장</option></select></label>
+        <label>종류 <select id="certKind"><option value="level">급수 인증서</option><option value="nat">점퍼스 순위 상장</option></select></label>
         <label id="certClassRow">반 <select id="certClass"></select></label>
         <label id="certMonthRow" style="display:none;">달 <select id="certMonth"></select></label>
       </div>
@@ -2916,6 +2923,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
   });
   function page(o){
     return '<div class="cert ' + o.cls + '"><div class="cert-in">' +
+      (o.cls === 'cert-award' && o.je ? '<div class="cert-je">' + jeLogo(40, false, 'height:6cqw;width:9cqw') + '<span>Jump Earth · 점퍼스</span></div>' : '') +
       '<div class="cert-title">' + o.title + '</div>' +
       (o.badge || '') +
       '<div class="cert-who">' + o.who + '</div>' +
@@ -2962,13 +2970,13 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
         const kinds = { total: ['학교 합계', function(s){ return Number(s.total).toLocaleString() + '회'; }], avg: ['1인당 평균', function(s){ return Number(s.avg).toLocaleString() + '회'; }], rate: ['참여율', function(s){ return s.rate + '%'; }] };
         Object.keys(kinds).forEach(function(k){
           (m.schools[k] || []).filter(function(s){ return s.pid === pid; }).forEach(function(s){
-            pages.push(page({ cls: 'cert-award', title: '상　　장', badge: '<div class="cert-rank">전국 ' + s.rank + '위</div>', who: '<b>' + esc(school) + '</b>',
-              body: ml + ' 전국 줄넘기 현황판에서 <b>' + kinds[k][0] + ' 전국 ' + s.rank + '위</b>(' + kinds[k][1](s) + ')를 차지하여<br>이 상장을 드립니다.' }));
+            pages.push(page({ cls: 'cert-award', title: '상　　장', je: true, badge: '<div class="cert-rank">전국 ' + s.rank + '위</div>', who: '<b>' + esc(school) + '</b>',
+              body: ml + ' 전국 줄넘기 현황판 <b>Jump Earth(점퍼스)</b>에서<br><b>' + kinds[k][0] + ' 전국 ' + s.rank + '위</b>(' + kinds[k][1](s) + ')를 차지하여 이 상장을 드립니다.' }));
           });
         });
         (m.students || []).filter(function(x){ return (x.pid && x.pid === pid) || (x.k && byKey[x.k]); }).forEach(function(x){
-          pages.push(page({ cls: 'cert-award', title: '상　　장', badge: '<div class="cert-rank">전국 ' + x.rank + '위</div>', who: nameOf(x),
-            body: ml + ' 전국 줄넘기 현황판 <b>학생 순위 전국 ' + x.rank + '위</b>(' + Number(x.c).toLocaleString() + '회)에 올라<br>꾸준히 노력한 모범이 되었기에 이 상장을 드립니다.' }));
+          pages.push(page({ cls: 'cert-award', title: '상　　장', je: true, badge: '<div class="cert-rank">전국 ' + x.rank + '위</div>', who: nameOf(x),
+            body: ml + ' 전국 줄넘기 현황판 <b>Jump Earth(점퍼스)</b>에서<br><b>학생 순위 전국 ' + x.rank + '위</b>(' + Number(x.c).toLocaleString() + '회)에 올라 꾸준히 노력한 모범이 되었기에<br>이 상장을 드립니다.' }));
         });
         const ins = (m.inSchool || []).filter(function(s){ return s.pid === pid; })[0];
         if (ins) {

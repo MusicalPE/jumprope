@@ -82,3 +82,5 @@ python3 test_site.py                              # playwright 전체 흐름 시
   https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy
   - 껍데기 새 판이 나오면 견본 시트의 Apps Script 에도 붙여 넣고 저장(배포는 하지 않음)
   - README·manual.html(PDF)·인디스쿨 안내글 설치 부분을 방법 A(견본)/B(직접 붙여넣기)로 바꿈, zip 재생성
+- 2.2.8: 전국 현황판 이름 Jump Earth (점퍼스). 로고는 B 시안(줄넘기 줄이 궤도처럼 지구를 감쌈, share/brand/).
+  board.html·hall.html 머리에 흰색판 SVG(인라인)·파비콘, index.html 의 jeLogo(h, white) 로 메인 버튼·관리자 탭·전국 순위 상장에 표시
