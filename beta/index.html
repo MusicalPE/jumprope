@@ -245,8 +245,7 @@
   .order-cell { text-align: center; color: var(--coral-dark); font-weight: 800; }
   /* 학생 관리: 반별로 골라 보기 + 한 줄에 한 학생 */
   .stu-bar { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:4px 0 10px; }
-  .stu-bar .chip { padding:6px 12px; min-height:0; font-size:0.88em; border-radius:99px; background:var(--surface); color:var(--ink-2); border:1px solid var(--line); box-shadow:none; }
-  .stu-bar .chip.on { background:var(--coral); border-color:var(--coral); color:#fff; }
+  .stu-bar select { width:auto; margin:0; padding:6px 28px 6px 10px; font-size:0.9em; font-weight:700; }
   .stu-bar input { width:auto; flex:1 1 140px; max-width:220px; margin:0 0 0 auto; padding:6px 10px; font-size:0.9em; }
   .stu-bar .cnt { color:var(--muted); font-size:0.88em; white-space:nowrap; }
   .stu-wrap { overflow-x:auto; }
@@ -1157,7 +1156,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="card">
       <h2>학생 관리</h2>
       <p class="hint">칸을 고치면 그 줄에 <b>저장</b> 버튼이 나와요(엔터로도 저장). ≡ 를 끌어 순서를 바꾸고, <b>기록</b>으로 학생별 기록을 확인·수정·삭제해요.</p>
-      <div class="stu-bar"><span id="stuClasses"></span><span class="cnt" id="stuCount"></span><input type="search" id="stuSearch" placeholder="이름 찾기"></div>
+      <div class="stu-bar"><select id="stuGrade" aria-label="학년"></select><select id="stuClass" aria-label="반"></select><span class="cnt" id="stuCount"></span><input type="search" id="stuSearch" placeholder="이름 찾기"></div>
       <div class="stu-wrap"><table id="studentTable">
         <thead><tr><th></th><th>순</th><th>학년</th><th>반</th><th>번호</th><th>이름</th><th>비밀번호 변경</th><th></th></tr></thead>
         <tbody></tbody>
@@ -2425,7 +2424,7 @@ document.getElementById('resetRecordsBtn').addEventListener('click', function(){
 });
 
 function escAttr_(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-let stuFilter = (function(){ try { return localStorage.getItem('jumpropeStuFilter') || 'all'; } catch (e) { return 'all'; } })();
+let stuFilter = (function(){ try { const v = JSON.parse(localStorage.getItem('jumpropeStuFilter2') || '{}'); return { g: v.g || '', c: v.c || '' }; } catch (e) { return { g: '', c: '' }; } })();
 function renderTable(list) {
   currentStudents = list || [];
   const tbody = document.querySelector('#studentTable tbody');
@@ -2450,31 +2449,34 @@ function renderTable(list) {
   renderStuClasses();
   applyStuFilter();
 }
-// 반 고르기 칩 (전체 + 학년-반)
+// 반 고르기: 학년 · 반 두 칸 (반이 많아도 짧게)
 function renderStuClasses() {
-  const keys = [];
-  currentStudents.forEach(function(s){ const k = s.grade + '-' + s.cls; if (keys.indexOf(k) < 0) keys.push(k); });
-  keys.sort(function(a, b){ const x = a.split('-').map(Number), y = b.split('-').map(Number); return (x[0]-y[0]) || (x[1]-y[1]); });
-  if (stuFilter !== 'all' && keys.indexOf(stuFilter) < 0) stuFilter = 'all';
-  const box = document.getElementById('stuClasses');
-  box.innerHTML = (keys.length > 1 ? '<button type="button" class="chip" data-k="all">전체</button> ' : '') +
-    keys.map(function(k){ const p = k.split('-'); return '<button type="button" class="chip" data-k="'+escAttr_(k)+'">'+escAttr_(p[0])+'학년 '+escAttr_(p[1])+'반</button>'; }).join(' ');
-  box.querySelectorAll('.chip').forEach(function(b){ b.classList.toggle('on', b.dataset.k === stuFilter || (keys.length === 1)); });
+  const gs = [], cs = {};
+  currentStudents.forEach(function(s){ const g = String(s.grade), c = String(s.cls); if (gs.indexOf(g) < 0) gs.push(g); (cs[g] = cs[g] || []).indexOf(c) < 0 && cs[g].push(c); });
+  gs.sort(function(a, b){ return a - b; });
+  if (stuFilter.g && gs.indexOf(stuFilter.g) < 0) stuFilter = { g: '', c: '' };
+  const cl = stuFilter.g ? (cs[stuFilter.g] || []).slice().sort(function(a, b){ return a - b; }) : [];
+  if (stuFilter.c && cl.indexOf(stuFilter.c) < 0) stuFilter.c = '';
+  const gSel = document.getElementById('stuGrade'), cSel = document.getElementById('stuClass');
+  gSel.innerHTML = '<option value="">전체 학년</option>' + gs.map(function(g){ return '<option value="'+escAttr_(g)+'">'+escAttr_(g)+'학년</option>'; }).join('');
+  gSel.value = stuFilter.g;
+  cSel.innerHTML = '<option value="">' + (stuFilter.g ? '전체 반' : '반') + '</option>' + cl.map(function(c){ return '<option value="'+escAttr_(c)+'">'+escAttr_(c)+'반</option>'; }).join('');
+  cSel.value = stuFilter.c; cSel.disabled = !stuFilter.g;
+  gSel.style.display = cSel.style.display = gs.length > 1 || cl.length > 1 || (gs.length === 1 && (cs[gs[0]] || []).length > 1) ? '' : 'none';
 }
 function applyStuFilter() {
   const q = (document.getElementById('stuSearch').value || '').trim();
   let shown = 0;
   document.querySelectorAll('#studentTable tbody tr').forEach(function(tr){
-    const ok = (stuFilter === 'all' || tr.dataset.key === stuFilter) && (!q || (tr.dataset.name || '').indexOf(q) >= 0);
+    const k = tr.dataset.key.split('-');
+    const ok = (!stuFilter.g || k[0] === stuFilter.g) && (!stuFilter.c || k[1] === stuFilter.c) && (!q || (tr.dataset.name || '').indexOf(q) >= 0);
     tr.style.display = ok ? '' : 'none'; if (ok) shown++;
   });
   document.getElementById('stuCount').textContent = shown + '명' + (shown !== currentStudents.length ? ' / 전체 ' + currentStudents.length + '명' : '');
 }
-document.getElementById('stuClasses').addEventListener('click', function(e){
-  const b = e.target.closest('.chip'); if (!b) return;
-  stuFilter = b.dataset.k; try { localStorage.setItem('jumpropeStuFilter', stuFilter); } catch (x) {}
-  renderStuClasses(); applyStuFilter();
-});
+function saveStuFilter() { try { localStorage.setItem('jumpropeStuFilter2', JSON.stringify(stuFilter)); } catch (x) {} renderStuClasses(); applyStuFilter(); }
+document.getElementById('stuGrade').addEventListener('change', function(e){ stuFilter = { g: e.target.value, c: '' }; saveStuFilter(); });
+document.getElementById('stuClass').addEventListener('change', function(e){ stuFilter.c = e.target.value; saveStuFilter(); });
 document.getElementById('stuSearch').addEventListener('input', applyStuFilter);
 // 칸을 고치면 그 줄만 저장 버튼 표시, 엔터로 저장
 document.querySelector('#studentTable tbody').addEventListener('input', function(e){ const tr = e.target.closest('tr'); if (tr) tr.classList.add('dirty'); });
