@@ -15,6 +15,7 @@
 <style>
   /* 큰 제목·줄넘기왕·통계 숫자 글꼴: 한글·숫자 주아(Jua), 영어 도현(Do Hyeon), 나머지 Pretendard (모두 OFL) */
   @font-face { font-family: 'JE Latin'; src: url(../fonts/do-hyeon-latin.woff2) format('woff2'); font-display: swap; unicode-range: U+0041-005A, U+0061-007A; }
+  .jn { font-family: 'JE Latin', 'Jua', 'Pretendard', sans-serif; font-weight: 400; color: #F26A3D; font-size: 1.06em; margin-right: 4px; letter-spacing: .01em; }
   body .hero h1, body .today-lead-name, body .today-lead-count, body .stat-value { font-family: 'JE Latin', 'Jua', 'Pretendard', sans-serif; font-weight: 400; }
 
   /* ---- 체육교사 보조 프로그램과 같은 계열의 디자인 (v1.5.1) ----
@@ -518,7 +519,7 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const INSTALL_VIDEO = 'https://youtu.be/5JLZTvS4VPc';
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.3.0', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.3.1', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -827,7 +828,7 @@ function render(view){
 }
 function showSetup(msg){
   document.getElementById('app').innerHTML =
-    '<div class="boot-wrap"><div class="card"><div class="boot-hero"><h1>🏆 줄넘기 기록 관리</h1><p>학교 시트와 연결이 필요해요</p></div>' +
+    '<div class="boot-wrap"><div class="card"><div class="boot-hero"><h1>Jump Us! 점퍼스 · 줄넘기 기록</h1><p>학교 시트와 연결이 필요해요</p></div>' +
     (msg ? '<div class="warn-box">' + msg + '</div>' : '') +
     '<p class="hint" style="margin-top:0;">학교 시트 웹앱 주소(<code>https://script.google.com/macros/s/…/exec</code>)를 붙여넣으세요. 배포 주소를 브라우저로 열면 나오는 "프로그램 열기" 버튼으로 들어와도 됩니다.</p>' +
     '<div class="tip-box" style="margin:0 0 14px;padding:12px 14px;border-radius:12px;background:var(--bg);font-size:14px;line-height:1.6;"><b>처음 설치하시나요?</b><br>① <a href="' + TEMPLATE_URL + '" target="_blank" rel="noopener"><b>견본 시트 사본 만들기</b></a> → ② 사본에서 확장 프로그램 → Apps Script → <b>배포 → 새 배포 → 웹 앱</b>(실행: 나 · 액세스: <b>모든 사용자</b>) → ③ 나온 주소를 여기에 붙여넣기<br>▶ <a href="' + INSTALL_VIDEO + '" target="_blank" rel="noopener"><b>설치 영상 보기 (1분)</b></a></div>' +
@@ -865,10 +866,10 @@ document.addEventListener('DOMContentLoaded', function(){
     <header class="topbar">
       <a class="brand" href="{{BASE}}">
         <span class="brand-mark"></span>
-        <span class="brand-word">줄넘기 기록</span>
+        <span class="brand-word"><b class="jn">Jump Us!</b>줄넘기 기록</span>
       </a>
       <div class="topbar-nav">
-        <a class="btn-outline" id="navBoard" style="display:none;" title="Jump Earth (점퍼스) · 전국 줄넘기 현황판"><span class="je-slot"></span>점퍼스</a>
+        <a class="btn-outline" id="navBoard" style="display:none;" title="Jump Earth (점퍼스) · 전국 줄넘기 현황판"><span class="je-slot"></span><b class="jn">Jump Earth!</b>전국</a>
         <button type="button" class="btn-outline" id="navQr" title="학생들이 휴대폰으로 찍어서 들어오는 QR">📱 접속 QR</button>
         <a class="btn-outline" id="navApproval" style="display:none;" href="{{BASE}}&page=adminLogin&next=approval">기록 승인</a>
         <a class="btn-outline" id="navAdmin" href="{{BASE}}&page=adminLogin&next=admin">관리자 메뉴</a>
@@ -1078,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <button type="button" data-tab="register"><span class="ico"></span>학생 등록</button>
       <button type="button" data-tab="camera"><span class="ico"></span>카메라 판정기</button>
       <button type="button" data-tab="ai"><span class="ico"></span>AI 한마디</button>
-      <button type="button" data-tab="national"><span class="ico"></span>점퍼스 · 전국</button>
+      <button type="button" data-tab="national"><span class="ico"></span>Jump Earth! 전국</button>
       <button type="button" data-tab="levels"><span class="ico"></span>급수 인증<span class="new-dot feat-new" data-new="levels">NEW</span></button>
       <button type="button" data-tab="certs"><span class="ico"></span>인증서 · 상장<span class="new-dot feat-new" data-new="certs">NEW</span></button>
       <button type="button" data-tab="journey"><span class="ico"></span>우리 반 여행<span class="new-dot feat-new" data-new="journey">NEW</span></button>
@@ -1254,7 +1255,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <section class="tab-pane" data-tab="national">
     <div class="card">
       <h2 style="display:flex;align-items:center;gap:8px;"><span class="je-slot" data-h="30"></span>Jump Earth (점퍼스) 참여 <span class="hint" style="font-weight:600;">전국 줄넘기 현황판</span></h2>
-      <p class="hint" style="margin-top:0;">켜면 우리 학교 기록이 <b>전국 현황판</b>에 모여 다른 학교와 <b>한 달 단위</b>로 순위를 겨뤄요. 매달 1일에 새로 시작하고, 지난 달 1~3등은 <b>명예의 전당</b>에 남습니다. (기본: 꺼짐)</p>
+      <p class="hint" style="margin-top:0;">켜면 우리 학교 기록이 <b>전국 현황판</b>에 모여 다른 학교와 <b>한 달 단위</b>로 순위를 겨뤄요. 매달 1일에 새로 시작하고, 지난 달 1~3등은 <b>기록실</b>에 남습니다. (기본: 꺼짐)</p>
       <div id="natNoCollector" class="warn-box" style="display:none;">전국 현황판 수집 주소가 아직 준비되지 않았어요. 준비되면 여기서 바로 켤 수 있습니다.</div>
       <div class="nat-share">
         <div><b>현황판에 보내는 것</b><br>가린 이름(예: 김*늘) · 학년 · 날짜별 뛴 횟수 · 카메라 인증 횟수 · 등록 학생 수</div>
@@ -1283,7 +1284,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <button type="button" id="saveNatBtn">저장</button>
         <button type="button" class="btn-outline" id="natSyncBtn">지금 보내기</button>
         <a class="btn-outline" id="natBoardLink">현황판 보기 →</a>
-        <a class="btn-outline" id="natHallLink">명예의 전당 →</a>
+        <a class="btn-outline" id="natHallLink"><b class="jn">Jumpers!</b>기록실 →</a>
       </div>
       <p id="natMsg" class="hint"></p>
       <p class="hint" style="margin-bottom:0;">학생이 기록을 저장할 때마다 오늘 집계가 보내지고, 관리자 메뉴를 열면 이번 달·지난 달 전체를 한 번 더 맞춥니다(늦게 넣은 기록·승인 반영). 참여를 끄면 현황판에 올라간 우리 학교 기록은 지워져요.</p>
@@ -1332,7 +1333,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <label>주는 날짜 <input type="date" id="certDate"></label>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;"><button type="button" id="certMake">미리 보기</button><button type="button" class="btn-outline" id="certPrint">인쇄 · PDF 저장</button><span id="certMsg" class="hint"></span></div>
-      <p class="hint">급수 인증서는 학생마다 <b>지금 딴 급수</b> 한 장씩, 전국 현황판 상장은 그 달 <b>명예의 전당</b>에 오른 우리 학교·학생(전국 1~3등, 우리 학교 안 1~3등)에게 나옵니다. 인쇄 창에서 "PDF로 저장"을 고르면 파일로 받을 수 있어요.</p>
+      <p class="hint">급수 인증서는 학생마다 <b>지금 딴 급수</b> 한 장씩, 전국 현황판 상장은 그 달 <b>기록실</b>에 오른 우리 학교·학생(전국 1~3등, 우리 학교 안 1~3등)에게 나옵니다. 인쇄 창에서 "PDF로 저장"을 고르면 파일로 받을 수 있어요.</p>
     </div>
     <div id="certPreview" class="cert-preview"></div>
     </section>
@@ -2747,7 +2748,7 @@ document.getElementById('closeRecordsPanel').addEventListener('click', function(
     if (!document.body.contains(btn)) return;   // 다른 화면으로 옮겨 간 뒤
     if (state === 'installed' || standalone) {
       btn.style.display = 'none'; help.textContent = '';
-      msg.textContent = state === 'installed' ? '앱 아이콘을 만들었어요! 바탕화면이나 시작 메뉴에서 "줄넘기 기록"을 찾아 보세요.' : '지금 앱으로 열려 있어요. (아이콘이 이미 있어요)';
+      msg.textContent = state === 'installed' ? '앱 아이콘을 만들었어요! 바탕화면이나 시작 메뉴에서 "점퍼스"를 찾아 보세요.' : '지금 앱으로 열려 있어요. (아이콘이 이미 있어요)';
       return;
     }
     btn.style.display = '';
@@ -3061,10 +3062,10 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
     const month = $('certMonth').value;
     return Promise.all([NAT.publicId(NAT.cfg.key), fetch(NAT.collector + '?api=hall' + (month ? '&month=' + month : ''), { cache: 'no-store' }).then(function(r){ return r.json(); })]).then(function(r){
       const pid = r[0], j = r[1];
-      if (!j.ok) throw new Error(j.error || '명예의 전당을 불러오지 못했어요');
+      if (!j.ok) throw new Error(j.error || '기록실을 불러오지 못했어요');
       const res = j.result, m = res.month || (res.months || []).filter(function(x){ return x.month === month; })[0] || (res.months || [])[0];
       if (res.list) $('certMonth').innerHTML = res.list.map(function(x){ return '<option value="' + x + '">' + mLabel(x) + '</option>'; }).join('');
-      if (!m) return { html: '', msg: '아직 명예의 전당에 오른 달이 없어요.' };
+      if (!m) return { html: '', msg: '아직 기록실에 오른 달이 없어요.' };
       $('certMonth').value = m.month;
       // 학생 키 → 실명 (우리 학교 학생만, 학교 안에서 계산)
       return Promise.all(students.map(function(s){ return NAT.sha('jr-student|' + NAT.cfg.key + '|' + String(s.id).trim()).then(function(h){ return [h.slice(0, 10), s]; }); })).then(function(pairs){
@@ -3101,7 +3102,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
               body: ml + ' 줄넘기 기록에서 <b>' + esc(school) + ' ' + r + '위</b>(' + Number(x.c).toLocaleString() + '회)를 차지하여<br>이 상장을 드립니다.' }));
           });
         }
-        return { html: pages.join(''), msg: pages.length ? ml + ' · ' + pages.length + '장' : ml + ' 명예의 전당에 우리 학교가 없어요.' };
+        return { html: pages.join(''), msg: pages.length ? ml + ' · ' + pages.length + '장' : ml + ' 기록실에 우리 학교가 없어요.' };
         });
       });
     });

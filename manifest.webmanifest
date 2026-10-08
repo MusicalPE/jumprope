@@ -1,7 +1,7 @@
 {
   "id": "/jumprope/",
-  "name": "줄넘기 기록 관리",
-  "short_name": "줄넘기 기록",
+  "name": "Jump Us! 점퍼스 · 줄넘기 기록",
+  "short_name": "점퍼스",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
