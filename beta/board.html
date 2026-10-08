@@ -352,7 +352,7 @@
           '<td class="num mono">' + n(sc.total) + '</td>' +
           (sc.noReg ? '<td class="num mono">–</td><td class="num mono">–</td>' :
           '<td class="num mono">' + n(sc.avg) + '</td>' +
-          '<td class="num mono">' + sc.rate + '%<span class="sub">' + sc.participants + '/' + sc.registered + '</span></td>') +
+          '<td class="num mono" title="' + sc.participants + '명 / ' + sc.registered + '명">' + sc.rate + '%</td>') +
           '<td class="num mono hide-sm">' + n(sc.camera) + '</td></tr>';
         if (openPid === sc.pid) html += '<tr class="detail"><td colspan="6">' + schoolDetail(sc) + '</td></tr>';
       });
