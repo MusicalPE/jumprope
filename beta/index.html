@@ -429,6 +429,8 @@
   .jr-tag { font-size: 0.8em; color: var(--coral-dark); font-weight: 700; }
   .jr-num { color: var(--ink-2); } .jr-num b { font-size: 1.3em; color: var(--ink); }
   .jr-track { position: relative; height: 12px; background: var(--bg); border-radius: 999px; margin: 26px 8px 0; }
+  .jr-sea { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(90deg, #BAE6FD 0 6px, #E0F2FE 6px 10px); }
+  .jr-fill { z-index: 1; } .jr-stop, .jr-me { z-index: 2; }
   .jr-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--coral-grad); border-radius: 999px; }
   .jr-me { position: absolute; top: -24px; transform: translateX(-50%); font-size: 20px; }
   .jr-stop { position: absolute; top: 0; transform: translateX(-50%); }
@@ -519,7 +521,7 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const INSTALL_VIDEO = 'https://youtu.be/5JLZTvS4VPc';
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.3.1', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.3.2', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -783,29 +785,63 @@ function ourLabel(list){
 function applyOurLabel(){ const w = APP.ourLabel || '우리 반'; document.querySelectorAll('[data-our]').forEach(function(el){ el.textContent = el.getAttribute('data-our').replace('{our}', w); }); }
 
 /* ===== 우리 반 줄넘기 여행 — 1회 = 1m =====
-   EXTRA_SETTINGS.journey = { course, base } : base = 새로 시작할 때의 누적 횟수 (그 뒤로 뛴 만큼 나아감) */
+   국토 대장정 하나: 학교마다 출발 도시를 고르면, 가장 가까운 큰길 도시로 가서 한 바퀴 돌고 다시 출발 도시로 돌아옴.
+   제주는 여수 → (배) 제주 → (배) 목포. 울릉은 포항에서 배.
+   EXTRA_SETTINGS.journey = { on, start, base } : start = 출발 도시 이름, base = 새로 시작할 때의 누적 횟수 */
 const JOURNEY = {
-  COURSES: {
-    busan: { name: '서울 → 부산', km: 400, stops: [['서울', 0], ['수원', 30], ['천안', 85], ['대전', 150], ['김천', 230], ['대구', 290], ['부산', 400]] },
-    korea: { name: '국토 한 바퀴', km: 1200, stops: [['서울', 0], ['강릉', 230], ['포항', 490], ['부산', 600], ['목포', 860], ['전주', 1000], ['서울', 1200]] },
-    jeju: { name: '서울 → 제주 (배 타고)', km: 560, stops: [['서울', 0], ['대전', 150], ['광주', 300], ['목포', 370], ['제주', 560]] },
-    earth: { name: '지구 한 바퀴', km: 40075, stops: [['출발', 0], ['서울→부산 거리 10번', 4000], ['베이징~모스크바쯤', 10000], ['반 바퀴', 20037], ['3/4', 30056], ['한 바퀴', 40075]] }
+  // 큰길(한 바퀴) — [도시, 이 도시까지 누적 km, 앞 도시에서 배로 오는가]
+  LOOP: [['대전', 0], ['서울', 150], ['춘천', 230], ['강릉', 380], ['안동', 560], ['포항', 660], ['부산', 770],
+    ['여수', 970], ['제주', 1150, 1], ['목포', 1300, 1], ['광주', 1370], ['전주', 1470], ['대전', 1560]],
+  // 출발 도시 고르기 목록 (시·도별) — [이름, 위도, 경도]
+  CITIES: {
+    '특별·광역시': [['서울', 37.566, 126.978], ['부산', 35.180, 129.075], ['대구', 35.871, 128.601], ['인천', 37.456, 126.705], ['광주', 35.160, 126.851], ['대전', 36.350, 127.385], ['울산', 35.539, 129.311], ['세종', 36.480, 127.289]],
+    '경기': [['수원', 37.263, 127.029], ['성남', 37.420, 127.127], ['고양', 37.658, 126.832], ['용인', 37.241, 127.178], ['부천', 37.503, 126.766], ['안산', 37.322, 126.831], ['안양', 37.394, 126.957], ['남양주', 37.636, 127.217], ['화성', 37.200, 126.831], ['평택', 36.992, 127.113], ['의정부', 37.738, 127.034], ['시흥', 37.380, 126.803], ['파주', 37.760, 126.780], ['김포', 37.615, 126.716], ['광명', 37.479, 126.865], ['경기 광주', 37.429, 127.255], ['군포', 37.362, 126.935], ['하남', 37.539, 127.215], ['오산', 37.150, 127.077], ['이천', 37.272, 127.435], ['안성', 37.008, 127.280], ['의왕', 37.345, 126.968], ['양주', 37.785, 127.046], ['구리', 37.594, 127.130], ['포천', 37.895, 127.200], ['여주', 37.298, 127.637], ['동두천', 37.904, 127.061], ['과천', 37.429, 126.988], ['양평', 37.492, 127.488], ['가평', 37.831, 127.510], ['연천', 38.096, 127.075]],
+    '강원': [['춘천', 37.881, 127.730], ['원주', 37.342, 127.920], ['강릉', 37.752, 128.876], ['동해', 37.525, 129.114], ['태백', 37.164, 128.986], ['속초', 38.207, 128.592], ['삼척', 37.450, 129.165], ['홍천', 37.697, 127.889], ['횡성', 37.492, 127.985], ['영월', 37.184, 128.462], ['평창', 37.371, 128.390], ['정선', 37.381, 128.661], ['철원', 38.147, 127.313], ['화천', 38.106, 127.708], ['양구', 38.110, 127.990], ['인제', 38.069, 128.170], ['강원 고성', 38.381, 128.468], ['양양', 38.075, 128.619]],
+    '충북': [['청주', 36.642, 127.489], ['충주', 36.991, 127.926], ['제천', 37.133, 128.191], ['보은', 36.489, 127.729], ['옥천', 36.306, 127.571], ['영동', 36.175, 127.783], ['증평', 36.785, 127.581], ['진천', 36.855, 127.436], ['괴산', 36.815, 127.787], ['음성', 36.940, 127.690], ['단양', 36.985, 128.366]],
+    '충남': [['천안', 36.815, 127.114], ['공주', 36.447, 127.119], ['보령', 36.333, 126.613], ['아산', 36.790, 127.002], ['서산', 36.785, 126.450], ['논산', 36.187, 127.099], ['계룡', 36.275, 127.249], ['당진', 36.890, 126.628], ['금산', 36.109, 127.488], ['부여', 36.276, 126.910], ['서천', 36.080, 126.692], ['청양', 36.459, 126.802], ['홍성', 36.601, 126.661], ['예산', 36.683, 126.845], ['태안', 36.746, 126.298]],
+    '전북': [['전주', 35.824, 127.148], ['군산', 35.968, 126.737], ['익산', 35.948, 126.958], ['정읍', 35.570, 126.856], ['남원', 35.416, 127.390], ['김제', 35.804, 126.881], ['완주', 35.905, 127.162], ['진안', 35.792, 127.425], ['무주', 36.007, 127.661], ['장수', 35.647, 127.521], ['임실', 35.618, 127.289], ['순창', 35.374, 127.137], ['고창', 35.436, 126.702], ['부안', 35.732, 126.733]],
+    '전남': [['목포', 34.812, 126.392], ['여수', 34.760, 127.662], ['순천', 34.951, 127.487], ['나주', 35.016, 126.711], ['광양', 34.941, 127.696], ['담양', 35.321, 126.988], ['곡성', 35.282, 127.292], ['구례', 35.202, 127.463], ['고흥', 34.611, 127.285], ['보성', 34.771, 127.080], ['화순', 35.065, 126.986], ['장흥', 34.682, 126.907], ['강진', 34.642, 126.767], ['해남', 34.573, 126.599], ['영암', 34.800, 126.697], ['무안', 34.990, 126.482], ['함평', 35.066, 126.517], ['영광', 35.277, 126.512], ['장성', 35.302, 126.785], ['완도', 34.311, 126.755], ['진도', 34.487, 126.263], ['신안', 34.833, 126.352]],
+    '경북': [['포항', 36.019, 129.343], ['경주', 35.856, 129.225], ['김천', 36.140, 128.114], ['안동', 36.568, 128.730], ['구미', 36.120, 128.344], ['영주', 36.806, 128.624], ['영천', 35.973, 128.939], ['상주', 36.411, 128.159], ['문경', 36.587, 128.187], ['경산', 35.825, 128.741], ['의성', 36.353, 128.697], ['청송', 36.436, 129.057], ['영양', 36.667, 129.112], ['영덕', 36.415, 129.365], ['청도', 35.647, 128.734], ['고령', 35.726, 128.263], ['성주', 35.919, 128.283], ['칠곡', 35.995, 128.402], ['예천', 36.658, 128.453], ['봉화', 36.893, 128.733], ['울진', 36.993, 129.400], ['울릉', 37.484, 130.906, 1]],
+    '경남': [['창원', 35.228, 128.681], ['진주', 35.180, 128.108], ['통영', 34.854, 128.433], ['사천', 35.004, 128.064], ['김해', 35.229, 128.889], ['밀양', 35.504, 128.747], ['거제', 34.881, 128.621], ['양산', 35.335, 129.037], ['의령', 35.322, 128.262], ['함안', 35.272, 128.406], ['창녕', 35.545, 128.492], ['경남 고성', 34.973, 128.322], ['남해', 34.838, 127.893], ['하동', 35.067, 127.751], ['산청', 35.416, 127.874], ['함양', 35.520, 127.725], ['거창', 35.687, 127.910], ['합천', 35.567, 128.166]],
+    '제주': [['제주', 33.500, 126.531], ['서귀포', 33.254, 126.560]]
   },
-  cfg: function(ex){ const j = (ex && ex.journey) || {}; return { course: this.COURSES[j.course] ? j.course : 'busan', base: Math.max(0, Number(j.base) || 0) }; },
+  city: function(name){ for (const g in this.CITIES) { const c = this.CITIES[g].find(function(x){ return x[0] === name; }); if (c) return c; } return null; },
+  cfg: function(ex){ const j = (ex && ex.journey) || {}; return { start: this.city(j.start) ? j.start : '대전', base: Math.max(0, Number(j.base) || 0) }; },
+  // 출발 도시 → 길 전체: [[이름, 누적km, 배로 오는가], ...] (처음과 끝이 출발 도시)
+  route: function(start){
+    const L = this.LOOP, n = L.length - 1, c = this.city(start) || this.city('대전');
+    const dist = function(a, b){ const R = 6371, r = Math.PI / 180, dLa = (b[1] - a[1]) * r, dLo = (b[2] - a[2]) * r;
+      const h = Math.sin(dLa / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(b[1] * r) * Math.sin(dLo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+    let k = 0, best = Infinity;
+    for (let i = 0; i < n; i++) { const d = dist(c, this.city(L[i][0])); if (d < best) { best = d; k = i; } }
+    const sea = !!c[3], spur = L[k][0] === c[0] ? 0 : Math.max(10, Math.round(best * (sea ? 1 : 1.3) / 10) * 10);
+    const out = [], seg = function(i){ return L[i + 1][1] - L[i][1]; };
+    let km = 0;
+    if (spur) { out.push([c[0], 0]); km = spur; }
+    out.push([L[k][0], km, spur && sea ? 1 : 0]);
+    for (let s = 0; s < n; s++) { const i = (k + s) % n; km += seg(i); out.push([L[(i + 1) % n][0], km, L[i + 1][2] || 0]); }
+    if (spur) { km += spur; out.push([c[0], km, sea ? 1 : 0]); }
+    return out;
+  },
   km: function(n){ return n >= 100000 ? Math.round(n / 1000).toLocaleString() : (n / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }); },
   html: function(total, ex){
-    const c = this.cfg(ex), co = this.COURSES[c.course];
-    const m = Math.max(0, total - c.base), goal = co.km * 1000;
+    const c = this.cfg(ex), R = this.route(c.start), goalKm = R[R.length - 1][1];
+    const m = Math.max(0, total - c.base), goal = goalKm * 1000;
     const laps = Math.floor(m / goal), cur = m - laps * goal, pct = Math.min(100, cur / goal * 100);
-    let at = co.stops[0][0], next = co.stops[co.stops.length - 1];
-    co.stops.forEach(function(s){ if (cur >= s[1] * 1000) at = s[0]; });
-    for (let i = 0; i < co.stops.length; i++) if (co.stops[i][1] * 1000 > cur) { next = co.stops[i]; break; }
-    const stops = co.stops.map(function(s, i){ const x = s[1] / co.km * 100; return '<span class="jr-stop' + (cur >= s[1] * 1000 ? ' on' : '') + (i === 0 ? ' first' : i === co.stops.length - 1 ? ' last' : '') + '" style="left:' + x + '%"><i></i><b>' + s[0] + '</b></span>'; }).join('');
-    return '<div class="jr-head"><div><span class="jr-tag" data-our="{our} 줄넘기 여행">' + (APP.ourLabel || '우리 반') + ' 줄넘기 여행</span><h2>' + co.name + ' <small>약 ' + co.km.toLocaleString() + 'km</small></h2></div>' +
+    let at = R[0][0], next = R[R.length - 1];
+    R.forEach(function(s){ if (cur >= s[1] * 1000) at = s[0]; });
+    for (let i = 0; i < R.length; i++) if (R[i][1] * 1000 > cur) { next = R[i]; break; }
+    const P = function(km){ return (km / goalKm * 100).toFixed(3) + '%'; };
+    const seas = R.map(function(s, i){ return s[2] && i ? '<span class="jr-sea" style="left:' + P(R[i - 1][1]) + ';width:' + P(s[1] - R[i - 1][1]) + '" title="배를 타고 가요"></span>' : ''; }).join('');
+    const stops = R.map(function(s, i){ return '<span class="jr-stop' + (cur >= s[1] * 1000 ? ' on' : '') + (i === 0 ? ' first' : i === R.length - 1 ? ' last' : '') + '" style="left:' + P(s[1]) + '"><i></i><b>' + s[0] + '</b></span>'; }).join('');
+    const onSea = next[2] && cur < next[1] * 1000 && at !== next[0];
+    return '<div class="jr-head"><div><span class="jr-tag" data-our="{our} 줄넘기 여행">' + (APP.ourLabel || '우리 반') + ' 줄넘기 여행</span><h2>국토 대장정 <small>' + c.start + ' 출발 · 약 ' + goalKm.toLocaleString() + 'km</small></h2></div>' +
       '<div class="jr-num"><b class="mono">' + this.km(cur) + 'km</b> 왔어요' + (laps ? ' · <b>' + laps + '번</b> 완주!' : '') + '</div></div>' +
-      '<div class="jr-track"><div class="jr-fill" style="width:' + pct.toFixed(2) + '%"></div><span class="jr-me" style="left:' + pct.toFixed(2) + '%">🏃</span>' + stops + '</div>' +
-      '<p class="hint" style="margin:30px 0 0;">지금 <b>' + at + '</b> 지나는 중 · 다음 <b>' + next[0] + '</b>까지 <b class="mono">' + Math.max(0, next[1] * 1000 - cur).toLocaleString() + '회</b> 남았어요 (줄넘기 1회 = 1m)</p>';
-  }
+      '<div class="jr-track">' + seas + '<div class="jr-fill" style="width:' + pct.toFixed(2) + '%"></div><span class="jr-me" style="left:' + pct.toFixed(2) + '%">🏃</span>' + stops + '</div>' +
+      '<p class="hint" style="margin:30px 0 0;">지금 <b>' + at + '</b> ' + (onSea ? '앞바다에서 배를 타고 가는 중' : '지나는 중') + ' · 다음 <b>' + next[0] + '</b>까지 <b class="mono">' + Math.max(0, next[1] * 1000 - cur).toLocaleString() + '회</b> 남았어요 (줄넘기 1회 = 1m)</p>';
+  },
+  // 관리자 화면 출발 도시 고르기 (시·도별 묶음)
+  options: function(sel){ const self = this; return Object.keys(this.CITIES).map(function(g){ return '<optgroup label="' + g + '">' + self.CITIES[g].map(function(c){ return '<option' + (c[0] === sel ? ' selected' : '') + '>' + c[0] + '</option>'; }).join('') + '</optgroup>'; }).join(''); }
 };
 
 function applyTheme(t){
@@ -1340,10 +1376,10 @@ document.addEventListener('DOMContentLoaded', function(){
 
     <section class="tab-pane" data-tab="journey">
     <div class="card">
-      <h2>우리 반 줄넘기 여행</h2>
-      <p class="hint" style="margin-top:0;">우리 반이 뛴 줄넘기를 <b>1회 = 1m</b>로 바꿔 여행 코스를 따라 나아가요. 켜면 메인 화면에 진행 막대가 보입니다. (승인된 기록만)</p>
+      <h2>우리 반 줄넘기 여행 · 국토 대장정</h2>
+      <p class="hint" style="margin-top:0;">우리 반이 뛴 줄넘기를 <b>1회 = 1m</b>로 바꿔 <b>국토 대장정</b>을 떠나요. 우리 학교가 있는 <b>출발 도시</b>를 고르면 그곳에서 출발해 서울·춘천·강릉·안동·포항·부산·여수·(배) 제주·(배) 목포·광주·전주·대전을 한 바퀴 돌고 다시 돌아와요. 켜면 메인 화면에 진행 막대가 보입니다. (승인된 기록만)</p>
       <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="jrOn" style="width:auto; margin:0;"> 메인 화면에 보이기</label>
-      <label style="max-width:320px;">코스 <select id="jrCourse"></select></label>
+      <label style="max-width:320px;">출발 도시 <select id="jrStart"></select></label>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;"><button type="button" id="jrSave">저장</button><button type="button" class="btn-outline" id="jrRestart">지금부터 새로 출발</button><span id="jrMsg" class="hint"></span></div>
     </div>
     <div class="card jr-card" id="jrPreview"></div>
@@ -3137,8 +3173,9 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
 (function(){
   const $ = function(id){ return document.getElementById(id); };
   let total = 0, ex = {};
-  $('jrCourse').innerHTML = Object.keys(JOURNEY.COURSES).map(function(k){ const c = JOURNEY.COURSES[k]; return '<option value="' + k + '">' + c.name + ' (약 ' + c.km.toLocaleString() + 'km)</option>'; }).join('');
-  function cur(){ return { on: $('jrOn').checked, course: $('jrCourse').value, base: JOURNEY.cfg(ex).base }; }
+  function cur(){ return { on: $('jrOn').checked, start: $('jrStart').value, base: JOURNEY.cfg(ex).base }; }
+  $('jrStart').innerHTML = JOURNEY.options('대전');
+  $('jrStart').addEventListener('change', preview);
   function preview(){ $('jrPreview').innerHTML = JOURNEY.html(total, { journey: cur() }); }
   function save(j, msg){
     $('jrMsg').textContent = '저장 중...';
@@ -3147,7 +3184,6 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
       ex = r.settings || ex; LEVELS._ready = null; preview(); $('jrMsg').textContent = msg;
     }).catch(function(err){ $('jrMsg').textContent = '저장하지 못했어요: ' + (err.message || err); });
   }
-  $('jrCourse').addEventListener('change', preview);
   $('jrSave').addEventListener('click', function(){ save(cur(), '저장했어요.' + ($('jrOn').checked ? ' 메인 화면에 보여요.' : '')); });
   $('jrRestart').addEventListener('click', function(){
     if (!confirm('지금까지 뛴 기록은 그대로 두고, 여행만 출발점에서 다시 시작할까요?')) return;
@@ -3157,7 +3193,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
     ex = r[0] || {};
     const sum = r[1] && r[1].list;
     total = (Array.isArray(sum) ? sum : []).reduce(function(a, s){ return a + (Number(s.total) || 0); }, 0);
-    const c = JOURNEY.cfg(ex); $('jrOn').checked = !!(ex.journey && ex.journey.on); $('jrCourse').value = c.course;
+    const c = JOURNEY.cfg(ex); $('jrOn').checked = !!(ex.journey && ex.journey.on); $('jrStart').value = c.start;
     preview();
   });
 })();

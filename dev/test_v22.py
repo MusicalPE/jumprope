@@ -85,8 +85,8 @@ with sync_playwright() as p:
     check('협회 기준표로 되돌리기', pg.locator('#lvLevel option').count()==9)
     # ── 우리 반 여행
     pg.click('#adminNav button[data-tab="journey"]'); pg.wait_for_timeout(800)
-    pg.check('#jrOn'); pg.select_option('#jrCourse','korea'); pg.click('#jrSave'); pg.wait_for_timeout(1000)
-    check('여행 저장', '메인 화면에 보여요' in pg.text_content('#jrMsg') and '국토 한 바퀴' in pg.text_content('#jrPreview'), pg.text_content('#jrMsg'))
+    pg.check('#jrOn'); pg.select_option('#jrStart','군산'); pg.click('#jrSave'); pg.wait_for_timeout(1000)
+    check('여행 저장', '메인 화면에 보여요' in pg.text_content('#jrMsg') and '군산 출발' in pg.text_content('#jrPreview') and '제주' in pg.text_content('#jrPreview'), pg.text_content('#jrMsg'))
     # ── 전국 현황판 참여 (지난 달 기록까지 보내기)
     pg.click('#adminNav button[data-tab="national"]'); pg.wait_for_timeout(800)
     pg.check('#natOn'); pg.fill('#natName','우리초등학교'); pg.fill('#natTeacher','홍길동'); pg.check('#natShowName'); pg.click('#saveNatBtn'); pg.wait_for_timeout(2500)
@@ -123,7 +123,7 @@ with sync_playwright() as p:
     check('아직 없음은 명단 안 펼침', pg.locator('#levelDist button.lv-pick').count()==1 and pg.locator('#levelDist .lv-pick.none').count()==1)
     pg.click('#levelDist button.lv-pick'); pg.wait_for_timeout(200)
     check('다시 누르면 접힘', not pg.is_visible('#levelWho'))
-    check('메인 여행 막대', pg.is_visible('#journeyCard') and '국토 한 바퀴' in pg.text_content('#journeyCard'), pg.text_content('#journeyCard')[:80])
+    check('메인 여행 막대', pg.is_visible('#journeyCard') and '국토 대장정' in pg.text_content('#journeyCard') and '군산 출발' in pg.text_content('#journeyCard'), pg.text_content('#journeyCard')[:80])
     pg.screenshot(path=OUT+'/v22_main.png', full_page=True)
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
     if pg.is_visible('#pw'):
