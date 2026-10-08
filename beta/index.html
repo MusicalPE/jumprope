@@ -243,6 +243,29 @@
   .drag-handle { cursor: grab; text-align: center; color: var(--faint); font-size: 1.2em; user-select: none; }
   #studentTable tbody tr.dragging { opacity: 0.4; background: var(--coral-tint); }
   .order-cell { text-align: center; color: var(--coral-dark); font-weight: 800; }
+  /* 학생 관리: 반별로 골라 보기 + 한 줄에 한 학생 */
+  .stu-bar { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:4px 0 10px; }
+  .stu-bar .chip { padding:6px 12px; min-height:0; font-size:0.88em; border-radius:99px; background:var(--surface); color:var(--ink-2); border:1px solid var(--line); box-shadow:none; }
+  .stu-bar .chip.on { background:var(--coral); border-color:var(--coral); color:#fff; }
+  .stu-bar input { width:auto; flex:1 1 140px; max-width:220px; margin:0 0 0 auto; padding:6px 10px; font-size:0.9em; }
+  .stu-bar .cnt { color:var(--muted); font-size:0.88em; white-space:nowrap; }
+  .stu-wrap { overflow-x:auto; }
+  #studentTable th, #studentTable td { padding:4px 4px; white-space:nowrap; }
+  #studentTable th { font-size:0.82em; }
+  #studentTable tbody tr { height:42px; }
+  #studentTable td input { padding:5px 7px; font-size:0.9em; border-radius:8px; }
+  #studentTable td input.n { width:46px; text-align:center; }
+  #studentTable td input.nm { width:100px; }
+  #studentTable td input.pw { width:96px; }
+  #studentTable .acts { text-align:right; }
+  #studentTable .acts button { padding:5px 10px; min-height:0; font-size:0.84em; border-radius:8px; margin-left:3px; box-shadow:none; }
+  #studentTable .acts button[data-action="save"] { display:none; }
+  #studentTable tr.dirty { background:var(--coral-tint); }
+  #studentTable tr.dirty .acts button[data-action="save"] { display:inline-block; }
+  #studentTable .acts button[data-action="view"] { background:var(--surface); color:var(--coral-dark); border:1px solid var(--line); }
+  #studentTable .acts button[data-action="del"] { background:none; border:none; color:var(--faint); padding:5px 6px; }
+  #studentTable .acts button[data-action="del"]:hover { color:var(--danger); background:var(--danger-tint); }
+  #studentTable tr.sep td { background:var(--line-2); color:var(--muted); font-size:0.82em; font-weight:700; padding:3px 10px; height:auto; }
 
   .back-link {
     color: var(--muted); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
@@ -496,7 +519,7 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const INSTALL_VIDEO = 'https://youtu.be/5JLZTvS4VPc';
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.2.11', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.2.12', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1133,11 +1156,12 @@ document.addEventListener('DOMContentLoaded', function(){
     <section class="tab-pane" data-tab="students">
     <div class="card">
       <h2>학생 관리</h2>
-      <p class="hint">왼쪽 ≡ 핸들을 드래그하면 순서를 바꿀 수 있습니다. "기록보기"로 학생별 일자별 기록을 확인·수정·삭제할 수 있습니다.</p>
-      <table id="studentTable">
-        <thead><tr><th></th><th>순번</th><th>학년</th><th>반</th><th>번호</th><th>이름</th><th>비밀번호 변경</th><th></th></tr></thead>
+      <p class="hint">칸을 고치면 그 줄에 <b>저장</b> 버튼이 나와요(엔터로도 저장). ≡ 를 끌어 순서를 바꾸고, <b>기록</b>으로 학생별 기록을 확인·수정·삭제해요.</p>
+      <div class="stu-bar"><span id="stuClasses"></span><span class="cnt" id="stuCount"></span><input type="search" id="stuSearch" placeholder="이름 찾기"></div>
+      <div class="stu-wrap"><table id="studentTable">
+        <thead><tr><th></th><th>순</th><th>학년</th><th>반</th><th>번호</th><th>이름</th><th>비밀번호 변경</th><th></th></tr></thead>
         <tbody></tbody>
-      </table>
+      </table></div>
     </div>
 
     <div class="card" id="recordsPanel" style="display:none;">
@@ -2400,6 +2424,8 @@ document.getElementById('resetRecordsBtn').addEventListener('click', function(){
     .resetAllRecords(token);
 });
 
+function escAttr_(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+let stuFilter = (function(){ try { return localStorage.getItem('jumpropeStuFilter') || 'all'; } catch (e) { return 'all'; } })();
 function renderTable(list) {
   currentStudents = list || [];
   const tbody = document.querySelector('#studentTable tbody');
@@ -2408,18 +2434,58 @@ function renderTable(list) {
     const tr = document.createElement('tr');
     tr.draggable = true;
     tr.dataset.id = s.id;
+    tr.dataset.key = s.grade + '-' + s.cls;
+    tr.dataset.name = s.name;
     tr.innerHTML =
       '<td class="drag-handle" title="드래그해서 순서 변경">≡</td>' +
       '<td class="order-cell">'+(idx+1)+'</td>' +
-      '<td><input value="'+s.grade+'" data-field="grade"></td>' +
-      '<td><input value="'+s.cls+'" data-field="cls"></td>' +
-      '<td><input value="'+(s.number||'')+'" data-field="number"></td>' +
-      '<td><input value="'+s.name+'" data-field="name"></td>' +
-      '<td><input type="password" placeholder="변경 시에만 입력" data-field="pw"></td>' +
-      '<td><button data-action="save">저장</button> <button data-action="view">기록보기</button> <button data-action="del">삭제</button></td>';
+      '<td><input class="n" value="'+escAttr_(s.grade)+'" data-field="grade"></td>' +
+      '<td><input class="n" value="'+escAttr_(s.cls)+'" data-field="cls"></td>' +
+      '<td><input class="n" value="'+escAttr_(s.number||'')+'" data-field="number"></td>' +
+      '<td><input class="nm" value="'+escAttr_(s.name)+'" data-field="name"></td>' +
+      '<td><input class="pw" type="password" placeholder="바꿀 때만" data-field="pw" autocomplete="new-password"></td>' +
+      '<td class="acts"><button data-action="save">저장</button><button data-action="view">기록</button><button data-action="del" title="학생 삭제">삭제</button></td>';
     tbody.appendChild(tr);
   });
+  renderStuClasses();
+  applyStuFilter();
 }
+// 반 고르기 칩 (전체 + 학년-반)
+function renderStuClasses() {
+  const keys = [];
+  currentStudents.forEach(function(s){ const k = s.grade + '-' + s.cls; if (keys.indexOf(k) < 0) keys.push(k); });
+  keys.sort(function(a, b){ const x = a.split('-').map(Number), y = b.split('-').map(Number); return (x[0]-y[0]) || (x[1]-y[1]); });
+  if (stuFilter !== 'all' && keys.indexOf(stuFilter) < 0) stuFilter = 'all';
+  const box = document.getElementById('stuClasses');
+  box.innerHTML = (keys.length > 1 ? '<button type="button" class="chip" data-k="all">전체</button> ' : '') +
+    keys.map(function(k){ const p = k.split('-'); return '<button type="button" class="chip" data-k="'+escAttr_(k)+'">'+escAttr_(p[0])+'학년 '+escAttr_(p[1])+'반</button>'; }).join(' ');
+  box.querySelectorAll('.chip').forEach(function(b){ b.classList.toggle('on', b.dataset.k === stuFilter || (keys.length === 1)); });
+}
+function applyStuFilter() {
+  const q = (document.getElementById('stuSearch').value || '').trim();
+  let shown = 0;
+  document.querySelectorAll('#studentTable tbody tr').forEach(function(tr){
+    const ok = (stuFilter === 'all' || tr.dataset.key === stuFilter) && (!q || (tr.dataset.name || '').indexOf(q) >= 0);
+    tr.style.display = ok ? '' : 'none'; if (ok) shown++;
+  });
+  document.getElementById('stuCount').textContent = shown + '명' + (shown !== currentStudents.length ? ' / 전체 ' + currentStudents.length + '명' : '');
+}
+document.getElementById('stuClasses').addEventListener('click', function(e){
+  const b = e.target.closest('.chip'); if (!b) return;
+  stuFilter = b.dataset.k; try { localStorage.setItem('jumpropeStuFilter', stuFilter); } catch (x) {}
+  renderStuClasses(); applyStuFilter();
+});
+document.getElementById('stuSearch').addEventListener('input', applyStuFilter);
+// 칸을 고치면 그 줄만 저장 버튼 표시, 엔터로 저장
+document.querySelector('#studentTable tbody').addEventListener('input', function(e){ const tr = e.target.closest('tr'); if (tr) tr.classList.add('dirty'); });
+document.querySelector('#studentTable tbody').addEventListener('keydown', function(e){
+  if (e.key !== 'Enter' || !e.target.matches('input')) return;
+  const tr = e.target.closest('tr'); if (tr && tr.classList.contains('dirty')) { e.preventDefault(); tr.querySelector('[data-action="save"]').click(); }
+});
+// 입력칸을 누를 때는 줄 끌기가 시작되지 않게
+document.querySelector('#studentTable tbody').addEventListener('mousedown', function(e){
+  const tr = e.target.closest('tr'); if (!tr) return; tr.draggable = !e.target.closest('input,button');
+});
 
 /* ---- 드래그로 순서 변경 ---- */
 const tbodyEl = document.querySelector('#studentTable tbody');
@@ -2570,7 +2636,7 @@ document.querySelector('#studentTable tbody').addEventListener('click', function
   const tr = btn.closest('tr');
   const id = tr.dataset.id;
   if (btn.dataset.action === 'del') {
-    if (!confirm('정말 삭제하시겠습니까? 관련 기록도 함께 삭제됩니다.')) return;
+    if (!confirm((tr.dataset.name || '') + ' 학생을 정말 삭제할까요? 관련 기록도 함께 삭제됩니다.')) return;
     google.script.run.withSuccessHandler(loadList).deleteStudent(token, id);
   } else if (btn.dataset.action === 'save') {
     const grade = tr.querySelector('[data-field="grade"]').value;
@@ -2578,7 +2644,8 @@ document.querySelector('#studentTable tbody').addEventListener('click', function
     const number = tr.querySelector('[data-field="number"]').value;
     const name = tr.querySelector('[data-field="name"]').value;
     const pw = tr.querySelector('[data-field="pw"]').value;
-    google.script.run.withSuccessHandler(loadList).updateStudent(token, id, grade, cls, number, name, pw);
+    btn.disabled = true; btn.textContent = '저장 중';
+    google.script.run.withSuccessHandler(loadList).withFailureHandler(function(err){ btn.disabled = false; btn.textContent = '저장'; alert('저장하지 못했어요: ' + String(err)); }).updateStudent(token, id, grade, cls, number, name, pw);
   } else if (btn.dataset.action === 'view') {
     viewStudentRecords(id);
   }
