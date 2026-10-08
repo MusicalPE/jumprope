@@ -72,13 +72,51 @@
   .hero .kick { font-weight: 700; margin: 0 0 2px; opacity: 1; }
   @media (max-width: 560px) { .hero-brand .je-logo { width: 66px; height: 44px; } }
   .hero-sels { display: flex; gap: 8px; flex-wrap: wrap; }
-  .earth { display: flex; gap: 16px; align-items: center; }
-  .earth .globe { font-size: 44px; line-height: 1; }
-  .earth .eb { flex: 1; min-width: 0; }
-  .earth h2 { margin: 0 0 2px; font-size: 1.1em; }
-  .earth .bar { position: relative; height: 14px; background: var(--bg); border-radius: 999px; overflow: hidden; margin: 10px 0 6px; }
-  .earth-prev { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line-2); font-size: 0.92em; color: var(--ink-2); }
-  .earth .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #0EA5E9, #16A34A); border-radius: 999px; }
+  /* 지구 대장정: 국토 대장정과 같은 그림 (무지개 줄넘기 줄 길 · 땅 모양 · 줄넘기 친구) */
+  .ej-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+  .ej-head h2 { margin: 2px 0 0; } .ej-head small { color: var(--muted); font-weight: 600; font-size: 0.7em; }
+  .ej-tag { font-size: 0.8em; color: var(--coral-dark); font-weight: 700; }
+  .ej-num { color: var(--ink-2); } .ej-num b { font-size: 1.3em; color: var(--ink); }
+  .ej-card { overflow: hidden; }
+  .ej-scene { position: relative; margin: 10px -20px -18px; padding: 104px 38px 14px; background: linear-gradient(180deg, #fff 0, #F2F8FC 78px, #F2F8FC 110px, #E9F0DC 110px, #EEF4E2 100%); }
+  .ej-land { position: absolute; left: 38px; right: 38px; top: 40px; height: 70px; }
+  .ej-t { position: absolute; top: 0; bottom: 0; background-repeat: repeat-x; background-position: left bottom; background-size: 120px 100%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent); }
+  .ej-t.m { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpolygon points='0,70 0,40 18,20 34,36 52,8 72,34 90,18 108,32 120,24 120,70' fill='%23B9C9D6'/%3E%3Cpolygon points='44,18 52,8 60,18 56,16 52,20 48,16' fill='%23fff'/%3E%3Cpolygon points='12,26 18,20 24,26 21,25 18,28 15,25' fill='%23fff'/%3E%3Cpolygon points='0,70 0,50 22,30 42,48 62,28 84,50 102,36 120,48 120,70' fill='%238FA9BE'/%3E%3Cpolygon points='56,34 62,28 68,34 65,33 62,36 59,33' fill='%23fff'/%3E%3Cpolygon points='0,70 0,60 30,50 60,62 90,52 120,60 120,70' fill='%237DAF66'/%3E%3C/svg%3E"); }
+  .ej-t.h { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 70 V44 Q20 26 40 42 T80 38 T120 42 V70Z' fill='%23B7D69C'/%3E%3Cpath d='M0 70 V54 Q30 40 60 52 T120 50 V70Z' fill='%238CBF72'/%3E%3Ccircle cx='26' cy='47' r='4' fill='%236FA85A'/%3E%3Ccircle cx='86' cy='45' r='4.5' fill='%236FA85A'/%3E%3C/svg%3E"); }
+  .ej-t.p { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 52 Q30 44 60 50 T120 48 V70 H0Z' fill='%23C9E0A2'/%3E%3Crect x='0' y='54' width='120' height='16' fill='%23DCEBAE'/%3E%3Crect x='0' y='56' width='120' height='2.4' fill='%23E8D47A'/%3E%3Crect x='0' y='61' width='120' height='2.4' fill='%23E8D47A'/%3E%3Crect x='0' y='66' width='120' height='2.4' fill='%23E8D47A'/%3E%3Crect x='34' y='44' width='1.6' height='8' fill='%238B6B4A'/%3E%3Ccircle cx='34.8' cy='43' r='4.6' fill='%237DB262'/%3E%3C/svg%3E"); }
+  .ej-t.g { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 54 Q40 46 80 52 T120 50 V70 H0Z' fill='%23CFE3A6'/%3E%3Crect y='58' width='120' height='12' fill='%23C2DA92'/%3E%3Cpath d='M44 52 Q50 42 56 52 Z' fill='%23fff' stroke='%23B08968' stroke-width='1'/%3E%3Crect x='48.5' y='48' width='3' height='4' fill='%23B08968'/%3E%3Ccircle cx='92' cy='56' r='2.2' fill='%23fff'/%3E%3Ccircle cx='98' cy='57' r='2.2' fill='%23fff'/%3E%3C/svg%3E"); }
+  .ej-t.d { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 50 Q20 38 42 48 T84 44 T120 48 V70 H0Z' fill='%23F3D9A4'/%3E%3Cpath d='M0 58 Q30 48 60 56 T120 54 V70 H0Z' fill='%23EBC98A'/%3E%3Cpath d='M96 42 l10 -14 l10 14 z' fill='%23E2B36A'/%3E%3Cpath d='M106 28 l10 14 h-4 z' fill='%23C9974F'/%3E%3Crect x='22' y='46' width='2.4' height='10' rx='1.2' fill='%236FA85A'/%3E%3Crect x='19' y='49' width='2' height='5' rx='1' fill='%236FA85A'/%3E%3Crect x='25' y='48' width='2' height='5' rx='1' fill='%236FA85A'/%3E%3C/svg%3E"); }
+  .ej-t.j { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 70 V42 Q15 30 30 40 T60 36 T90 40 T120 36 V70Z' fill='%234E9A45'/%3E%3Ccircle cx='14' cy='40' r='9' fill='%233F8A3A'/%3E%3Ccircle cx='44' cy='36' r='10' fill='%235DAA4F'/%3E%3Ccircle cx='76' cy='38' r='9' fill='%233F8A3A'/%3E%3Ccircle cx='104' cy='35' r='10' fill='%235DAA4F'/%3E%3Cpath d='M0 70 V56 Q30 48 60 56 T120 54 V70Z' fill='%232F7A33'/%3E%3C/svg%3E"); }
+  .ej-t.v { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 54 Q40 46 80 52 T120 50 V70 H0Z' fill='%23E6D79A'/%3E%3Crect y='58' width='120' height='12' fill='%23DCC985'/%3E%3Crect x='70' y='40' width='1.8' height='16' fill='%237A5A3A'/%3E%3Cpath d='M58 42 Q71 32 84 42 Z' fill='%237DAF66'/%3E%3C/svg%3E"); }
+  .ej-t.s { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 40 Q7.5 36 15 40 T30 40 T45 40 T60 40 T75 40 T90 40 T105 40 T120 40 V70 H0Z' fill='%23A9E0F8'/%3E%3Cpath d='M0 50 Q7.5 46 15 50 T30 50 T45 50 T60 50 T75 50 T90 50 T105 50 T120 50' stroke='%23fff' stroke-width='1.6' fill='none' opacity='.8'/%3E%3Cpath d='M0 60 Q7.5 56 15 60 T30 60 T45 60 T60 60 T75 60 T90 60 T105 60 T120 60' stroke='%23fff' stroke-width='1.6' fill='none' opacity='.65'/%3E%3C/svg%3E"); }
+  .ej-mark { position: absolute; bottom: -2px; width: 90px; height: 50px; transform: translateX(-50%); background: center bottom / contain no-repeat; }
+  .ej-mark.pyr { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 62' preserveAspectRatio='xMidYMax meet'%3E%3Cpath d='M10 60 L34 24 L58 60 Z' fill='%23E2B36A'/%3E%3Cpath d='M34 24 L58 60 L42 60 Z' fill='%23C9974F'/%3E%3Cpath d='M52 60 L68 36 L84 60 Z' fill='%23E8BF7C'/%3E%3Cpath d='M68 36 L84 60 L74 60 Z' fill='%23C9974F'/%3E%3C/svg%3E"); }
+  .ej-mark.isle { width: 110px; height: 56px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 62' preserveAspectRatio='xMidYMax meet'%3E%3Cellipse cx='60' cy='52' rx='50' ry='8' fill='%23F2DFB0'/%3E%3Cpath d='M16 52 Q36 30 60 26 Q84 30 104 52 Z' fill='%235DAA4F'/%3E%3Crect x='80' y='34' width='1.6' height='14' fill='%238B6B4A' transform='rotate(8 81 41)'/%3E%3Cpath d='M82 34 q-6 -3 -10 1 M82 34 q6 -4 10 0 M82 34 q-2 -6 -7 -6 M82 34 q3 -6 8 -5' stroke='%234E9A45' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); }
+  .ej-track { position: relative; height: 12px; }
+  .ej-rope { position: absolute; inset: 0; border-radius: 999px; background: repeating-linear-gradient(-60deg, rgba(255,255,255,.38) 0 2px, transparent 2px 6px), linear-gradient(90deg, #EF4444, #F97316, #EAB308, #22C55E, #06B6D4, #6366F1, #D946EF); box-shadow: 0 2px 0 rgba(60,70,40,.25), inset 0 -2px 0 rgba(0,0,0,.12); }
+  .ej-rest { position: absolute; top: 0; bottom: 0; right: 0; border-radius: 0 999px 999px 0; background: rgba(240,246,232,.74); }
+  .ej-sea { position: absolute; top: -9px; bottom: -9px; z-index: 1; border-radius: 10px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 30'%3E%3Cpath d='M0 15 Q7 9 14 15 T28 15' stroke='%23fff' stroke-width='2' fill='none' opacity='.85'/%3E%3C/svg%3E") repeat-x center / 24px 100%, linear-gradient(#93DBFB, #38BDF8); box-shadow: inset 0 0 0 2px rgba(255,255,255,.55), 0 2px 0 rgba(14,116,144,.25); }
+  .ej-sea.later { filter: saturate(.55) brightness(1.08); }
+  .ej-stop { position: absolute; top: 6px; transform: translateX(-50%); z-index: 2; }
+  .ej-stop i { display: block; width: 14px; height: 19px; margin-top: -21px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 31C12 31 2 19 2 11.5a10 10 0 0 1 20 0C22 19 12 31 12 31z' fill='%239CA3AF' stroke='%23fff' stroke-width='1.6'/%3E%3Ccircle cx='12' cy='11.5' r='4' fill='%23fff'/%3E%3C/svg%3E") center / contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
+  .ej-stop.on i { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 31C12 31 2 19 2 11.5a10 10 0 0 1 20 0C22 19 12 31 12 31z' fill='%23F26A3D' stroke='%23fff' stroke-width='1.6'/%3E%3Ccircle cx='12' cy='11.5' r='4' fill='%23fff'/%3E%3C/svg%3E"); }
+  .ej-stop.big i { width: 18px; height: 24px; margin-top: -26px; }
+  .ej-stop b { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-size: 0.72em; color: #7C8B6A; white-space: nowrap; font-weight: 700; }
+  .ej-stop.on b { color: #2F3D22; }
+  .ej-me { position: absolute; bottom: 2px; width: 64px; height: 102px; transform: translateX(-50%); z-index: 3; pointer-events: none; }
+  .ej-me.sea { bottom: 9px; }
+  .ej-me img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; animation: ejHop .9s ease-in-out infinite; filter: drop-shadow(0 1px 1.5px rgba(60,40,20,.28)); }
+  .ej-me::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 30px; height: 7px; margin-left: -15px; border-radius: 50%; background: rgba(40,60,30,.22); animation: ejShadow .9s ease-in-out infinite; }
+  .ej-me.sea::after { display: none; }
+  .ej-boat { position: absolute; left: 50%; bottom: -6px; width: 84px; height: 14px; margin-left: -42px; }
+  @keyframes ejHop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+  @keyframes ejShadow { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(.7); opacity: .6; } }
+  @media (prefers-reduced-motion: reduce) { .ej-me img, .ej-me::after { animation: none; } }
+  .ej-msg { margin: 34px 0 0; font-size: 0.85em; color: #4B5E3A; } .ej-msg b { color: #2F3D22; }
+  .ej-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: .85em; color: #4B5E3A; }
+  .ej-foot a { color: var(--coral-dark); font-weight: 700; text-decoration: none; cursor: pointer; }
+  .ej-map { display: block; width: 100%; height: auto; border-radius: 12px; }
+  @media (max-width: 640px) { .ej-scene { padding: 100px 22px 12px; } .ej-land { left: 22px; right: 22px; top: 34px; } .ej-stop b { display: none; } .ej-stop.first b, .ej-stop.last b, .ej-stop.now b { display: block; } }
   .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
   .kpi { background: var(--surface); border-radius: var(--r-md); padding: 12px 14px; box-shadow: var(--shadow); }
   .kpi span { color: var(--muted); font-size: 0.82em; font-weight: 700; }
@@ -174,6 +212,49 @@
   const $ = function(id){ return document.getElementById(id); };
   const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   const n = function(v){ return (Number(v) || 0).toLocaleString('ko-KR'); };
+  // ===== 지구 대장정: 인천항에서 배 타고 출발해 서쪽으로 지구를 돌아 부산항으로 (1회 = 1m) =====
+  // [도시, 위도, 경도, 앞 도시에서 배로 오는가, 앞 구간 땅 모양(s 바다·p 들판·g 초원·d 사막·m 설산·h 언덕·j 밀림·v 사바나), 늘 이름 보이기, 표지(pyr 피라미드·isle 섬)]
+  const EJ = [['인천항', 37.45, 126.6, 0, '', 1], ['칭다오', 36.07, 120.38, 1, 's'], ['베이징', 39.9, 116.4, 0, 'p'], ['울란바토르', 47.92, 106.92, 0, 'g'],
+    ['우루무치', 43.83, 87.62, 0, 'd'], ['알마티', 43.24, 76.89, 0, 'm'], ['타슈켄트', 41.3, 69.24, 0, 'g'], ['테헤란', 35.69, 51.39, 0, 'd'],
+    ['카이로', 30.04, 31.24, 0, 'd', 1, 'pyr'], ['이스탄불', 41.01, 28.98, 1, 's'], ['로마', 41.9, 12.5, 0, 'h'], ['파리', 48.86, 2.35, 0, 'h', 1], ['마드리드', 40.42, -3.7, 0, 'h'],
+    ['탕헤르', 35.77, -5.8, 1, 's'], ['다카르', 14.69, -17.44, 0, 'd'], ['라고스', 6.52, 3.38, 0, 'j'], ['킨샤사', -4.44, 15.27, 0, 'j'], ['케이프타운', -33.92, 18.42, 0, 'v', 1],
+    ['부에노스아이레스', -34.6, -58.38, 1, 's'], ['산티아고', -33.45, -70.67, 0, 'm'], ['리마', -12.05, -77.04, 0, 'd'], ['보고타', 4.71, -74.07, 0, 'm'],
+    ['멕시코시티', 19.43, -99.13, 0, 'j', 1], ['로스앤젤레스', 34.05, -118.24, 0, 'd'], ['호놀룰루', 21.31, -157.86, 1, 's', 1, 'isle'], ['도쿄', 35.68, 139.69, 1, 's'], ['부산항', 35.1, 129.04, 1, 's', 1]];
+  const EJ_KM = (function(){ let km = 0; const r = Math.PI / 180; return EJ.map(function(c, i){ if (i) { const a = EJ[i - 1], dLa = (c[1] - a[1]) * r, dLo = (c[2] - a[2]) * r;
+    const h = Math.sin(dLa / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(c[1] * r) * Math.sin(dLo / 2) ** 2; km += Math.round(2 * 6371 * Math.asin(Math.sqrt(h))); } return km; }); })();
+  const EJ_GOAL = EJ_KM[EJ_KM.length - 1] * 1000;   // 한 바퀴 = 이만큼 회
+  const EJ_IMG = (/\/beta\//.test(location.pathname) ? '../' : '') + 'img/';
+  function earthHTML(t, title, prev){
+    const laps = Math.floor(t / EJ_GOAL), cur = t - laps * EJ_GOAL, pct = Math.min(100, cur / EJ_GOAL * 100), goalKm = EJ_KM[EJ_KM.length - 1];
+    let ai = 0; EJ.forEach(function(c, i){ if (cur >= EJ_KM[i] * 1000) ai = i; });
+    const ni = Math.min(EJ.length - 1, ai + 1), onSea = !!(EJ[ni][3] && cur < EJ_KM[ni] * 1000);
+    const P = function(km){ return (km / goalKm * 100).toFixed(3) + '%'; };
+    const runs = [];
+    EJ.forEach(function(c, i){ if (!i) return; const r = runs[runs.length - 1]; if (r && r[0] === c[4]) r[2] = EJ_KM[i]; else runs.push([c[4], EJ_KM[i - 1], EJ_KM[i]]); });
+    const land = runs.map(function(r, i){ const L = i ? 40 : 44, R = i === runs.length - 1 ? 44 : 40;
+      return '<i class="ej-t ' + r[0] + '" style="left:calc(' + P(r[1]) + ' - ' + L + 'px);width:calc(' + P(r[2] - r[1]) + ' + ' + (L + R) + 'px)"></i>'; }).join('') +
+      EJ.map(function(c, i){ return c[6] ? '<i class="ej-mark ' + c[6] + '" style="left:' + P(EJ_KM[i]) + '"></i>' : ''; }).join('');
+    const seas = EJ.map(function(c, i){ return c[3] && i ? '<span class="ej-sea' + (cur < EJ_KM[i] * 1000 ? ' later' : '') + '" style="left:' + P(EJ_KM[i - 1]) + ';width:' + P(EJ_KM[i] - EJ_KM[i - 1]) + '" title="배를 타고 가요"></span>' : ''; }).join('');
+    const stops = EJ.map(function(c, i){ const show = c[5] || (i === ai && EJ.every(function(d, j){ return !d[5] || j === i || Math.abs(EJ_KM[j] - EJ_KM[i]) > goalKm * 0.05; }));
+      return '<span class="ej-stop' + (cur >= EJ_KM[i] * 1000 ? ' on' : '') + (c[5] ? ' big' : '') + (i === ai ? ' now' : '') + (i === 0 ? ' first' : i === EJ.length - 1 ? ' last' : '') + '" style="left:' + P(EJ_KM[i]) + '" title="' + c[0] + ' · ' + EJ_KM[i].toLocaleString('ko-KR') + 'km">' +
+        '<i></i>' + (show ? '<b>' + c[0] + '</b>' : '') + '</span>'; }).join('');
+    const kid = '<img src="' + EJ_IMG + 'journey-kid.webp" alt="">' + (onSea ? '<svg class="ej-boat" viewBox="0 0 70 12"><path d="M2 1 H68 L58 11 H12 Z" fill="#B45309" stroke="#7C2D12" stroke-width="1.2"/></svg>' : '');
+    const km = function(v){ return (v / 1000).toLocaleString('ko-KR', { maximumFractionDigits: v >= 10000000 ? 0 : 1 }); };
+    return '<div class="card ej-card"><div class="ej-head"><div><span class="ej-tag">' + esc(title) + '</span><h2>지구 대장정 <small>인천항 출발 · 부산항 도착 · 약 ' + goalKm.toLocaleString('ko-KR') + 'km</small></h2></div>' +
+      '<div class="ej-num"><b class="mono">' + km(cur) + 'km</b> 왔어요' + (laps ? ' · <b>' + laps + '번</b> 완주!' : '') + '</div></div>' +
+      '<div class="ej-scene"><div class="ej-land">' + land + '</div><div class="ej-track"><div class="ej-rope"></div><div class="ej-rest" style="left:' + pct.toFixed(2) + '%"></div>' + seas + stops +
+      '<span class="ej-me' + (onSea ? ' sea' : '') + '" style="left:clamp(10px, ' + pct.toFixed(2) + '%, calc(100% - 10px))">' + kid + '</span></div>' +
+      '<p class="ej-msg">지금 <b>' + EJ[ai][0] + '</b> ' + (onSea ? '앞바다에서 배를 타고 가는 중' : '지나는 중') + ' · 다음 <b>' + EJ[ni][0] + '</b>까지 <b class="mono">' + n(Math.max(0, EJ_KM[ni] * 1000 - cur)) + '회</b> 남았어요</p>' +
+      '<div class="ej-foot"><span>참여한 모든 학교가 뛴 줄넘기 <b class="mono">' + n(t) + '회</b> · 1회 = 1m</span><a id="ejMapBtn">🗺️ 코스 지도 보기</a></div>' +
+      (prev ? '<div class="ej-foot" style="margin-top:4px">' + prev + '</div>' : '') + '</div></div>';
+  }
+  function showEarthMap(){
+    const bg = document.createElement('div'); bg.className = 'modal-bg';
+    bg.innerHTML = '<div class="modal" style="max-width:1000px"><div class="modal-head"><h3>지구 대장정 코스</h3><button class="modal-x" type="button" aria-label="닫기">×</button></div><div class="modal-body"><img class="ej-map" src="' + EJ_IMG + 'earth-route.webp" alt="지구 대장정 코스 지도"></div></div>';
+    document.body.appendChild(bg);
+    const close = function(){ bg.remove(); };
+    bg.addEventListener('click', function(e){ if (e.target === bg || e.target.classList.contains('modal-x')) close(); });
+  }
   const mLabel = function(m){ return Number(m.slice(0, 4)) + '년 ' + Number(m.slice(5, 7)) + '월'; };
   const rankHtml = function(r){ return r ? '<span class="rank r' + r + '">' + r + '</span>' : '<span class="rank">–</span>'; };
   /* 50등까지 보기 팝업 */
@@ -237,19 +318,13 @@
     } else $('gradeSel').style.display = 'none';   // 예전 수집기
     const s = data.summary || {};
     let html = '';
-    // 모두 함께 지구 한 바퀴: 학년도마다(3월 1일) 새로 시작. 예전 수집기(학년도 정보 없음)면 지금까지 합계
+    // 모두 함께 지구 대장정: 학년도마다(3월 1일) 새로 출발. 예전 수집기(학년도 정보 없음)면 지금까지 합계
     if (data.allTime) {
       const at = data.allTime, byYear = at.years && at.year;
-      const t = byYear ? (Number(at.years[at.year]) || 0) : (Number(at.total) || 0), laps = Math.floor(t / EARTH_M), cur = t - laps * EARTH_M, pct = cur / EARTH_M * 100;
+      const t = byYear ? (Number(at.years[at.year]) || 0) : (Number(at.total) || 0);
       const prevY = byYear ? String(Number(at.year) - 1) : '', prevT = byYear ? Number(at.years[prevY]) || 0 : 0;
-      html += '<div class="card earth"><div class="globe">🌏</div><div class="eb"><h2>' + (byYear ? esc(at.year) + '학년도 ' : '') + '모두 함께 지구 한 바퀴' + (laps ? ' <span class="tag-me">' + laps + '바퀴 완주!</span>' : '') + '</h2>' +
-        '<span class="hint">참여한 모든 학교가 ' + (byYear ? '이번 학년도에' : '지금까지') + ' 뛴 줄넘기 <b class="mono">' + n(t) + '회</b> = <b class="mono">' + (t / 1000).toLocaleString('ko-KR', { maximumFractionDigits: 1 }) + 'km</b> (1회 = 1m)' +
-        (byYear ? ' · 3월 1일에 새로 시작' : '') + '</span>' +
-        '<div class="bar"><i style="width:' + Math.max(pct, 0.3).toFixed(3) + '%"></i></div>' +
-        '<span class="hint">' + (laps ? (laps + 1) + '바퀴째 ' : '') + pct.toFixed(pct < 1 ? 2 : 1) + '% · 한 바퀴(40,075km)까지 <b class="mono">' + n(EARTH_M - cur) + '회</b> 남았어요</span>' +
-        // 학년도가 바뀌면 지난 학년도 기록을 한 줄로
-        (prevT ? '<div class="earth-prev">지난 ' + esc(prevY) + '학년도에는 모두 함께 <b class="mono">' + (prevT / 1000).toLocaleString('ko-KR', { maximumFractionDigits: 1 }) + 'km</b> 뛰었어요' + (prevT >= EARTH_M ? ' (지구 ' + Math.floor(prevT / EARTH_M) + '바퀴 완주!)' : ' (지구 한 바퀴의 ' + (prevT / EARTH_M * 100).toFixed(1) + '%)') + '</div>' : '') +
-        '</div></div>';
+      html += earthHTML(t, (byYear ? at.year + '학년도 ' : '') + '모두 함께 · 3월 1일에 새로 출발',
+        prevT ? '<span>지난 ' + esc(prevY) + '학년도에는 모두 함께 <b class="mono">' + (prevT / 1000).toLocaleString('ko-KR', { maximumFractionDigits: 1 }) + 'km</b> 뛰었어요' + (prevT >= EJ_GOAL ? ' (지구 대장정 ' + Math.floor(prevT / EJ_GOAL) + '번 완주!)' : ' (지구 대장정의 ' + (prevT / EJ_GOAL * 100).toFixed(1) + '%)') + '</span>' : '');
     }
     html += '<div class="kpis">' +
       '<div class="kpi"><span>참여 학교</span><b class="mono">' + n(s.schools) + '</b></div>' +
@@ -297,6 +372,7 @@
     html += '</div>';
     html += '<p class="hint" style="text-align:center;">집계는 몇 분마다 새로 고쳐져요 · 마지막 갱신 ' + new Date(data.updated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + '</p>';
     $('body').innerHTML = html;
+    if ($('ejMapBtn')) $('ejMapBtn').onclick = showEarthMap;
 
     $('stuMore') && $('stuMore').addEventListener('click', function(){ const st = data.students || []; openModal('전국 학생 순위 · ' + st.length + '등까지', mLabel(data.month) + (data.grade ? ' · ' + esc(data.grade) + '학년' : '') + ' 동안 뛴 횟수 합계', stuTable(st, st)); });
     $('sortSeg') && $('sortSeg').addEventListener('click', function(e){ const b = e.target.closest('button'); if (b) { sortBy = b.dataset.k; draw(); } });

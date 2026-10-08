@@ -151,8 +151,10 @@ with sync_playwright() as p:
     # ── 현황판: 학년 · 지구
     pg.goto(H+'/jumprope/'+CH+'board.html'); pg.wait_for_timeout(1800)
     at=get(H+'/collector?api=board')['result']['allTime']
-    et=pg.text_content('.earth')
-    check('지구 한 바퀴: 이번 학년도만, 지난 학년도 함께 표시', at['year']+'학년도' in et and '{:,}회'.format(at['years'][at['year']]) in et and at['years'][at['year']] < at['total'] and ('지난 '+str(int(at['year'])-1)+'학년도에는 모두 함께') in et and '뛰었어요' in et, et[:140])
+    et=pg.text_content('.ej-card')
+    pg.click('#ejMapBtn'); pg.wait_for_timeout(500); mapok=pg.is_visible('.ej-map'); pg.click('.modal-x'); pg.wait_for_timeout(200)
+    check('지구 대장정 코스 지도', mapok and not pg.is_visible('.ej-map'))
+    check('지구 대장정: 이번 학년도만, 지난 학년도 함께 표시', '지구 대장정' in et and '인천항' in et and at['year']+'학년도' in et and '{:,}회'.format(at['years'][at['year']]) in et and at['years'][at['year']] < at['total'] and ('지난 '+str(int(at['year'])-1)+'학년도에는 모두 함께') in et and '뛰었어요' in et, et[:140])
     gopts=pg.eval_on_selector_all('#gradeSel option','e=>e.map(x=>x.value)')
     check('학년 고르기', '6' in gopts and '4' in gopts, str(gopts))
     pg.select_option('#gradeSel','6'); pg.wait_for_timeout(1500)
