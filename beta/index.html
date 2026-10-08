@@ -429,7 +429,13 @@
   .jr-tag { font-size: 0.8em; color: var(--coral-dark); font-weight: 700; }
   .jr-num { color: var(--ink-2); } .jr-num b { font-size: 1.3em; color: var(--ink); }
   /* 국토 대장정 그림: 모래 언덕 + 무지개 줄넘기 줄 길 + 바닷길은 물 + 줄넘기 하는 아이 */
-  .jr-scene { position: relative; margin: 10px -20px -20px; padding: 86px 38px 14px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 160' preserveAspectRatio='none'%3E%3Cpath d='M0 58 C150 30 300 72 460 50 S760 22 1000 44 V160 H0Z' fill='%23F7E9D3'/%3E%3Cpath d='M0 84 C200 62 380 98 560 80 S850 64 1000 76 V160 H0Z' fill='%23F0D9B5'/%3E%3Cpath d='M-20 128 C200 106 420 134 660 118' stroke='%23F9EEDC' stroke-width='3' fill='none'/%3E%3Cpath d='M800 160 C850 140 920 130 1000 127 V160Z' fill='%23DE8466'/%3E%3Cpath d='M846 160 C888 145 945 137 1000 135' stroke='%23fff' stroke-width='1.6' fill='none' opacity='.8'/%3E%3Cpath d='M892 160 C925 149 965 144 1000 143' stroke='%23fff' stroke-width='1.6' fill='none' opacity='.8'/%3E%3Cpath d='M935 160 C958 153 982 150 1000 150 V160Z' fill='%2386BF6A'/%3E%3C/svg%3E") center bottom / 100% 100% no-repeat; }
+  .jr-scene { position: relative; margin: 10px -20px -20px; padding: 86px 38px 14px; background: linear-gradient(180deg, #fff 0, #F4F9EE 60px, #F4F9EE 92px, #E7F0D8 92px, #EEF4E2 100%); }
+  .jr-land { position: absolute; left: 38px; right: 38px; top: 22px; height: 70px; }
+  .jr-t { position: absolute; top: 0; bottom: 0; background-repeat: repeat-x; background-position: left bottom; background-size: 120px 100%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); }
+  .jr-t.m { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpolygon points='0,70 0,40 18,20 34,36 52,8 72,34 90,18 108,32 120,24 120,70' fill='%23B9D6A8'/%3E%3Cpolygon points='45,17 52,8 59,17 55,15 52,19 48,15' fill='%23fff' opacity='.85'/%3E%3Cpolygon points='0,70 0,50 22,30 42,48 62,28 84,50 102,36 120,48 120,70' fill='%237DAF66'/%3E%3Cpolygon points='0,70 0,60 30,50 60,62 90,52 120,60 120,70' fill='%235E9850'/%3E%3C/svg%3E"); }
+  .jr-t.h { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 70 V44 Q20 26 40 42 T80 38 T120 42 V70Z' fill='%23B7D69C'/%3E%3Cpath d='M0 70 V54 Q30 40 60 52 T120 50 V70Z' fill='%238CBF72'/%3E%3Ccircle cx='26' cy='47' r='4' fill='%236FA85A'/%3E%3Ccircle cx='86' cy='45' r='4.5' fill='%236FA85A'/%3E%3C/svg%3E"); }
+  .jr-t.p { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 52 Q30 44 60 50 T120 48 V70 H0Z' fill='%23C9E0A2'/%3E%3Crect x='0' y='54' width='120' height='16' fill='%23DCEBAE'/%3E%3Crect x='0' y='56' width='120' height='2.4' fill='%23E8D47A'/%3E%3Crect x='0' y='61' width='120' height='2.4' fill='%23E8D47A'/%3E%3Crect x='0' y='66' width='120' height='2.4' fill='%23E8D47A'/%3E%3Crect x='34' y='44' width='1.6' height='8' fill='%238B6B4A'/%3E%3Ccircle cx='34.8' cy='43' r='4.6' fill='%237DB262'/%3E%3Crect x='94' y='46' width='1.6' height='7' fill='%238B6B4A'/%3E%3Ccircle cx='94.8' cy='45' r='4' fill='%237DB262'/%3E%3C/svg%3E"); }
+  .jr-t.s { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 40 Q7.5 36 15 40 T30 40 T45 40 T60 40 T75 40 T90 40 T105 40 T120 40 V70 H0Z' fill='%23A9E0F8'/%3E%3Cpath d='M0 50 Q7.5 46 15 50 T30 50 T45 50 T60 50 T75 50 T90 50 T105 50 T120 50' stroke='%23fff' stroke-width='1.6' fill='none' opacity='.8'/%3E%3Cpath d='M0 60 Q7.5 56 15 60 T30 60 T45 60 T60 60 T75 60 T90 60 T105 60 T120 60' stroke='%23fff' stroke-width='1.6' fill='none' opacity='.65'/%3E%3C/svg%3E"); }
   .jr-track { position: relative; height: 12px; }
   .jr-rope { position: absolute; inset: 0; border-radius: 999px; background: repeating-linear-gradient(-60deg, rgba(255,255,255,.38) 0 2px, transparent 2px 6px), linear-gradient(90deg, #EF4444, #F97316, #EAB308, #22C55E, #06B6D4, #6366F1, #D946EF); box-shadow: 0 2px 0 rgba(110,70,30,.28), inset 0 -2px 0 rgba(0,0,0,.12); }
   .jr-rest { position: absolute; top: 0; bottom: 0; right: 0; border-radius: 0 999px 999px 0; background: rgba(247,236,220,.72); }
@@ -438,18 +444,18 @@
   .jr-stop { position: absolute; top: 6px; transform: translateX(-50%); z-index: 2; }
   .jr-stop i { display: block; width: 18px; height: 24px; margin-top: -26px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 31C12 31 2 19 2 11.5a10 10 0 0 1 20 0C22 19 12 31 12 31z' fill='%239CA3AF' stroke='%23fff' stroke-width='1.6'/%3E%3Ccircle cx='12' cy='11.5' r='4' fill='%23fff'/%3E%3C/svg%3E") center / contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
   .jr-stop.on i { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 31C12 31 2 19 2 11.5a10 10 0 0 1 20 0C22 19 12 31 12 31z' fill='%23F26A3D' stroke='%23fff' stroke-width='1.6'/%3E%3Ccircle cx='12' cy='11.5' r='4' fill='%23fff'/%3E%3C/svg%3E"); }
-  .jr-stop b { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-size: 0.74em; color: #8A7258; white-space: nowrap; font-weight: 700; }
-  .jr-stop.on b { color: #4B3621; }
+  .jr-stop b { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-size: 0.74em; color: #7C8B6A; white-space: nowrap; font-weight: 700; }
+  .jr-stop.on b { color: #2F3D22; }
   .jr-me { position: absolute; bottom: 3px; width: 76px; height: 82px; transform: translateX(-50%); z-index: 3; pointer-events: none; }
   .jr-me svg { display: block; width: 100%; height: 100%; animation: jrHop .9s ease-in-out infinite; transform-origin: 50% 100%; }
-  .jr-me::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 30px; height: 7px; margin-left: -15px; border-radius: 50%; background: rgba(80,50,20,.22); animation: jrShadow .9s ease-in-out infinite; }
+  .jr-me::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 30px; height: 7px; margin-left: -15px; border-radius: 50%; background: rgba(40,60,30,.22); animation: jrShadow .9s ease-in-out infinite; }
   .jr-me.sea::after { display: none; }
   @keyframes jrHop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
   @keyframes jrShadow { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(.7); opacity: .6; } }
   @media (prefers-reduced-motion: reduce) { .jr-me svg, .jr-me::after { animation: none; } }
-  .jr-msg { margin: 34px 0 0; font-size: 0.85em; color: #6B5038; }
-  .jr-msg b { color: #3F2C1A; }
-  @media (max-width: 640px) { .jr-scene { padding: 80px 24px 12px; } .jr-stop b { display: none; } .jr-stop.first b, .jr-stop.last b { display: block; } }
+  .jr-msg { margin: 34px 0 0; font-size: 0.85em; color: #4B5E3A; }
+  .jr-msg b { color: #2F3D22; }
+  @media (max-width: 640px) { .jr-scene { padding: 80px 24px 12px; } .jr-land { left: 24px; right: 24px; top: 16px; } .jr-stop b { display: none; } .jr-stop.first b, .jr-stop.last b { display: block; } }
   .nat-kpis { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .nat-kpis div { background: var(--bg); border-radius: var(--r-sm); padding: 8px 12px; font-size: 0.88em; color: var(--muted); }
   .nat-kpis b { display: block; color: var(--ink); font-size: 1.25em; }
@@ -532,7 +538,7 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const INSTALL_VIDEO = 'https://youtu.be/5JLZTvS4VPc';
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.3.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.3.4', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -845,11 +851,17 @@ const JOURNEY = {
     const P = function(km){ return (km / goalKm * 100).toFixed(3) + '%'; };
     const seas = R.map(function(s, i){ return s[2] && i ? '<span class="jr-sea' + (cur < s[1] * 1000 ? ' later' : '') + '" style="left:' + P(R[i - 1][1]) + ';width:' + P(s[1] - R[i - 1][1]) + '" title="배를 타고 가요"></span>' : ''; }).join('');
     const stops = R.map(function(s, i){ return '<span class="jr-stop' + (cur >= s[1] * 1000 ? ' on' : '') + (i === 0 ? ' first' : i === R.length - 1 ? ' last' : '') + '" style="left:' + P(s[1]) + '"><i></i><b>' + s[0] + '</b></span>'; }).join('');
+    const self = this, lon = function(n){ const x = self.city(n); return x ? x[2] : 127.5; };
+    const runs = [];
+    R.forEach(function(s, i){ if (!i) return; const a = R[i - 1], o = (lon(a[0]) + lon(s[0])) / 2, t = s[2] ? 's' : o >= 128.3 ? 'm' : o < 127.4 ? 'p' : 'h';
+      const r = runs[runs.length - 1]; if (r && r[0] === t) r[2] = s[1]; else runs.push([t, a[1], s[1]]); });
+    const land = runs.map(function(r, i){ const L = i ? 12 : 40, Rr = i === runs.length - 1 ? 40 : 12;
+      return '<i class="jr-t ' + r[0] + '" style="left:calc(' + P(r[1]) + ' - ' + L + 'px);width:calc(' + P(r[2] - r[1]) + ' + ' + (L + Rr) + 'px)"></i>'; }).join('');
     const onSea = !!(next[2] && at !== next[0]);
     const kid = '<svg viewBox="0 0 70 76" aria-hidden="true"><defs><linearGradient id="jrRb" x1="0" x2="1"><stop offset="0" stop-color="#EF4444"/><stop offset=".2" stop-color="#F97316"/><stop offset=".4" stop-color="#EAB308"/><stop offset=".6" stop-color="#22C55E"/><stop offset=".8" stop-color="#3B82F6"/><stop offset="1" stop-color="#D946EF"/></linearGradient></defs><path d="M15 50 C3 -6, 67 -6, 55 50" stroke="url(#jrRb)" stroke-width="3.6" fill="none" stroke-linecap="round"/><g stroke="#1F2937" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M29 39 L18 47 M41 39 L52 47"/><path d="M31 47 L26 58 L30 66 M39 47 L44 58 L40 66"/></g><g stroke="#fff" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M29 39 L18 47 M41 39 L52 47"/><path d="M31 47 L26 58 L30 66 M39 47 L44 58 L40 66"/></g><rect x="26" y="33" width="18" height="17" rx="8.5" fill="#fff" stroke="#1F2937" stroke-width="1.8"/><rect x="12" y="46" width="6" height="11" rx="2.5" fill="#F26A3D" stroke="#7C2D12" stroke-width=".8" transform="rotate(-25 15 51.5)"/><rect x="52" y="46" width="6" height="11" rx="2.5" fill="#F26A3D" stroke="#7C2D12" stroke-width=".8" transform="rotate(25 55 51.5)"/><circle cx="35" cy="22" r="10.5" fill="#fff" stroke="#1F2937" stroke-width="1.9"/><circle cx="31.5" cy="21" r="1.3" fill="#1F2937"/><circle cx="38.5" cy="21" r="1.3" fill="#1F2937"/><path d="M31.6 25.4 Q35 28.4 38.4 25.4" stroke="#1F2937" stroke-width="1.4" fill="none" stroke-linecap="round"/><circle cx="28.8" cy="24.6" r="1.6" fill="#FDA4AF" opacity=".7"/><circle cx="41.2" cy="24.6" r="1.6" fill="#FDA4AF" opacity=".7"/>' + (onSea ? '<path d="M9 67 H61 L53 75 H17 Z" fill="#B45309" stroke="#7C2D12" stroke-width="1.2"/>' : '') + '</svg>';
     return '<div class="jr-head"><div><span class="jr-tag" data-our="{our} 줄넘기 여행">' + (APP.ourLabel || '우리 반') + ' 줄넘기 여행</span><h2>국토 대장정 <small>' + c.start + ' 출발 · 약 ' + goalKm.toLocaleString() + 'km</small></h2></div>' +
       '<div class="jr-num"><b class="mono">' + this.km(cur) + 'km</b> 왔어요' + (laps ? ' · <b>' + laps + '번</b> 완주!' : '') + '</div></div>' +
-      '<div class="jr-scene"><div class="jr-track"><div class="jr-rope"></div><div class="jr-rest" style="left:' + pct.toFixed(2) + '%"></div>' + seas + stops +
+      '<div class="jr-scene"><div class="jr-land">' + land + '</div><div class="jr-track"><div class="jr-rope"></div><div class="jr-rest" style="left:' + pct.toFixed(2) + '%"></div>' + seas + stops +
       '<span class="jr-me' + (onSea ? ' sea' : '') + '" style="left:' + pct.toFixed(2) + '%">' + kid + '</span></div>' +
       '<p class="jr-msg">지금 <b>' + at + '</b> ' + (onSea ? '앞바다에서 배를 타고 가는 중' : '지나는 중') + ' · 다음 <b>' + next[0] + '</b>까지 <b class="mono">' + Math.max(0, next[1] * 1000 - cur).toLocaleString() + '회</b> 남았어요 (줄넘기 1회 = 1m)</p></div>';
   },
