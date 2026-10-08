@@ -542,7 +542,7 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const INSTALL_VIDEO = 'https://youtu.be/5JLZTvS4VPc';
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.3.7', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.3.8', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -631,7 +631,7 @@ const NAT = {
       .then(function(j){ if (!j.ok) throw new Error(j.error || '현황판 요청 실패'); return j.result; });
   },
   /* 학생 목록 + {studentId: {date: [count, cam]}} → 보고용 days */
-  buildDays: function(students, perStudent){
+  buildDays: function(students, perStudent, fillFrom){
     const key = this.cfg.key, byId = {}, days = {};
     students.forEach(function(s){ byId[String(s.id).trim()] = s; });
     const jobs = Object.keys(perStudent).filter(function(id){ return byId[id]; }).map(function(id){
@@ -644,6 +644,9 @@ const NAT = {
       });
     });
     return Promise.all(jobs).then(function(){
+      // fillFrom: 그 날부터 오늘까지 기록 없는 날도 빈 날로 보냄 → 학교에서 지운 기록이 전국 현황판에서도 지워짐
+      if (fillFrom) { const p2 = function(x){ return String(x).padStart(2, '0'); }, t = new Date();
+        for (let d = new Date(fillFrom + 'T00:00:00'); d <= t; d.setDate(d.getDate() + 1)) { const ds = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); if (!days[ds]) days[ds] = []; } }
       return Object.keys(days).sort().map(function(d){ return { date: d, students: days[d] }; });
     });
   },
@@ -707,7 +710,7 @@ const NAT = {
           const v = ((per[r.studentId] = per[r.studentId] || {})[r.date] = per[r.studentId][r.date] || [0, 0]);
           v[0] += r.count; if (r.source === 'camera') v[1] += r.count;
         });
-        return NAT.buildDays(all.students || [], per).then(function(days){
+        return NAT.buildDays(all.students || [], per, from).then(function(days){
           return NAT.post('report', Object.assign(NAT.meta(all.students || [], true), { days: days })).then(function(res){
             NAT._mark('sync'); NAT._mark('today');
             return { result: res, days: days };
