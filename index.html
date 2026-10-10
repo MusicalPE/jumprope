@@ -182,6 +182,10 @@
   label { display: block; margin-bottom: 12px; font-size: 0.84em; font-weight: 700; color: var(--muted); }
   .form-row { display: flex; gap: 14px; flex-wrap: wrap; }
   .form-row label { flex: 1; min-width: 140px; }
+  /* 한 명만 추가: 휴대폰에서도 칸이 가지런하게 (학년·반·번호 한 줄, 이름·비밀번호 한 줄) */
+  #addForm .form-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  #addForm .form-row.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #addForm .form-row label { min-width: 0; }
 
   input, select, textarea {
     display: block; width: 100%; box-sizing: border-box;
@@ -1277,9 +1281,9 @@ document.addEventListener('DOMContentLoaded', function(){
           <label>반 <input type="text" id="newClass" required></label>
           <label>번호 <input type="text" id="newNumber"></label>
         </div>
-        <div class="form-row">
+        <div class="form-row two">
           <label>이름 <input type="text" id="newName" required></label>
-          <label>비밀번호 (개별 기록 조회용) <input type="password" id="newPw" required></label>
+          <label>비밀번호 <input type="password" id="newPw" required placeholder="기록 조회용"></label>
         </div>
         <button type="submit">추가</button>
       </form>
