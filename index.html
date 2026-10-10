@@ -542,7 +542,7 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const INSTALL_VIDEO = 'https://youtu.be/5JLZTvS4VPc';
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.3.8', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.3.9', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1283,6 +1283,24 @@ document.addEventListener('DOMContentLoaded', function(){
         </div>
         <button type="submit">추가</button>
       </form>
+    </div>
+
+    <div class="card" id="offImpCard">
+      <h2>오프라인판 자료 불러오기</h2>
+      <p class="hint">파일로 여는 <b>줄넘기 기록 관리(오프라인판)</b>에서 쓰던 기록을 이 학교 시트로 옮겨요. 오프라인판 "학생 관리" 탭 → <b>컴퓨터와 동기화(백업) → 내보내기</b>로 받은 <b>줄넘기기록_백업_날짜.json</b> 파일을 골라 주세요. 학생은 학년·반·번호·이름으로 맞추고, 같은 날짜·횟수 기록이 이미 있으면 건너뛰어서 여러 번 해도 겹치지 않아요.</p>
+      <input type="file" id="offImpFile" accept=".json,application/json" style="display:none">
+      <button type="button" id="offImpPick" class="btn-outline">백업 파일 고르기</button>
+      <div id="offImpBox" style="display:none; margin-top:12px;">
+        <p class="hint" id="offImpSum"></p>
+        <div id="offImpMissWrap" style="display:none; margin:8px 0;">
+          <p class="hint" style="color:var(--danger)" id="offImpMiss"></p>
+          <button type="button" id="offImpAddStu" class="btn-outline">없는 학생 먼저 등록하기</button>
+        </div>
+        <label style="display:flex; align-items:center; gap:8px; margin:10px 0;">기록에 붙일 줄넘기 종류 <select id="offImpType" style="width:auto;"></select></label>
+        <button type="button" id="offImpGo">가져오기</button>
+        <div id="offImpBarWrap" style="display:none; margin-top:10px; height:10px; background:var(--line-2); border-radius:6px; overflow:hidden;"><i id="offImpBar" style="display:block; height:100%; width:0; background:var(--coral); transition:width .2s;"></i></div>
+        <p class="hint" id="offImpMsg"></p>
+      </div>
     </div>
     </section>
 
@@ -2700,6 +2718,101 @@ document.getElementById('bulkAddBtn').addEventListener('click', function(){
     })
     .withFailureHandler(function(err){ msgEl.textContent = '오류: ' + String(err); })
     .addStudentsBulk(token, rows);
+});
+
+/* ---- 오프라인판 자료 불러오기 ----
+   백업 파일 모양: { students:[{id,grade,cls,number,name}], records:[{studentId,date:'YYYY-MM-DD',count,time:'HH:mm'}] }
+   학생은 학년·반·번호·이름으로 이 학교 학생과 맞춤 → 기록을 addRecord 로 한 건씩 넣음(승인 절차가 켜져 있으면 잠깐 끄고 넣은 뒤 되돌림)
+   이미 같은 학생·날짜·횟수 기록이 있으면 건너뜀 */
+const OFF = { data: null, online: [], have: null, plan: [], miss: [] };
+const offKey = function(g, c, n, nm){ return [g, c, n, nm].map(function(v){ return String(v == null ? '' : v).trim(); }).join('|'); };
+const offRpc = function(fn, args){ return rpc(fn, args); };
+document.getElementById('offImpPick').addEventListener('click', function(){ document.getElementById('offImpFile').click(); });
+document.getElementById('offImpFile').addEventListener('change', function(e){
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = function(){
+    try {
+      const d = JSON.parse(rd.result);
+      if (!Array.isArray(d.students) || !Array.isArray(d.records)) throw new Error('형식');
+      OFF.data = d; offPrepare();
+    } catch (err) { offMsg('오프라인판 백업 파일이 아니에요 — "내보내기"로 받은 .json 파일을 골라 주세요.', true); document.getElementById('offImpBox').style.display = 'block'; }
+  };
+  rd.readAsText(f);
+});
+function offMsg(t, bad){ const el = document.getElementById('offImpMsg'); el.textContent = t; el.style.color = bad ? 'var(--danger)' : ''; }
+function offPrepare(){
+  document.getElementById('offImpBox').style.display = 'block';
+  offMsg('이 학교 학생·기록을 확인하는 중…');
+  document.getElementById('offImpGo').disabled = true;
+  const sel = document.getElementById('offImpType');
+  sel.innerHTML = (jumpTypes || []).map(function(t){ return '<option>' + String(t).replace(/</g, '&lt;') + '</option>'; }).join('');
+  offRpc('getAllDataAdmin', [token]).then(function(all){
+    OFF.online = all.students || [];
+    const idByKey = {}; OFF.online.forEach(function(s){ idByKey[offKey(s.grade, s.cls, s.number, s.name)] = s.id; });
+    OFF.have = {}; (all.records || []).forEach(function(r){ OFF.have[r.studentId + '|' + r.date + '|' + r.count] = true; });
+    const d = OFF.data, stuById = {}; d.students.forEach(function(s){ stuById[s.id] = s; });
+    OFF.miss = []; const missSet = {};
+    OFF.plan = []; let dup = 0, bad = 0;
+    d.records.forEach(function(r){
+      const s = stuById[r.studentId]; const cnt = Math.round(Number(r.count));
+      if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(String(r.date || '')) || !(cnt > 0) || cnt > 5000) { bad++; return; }
+      const sid = idByKey[offKey(s.grade, s.cls, s.number, s.name)];
+      if (!sid) { const k = offKey(s.grade, s.cls, s.number, s.name); if (!missSet[k]) { missSet[k] = 1; OFF.miss.push(s); } return; }
+      if (OFF.have[sid + '|' + r.date + '|' + cnt]) { dup++; return; }
+      OFF.plan.push({ sid: sid, date: r.date, count: cnt, time: String(r.time || '').slice(0, 5) });
+    });
+    const days = {}; OFF.plan.forEach(function(p){ days[p.date] = 1; });
+    const ds = Object.keys(days).sort();
+    document.getElementById('offImpSum').innerHTML = '백업 파일: 학생 <b>' + d.students.length + '명</b> · 기록 <b>' + d.records.length + '건</b><br>' +
+      '가져올 기록 <b>' + OFF.plan.length + '건</b>' + (ds.length ? ' (' + ds[0] + ' ~ ' + ds[ds.length - 1] + ')' : '') +
+      (dup ? ' · 이미 있는 기록 ' + dup + '건 건너뜀' : '') + (bad ? ' · 알아볼 수 없는 기록 ' + bad + '건 뺌' : '');
+    const mw = document.getElementById('offImpMissWrap');
+    mw.style.display = OFF.miss.length ? 'block' : 'none';
+    if (OFF.miss.length) document.getElementById('offImpMiss').textContent = '이 학교 명단에 없는 학생 ' + OFF.miss.length + '명: ' +
+      OFF.miss.slice(0, 12).map(function(s){ return s.grade + '-' + s.cls + ' ' + (s.number || '') + '번 ' + s.name; }).join(', ') + (OFF.miss.length > 12 ? ' 외' : '') + ' — 등록하면 이 학생들 기록도 함께 가져와요';
+    document.getElementById('offImpGo').disabled = !OFF.plan.length;
+    offMsg(OFF.plan.length ? '줄넘기 종류를 고르고 "가져오기"를 눌러 주세요.' : (OFF.miss.length ? '먼저 없는 학생을 등록해 주세요.' : '새로 가져올 기록이 없어요 (이미 다 들어와 있어요).'));
+  }).catch(function(err){ offMsg('이 학교 자료를 읽지 못했어요: ' + (err.message || err), true); });
+}
+document.getElementById('offImpAddStu').addEventListener('click', function(){
+  const rows = OFF.miss.map(function(s){ return { grade: s.grade, cls: s.cls, number: s.number, name: s.name, password: '' }; });
+  if (!rows.length) return;
+  if (!confirm(rows.length + '명을 이 학교 명단에 등록할까요? (비밀번호는 1234로 시작해요)')) return;
+  offMsg('학생 등록 중…');
+  offRpc('addStudentsBulk', [token, rows]).then(function(res){ offMsg(res.added + '명 등록했어요. 기록을 다시 맞춰 볼게요…'); loadList(); offPrepare(); })
+    .catch(function(err){ offMsg('학생을 등록하지 못했어요: ' + (err.message || err), true); });
+});
+document.getElementById('offImpGo').addEventListener('click', async function(){
+  const type = document.getElementById('offImpType').value;
+  if (!type) { offMsg('줄넘기 종류를 골라 주세요.', true); return; }
+  const plan = OFF.plan.slice(); if (!plan.length) return;
+  if (!confirm('기록 ' + plan.length + '건을 "' + type + '"(으)로 이 학교 시트에 넣을까요? 모두 승인된 기록으로 들어가요.')) return;
+  const btn = this; btn.disabled = true;
+  document.getElementById('offImpBarWrap').style.display = 'block';
+  const wasOn = !!(APP.settings && APP.settings.approvalOn);
+  let done = 0, fail = 0;
+  try {
+    if (wasOn) await offRpc('setAppSettings', [token, { approvalOn: false }]);   // 넣는 동안만 승인 절차 끔 → 바로 승인 기록
+    let i = 0;
+    const worker = async function(){
+      while (i < plan.length) {
+        const p = plan[i++];
+        try { const r = await offRpc('addRecord', [p.sid, p.date, p.count, p.time, type]); if (r && r.ok === false) fail++; else { done++; OFF.have[p.sid + '|' + p.date + '|' + p.count] = true; } }
+        catch (e) { fail++; }
+        document.getElementById('offImpBar').style.width = Math.round((done + fail) / plan.length * 100) + '%';
+        offMsg('넣는 중… ' + (done + fail) + ' / ' + plan.length + ' (창을 닫지 마세요)');
+      }
+    };
+    await Promise.all([worker(), worker(), worker()]);
+  } catch (err) { offMsg('가져오다 멈췄어요: ' + (err.message || err), true); }
+  finally {
+    if (wasOn) { try { await offRpc('setAppSettings', [token, { approvalOn: true }]); } catch (e) { alert('승인 절차를 다시 켜지 못했어요 — 설정 탭에서 "승인 절차 사용"을 다시 켜 주세요.'); } }
+  }
+  OFF.plan = OFF.plan.filter(function(p){ return !OFF.have[p.sid + '|' + p.date + '|' + p.count]; });
+  offMsg('기록 ' + done + '건을 가져왔어요' + (fail ? ' · ' + fail + '건은 실패 — "가져오기"를 한 번 더 누르면 남은 것만 다시 넣어요' : '') + '.', !!fail);
+  if (done) { try { NAT.syncAll(token, true).catch(function(){}); } catch (e) {} }   // 점퍼스에 참여 중이면 바로 보냄
+  btn.disabled = !OFF.plan.length;
 });
 
 document.querySelector('#studentTable tbody').addEventListener('click', function(e){
