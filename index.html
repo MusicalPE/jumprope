@@ -466,6 +466,10 @@
   .jr-stop.on i { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 31C12 31 2 19 2 11.5a10 10 0 0 1 20 0C22 19 12 31 12 31z' fill='%23F26A3D' stroke='%23fff' stroke-width='1.6'/%3E%3Ccircle cx='12' cy='11.5' r='4' fill='%23fff'/%3E%3C/svg%3E"); }
   .jr-stop b { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-size: 0.74em; color: #7C8B6A; white-space: nowrap; font-weight: 700; }
   .jr-stop.on b { color: #2F3D22; }
+  /* 출발 도시 바로 옆이라 이름이 겹치는 곳: 이름 없이 작은 동그라미만 */
+  .jr-stop.near b { display: none; }
+  .jr-stop.near i { width: 9px; height: 9px; margin-top: -9px; border-radius: 50%; background: #9CA3AF; border: 2px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .jr-stop.near.on i { background: #F26A3D; }
   .jr-me { position: absolute; bottom: 2px; width: 64px; height: 102px; transform: translateX(-50%); z-index: 3; pointer-events: none; }
   .jr-me img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; animation: jrHop .9s ease-in-out infinite; filter: drop-shadow(0 1px 1.5px rgba(60,40,20,.28)); }
   .jr-boat { position: absolute; left: 50%; bottom: -6px; width: 84px; height: 14px; margin-left: -42px; }
@@ -560,7 +564,7 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const INSTALL_VIDEO = 'https://youtu.be/5JLZTvS4VPc';
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.4.0', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.4.1', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -875,7 +879,10 @@ const JOURNEY = {
     for (let i = 0; i < R.length; i++) if (R[i][1] * 1000 > cur) { next = R[i]; break; }
     const P = function(km){ return (km / goalKm * 100).toFixed(3) + '%'; };
     const seas = R.map(function(s, i){ return s[2] && i ? '<span class="jr-sea' + (cur < s[1] * 1000 ? ' later' : '') + '" style="left:' + P(R[i - 1][1]) + ';width:' + P(s[1] - R[i - 1][1]) + '" title="배를 타고 가요"></span>' : ''; }).join('');
-    const stops = R.map(function(s, i){ return '<span class="jr-stop' + (cur >= s[1] * 1000 ? ' on' : '') + (i === 0 ? ' first' : i === R.length - 1 ? ' last' : '') + '" style="left:' + P(s[1]) + '"><i></i><b>' + s[0] + '</b></span>'; }).join('');
+    // 이름이 겹칠 만큼 가까운 도시: 출발 도시(처음·끝)를 먼저 보이고, 바로 옆 도시는 동그라미만
+    const pos = R.map(function(s){ return s[1] / goalKm * 100; }), shown = [0, R.length - 1], near = {};
+    for (let i = 1; i < R.length - 1; i++) { if (shown.some(function(j){ return Math.abs(pos[i] - pos[j]) < 3.5; })) near[i] = 1; else shown.push(i); }
+    const stops = R.map(function(s, i){ return '<span class="jr-stop' + (cur >= s[1] * 1000 ? ' on' : '') + (i === 0 ? ' first' : i === R.length - 1 ? ' last' : '') + (near[i] ? ' near' : '') + '" style="left:' + P(s[1]) + '" title="' + s[0] + '"><i></i><b>' + s[0] + '</b></span>'; }).join('');
     const self = this, lon = function(n){ const x = self.city(n); return x ? x[2] : 127.5; };
     const runs = [];
     R.forEach(function(s, i){ if (!i) return; const a = R[i - 1], o = (lon(a[0]) + lon(s[0])) / 2, t = s[2] ? 's' : (a[0] + s[0] === '부산여수' || a[0] + s[0] === '여수부산') ? 'b' : o >= 128.3 ? 'm' : o < 127.4 ? 'p' : 'h';
