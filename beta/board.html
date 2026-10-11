@@ -159,7 +159,8 @@
     .bw > #body { display: contents; }
     .bw-l { grid-column: 1; grid-row: 2; position: sticky; top: 16px; }   /* 오른쪽 순위를 내려 봐도 지구 대장정은 따라와요 */
     .bw-r { grid-column: 2; grid-row: 1 / span 2; }
-    .bw-r .card.fold:not(.open) tr.x { display: none; }
+    .bw-r .card.fold:not(.open) > .table-wrap > table > tbody > tr.x { display: none; }
+    .bw-r .det-fold:not(.open) table.mini tr.x { display: none; }
     .bw-r .card.fold:not(.open) .more-row { display: none; }   /* 펼친 뒤에 전체 보기 버튼 */
     .bw-r .fold-row { display: block; }
     .bw > #body > .hint, .bw > #body > .loading, .bw > #body > .err { grid-column: 1 / -1; }
@@ -207,7 +208,7 @@
   const me = q.me || '';
   let collector = '', data = null, sortBy = 'total', openPid = me, grade = q.grade || '';
   const folds = {};   // 넓은 화면에서 6등 아래를 펼친 표 (sch·stu·run)
-  const FOLD = 5;    // 넓은 화면 오른쪽 순위는 5등까지만 먼저 (우리 학교·나는 늘 보여요)
+  const FOLD = 5;    // 넓은 화면 오른쪽 순위는 5등까지만 먼저 (학교 순위의 우리 학교 줄은 늘 보여요)
   const EARTH_M = 40075000;   // 지구 둘레 40,075km, 줄넘기 1회 = 1m
   const $ = function(id){ return document.getElementById(id); };
   const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
@@ -347,19 +348,19 @@
     all.forEach(function(x, i){
       r = (i > 0 && all[i - 1].c === x.c) ? r : i + 1;
       if (i >= rows.length) return;
-      h += '<tr class="' + (x.pid === me ? 'me' : (i >= FOLD ? 'x' : '')) + '"><td>' + rankHtml(r) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>';
+      h += '<tr class="' + (x.pid === me ? 'me' : '') + (i >= FOLD ? ' x' : '') + '"><td>' + rankHtml(r) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>';
     });
     return h + '</tbody></table>';
   }
 
   function runTable(rows){
     return '<table><thead><tr><th>순위</th><th>이름</th><th>학교</th><th class="num">연속</th><th class="num hide-sm">횟수</th></tr></thead><tbody>' + rows.map(function(x, i){
-      return '<tr class="' + (x.pid === me ? 'me' : (i >= FOLD ? 'x' : '')) + '"><td>' + rankHtml(x.rank) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>';
+      return '<tr class="' + (x.pid === me ? 'me' : '') + (i >= FOLD ? ' x' : '') + '"><td>' + rankHtml(x.rank) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>';
     }).join('') + '</tbody></table>';
   }
 
-  function foldBtn(k, len){
-    if (len <= FOLD) return '';
+  function foldBtn(k, len, hidden){
+    if (len <= FOLD || hidden === 0) return '';   // 접혀서 숨는 줄이 없으면 버튼도 없어요
     return '<div class="fold-row"><button type="button" class="more-btn fold-btn" data-fold="' + k + '">' + (folds[k] ? '접기 ▴' : (FOLD + 1) + '~' + len + '등 더보기 ▾') + '</button></div>';
   }
   function draw(){
@@ -417,7 +418,7 @@
         if (openPid === sc.pid) html += '<tr class="detail' + xc + '"><td colspan="6">' + schoolDetail(sc) + '</td></tr>';
       });
       html += '</tbody></table></div>';
-      html += foldBtn('sch', schools.length);
+      html += foldBtn('sch', schools.length, schools.filter(function(sc, i){ return i >= FOLD && sc.pid !== me; }).length);
       html += '<p class="hint" style="margin-bottom:0;">1인당 평균 = 합계 ÷ 등록 학생 수 · 참여율 = 이번 달 한 번이라도 뛴 학생 ÷ 등록 학생 수. 두 순위는 등록 학생 ' + (data.minRegistered || 5) + '명 이상인 학교만 매겨요.' + (data.grade ? ' 학년별로 볼 때는 학년별 학생 수를 보낸 학교(2.2 이상)만 1인당 평균·참여율 순위에 들어가요.' : '') + ' 📷 카메라는 줄넘기 판정기로 인증된 횟수예요.</p>';
     }
     html += '</div>';
@@ -465,11 +466,11 @@
     const st = sc.students || [];
     if (!st.length) return '<p class="hint">학생 기록이 없어요.</p>';
     let r = 0;
-    return '<table class="mini"><thead><tr><th>학교 안 순위</th><th>이름</th><th class="num">횟수</th><th class="num">뛴 날</th><th class="num">📷</th></tr></thead><tbody>' +
+    return '<div class="det-fold' + (folds.det ? ' open' : '') + '"><table class="mini"><thead><tr><th>학교 안 순위</th><th>이름</th><th class="num">횟수</th><th class="num">뛴 날</th><th class="num">📷</th></tr></thead><tbody>' +
       st.map(function(x, i){
         r = (i > 0 && st[i - 1].c === x.c) ? r : i + 1;
-        return '<tr><td>' + rankHtml(r) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + x.days + '일</td><td class="num mono">' + n(x.cam) + '</td></tr>';
-      }).join('') + '</tbody></table>' +
+        return '<tr' + (i >= FOLD ? ' class="x"' : '') + '><td>' + rankHtml(r) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + x.days + '일</td><td class="num mono">' + n(x.cam) + '</td></tr>';
+      }).join('') + '</tbody></table>' + foldBtn('det', st.length) + '</div>' +
       (sc.participants > st.length ? '<p class="hint" style="margin:6px 0 0;">상위 ' + st.length + '명까지 보여요 (참여 ' + sc.participants + '명)</p>' : '');
   }
 
