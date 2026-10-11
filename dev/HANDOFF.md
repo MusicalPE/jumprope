@@ -1,7 +1,7 @@
 # 줄넘기 기록 관리 v2 — 이어서 작업하기 위한 메모
 
 ## 구조
-- `Shell.gs` (저장소 루트): 학교 스프레드시트에 붙이는 껍데기. `SHELL_VERSION = 3` (2·3판은 선택 업데이트, requiredShell 은 1 그대로. 3판 = 급수 Levels 시트 + 학생 삭제 고침). beta/Shell.gs 와 같음
+- `Shell.gs` (저장소 루트): 학교 스프레드시트에 붙이는 껍데기. `SHELL_VERSION = 4` (2·3·4판은 선택 업데이트, requiredShell 은 1 그대로. 3판 = 급수 Levels 시트 + 학생 삭제 고침. 4판 = 공개 getExtraSettings 에서 nat.key 를 빼고 nat.pid 만, 관리자는 getExtraSettingsAdmin, 오늘 기록은 natReportToday 로 껍데기가 직접 수집기에 보냄 — 화면은 APP.shell.shell>=4 면 이 길로, 아니면 예전처럼 화면이 보냄). beta/Shell.gs 와 같음
   - `doGet`: `?api=rope_x_who|rope_x_save` → 줄넘기 판정기 연동(JSON), 그 밖에는 "프로그램 열기" 설치 확인 화면
   - `doPost`: 본문 `{"fn","args"}` → `RPC_ALLOW_` 목록에 있는 함수만 실행 → `{"ok","result"|"error"}`
   - 설정은 1.x 와 같은 Script Properties 이름 그대로(DAILY_GOAL, JUMP_TYPES, ADMIN_HASH, GEMINI_KEY, THEME_*, CAMERA_*) + `APPROVAL_ON` + 자유 저장칸 `EXTRA_SETTINGS`(JSON, setExtraSettings) — 새 기능은 가능하면 이 칸과 getAllDataAdmin 으로 화면에서 처리해서 껍데기를 안 바꾸기
