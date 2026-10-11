@@ -22,7 +22,7 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 9;   // 9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 10;  // 10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -39,6 +39,7 @@ function doGet(e) {
   let out;
   try {
     if (q.api === 'board') out = getBoard_(q.month, q.grade);
+    else if (q.api === 'school') out = getSchool_(q.pid, q.month, q.grade);
     else if (q.api === 'hall') out = getHall_(q.month);
     else if (q.api === 'matBoard') out = getMatBoard_(q.month, q.game, q.diff, q.band);
     else out = { collector: COLLECTOR_VERSION, today: today_() };
@@ -393,15 +394,43 @@ function getBoard_(month, grade) {
     },
     students: nationalStudents_(schools, 50),
     streaks: nationalStreaks_(schools, 50, month === cur),
-    schools: schools.map(function (s) {
-      const o = Object.assign({}, s);
-      o.students = s.students.slice(0, 30).map(function (x) { return { n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days }; });
-      delete o.ratioOk;
-      return o;
-    })
+    // 학교 순위는 합계·1인당 평균·참여율 중 하나라도 10등 안인 학교만 (학교가 많아져도 가볍게)
+    // 우리 학교 줄과 학교 안 학생 순위는 ?api=school 로 그 학교만 따로 받아 가요
+    schoolsTotal: schools.length,
+    schools: schools.filter(function (s) { return [s.rank.total, s.rank.avg, s.rank.rate].some(function (r) { return r && r <= BOARD_TOP_SCHOOLS; }); })
+      .map(function (s) { return schoolRow_(s); }),
+    v: COLLECTOR_VERSION
   };
   const text = JSON.stringify(out);
   if (text.length < 90000) cache.put(ck, text, BOARD_CACHE_SEC);
+  return out;
+}
+
+const BOARD_TOP_SCHOOLS = 10;
+function schoolRow_(s) {
+  const o = Object.assign({}, s);
+  delete o.students; delete o.ratioOk;
+  return o;
+}
+// 학교 하나: 그 학교 줄(순위 포함) + 학교 안 학생 전체 순위 (이름은 가린 채)
+function getSchool_(pid, month, grade) {
+  const cur = month_(today_());
+  pid = cleanText_(pid, 16);
+  month = /^\d{4}-\d{2}$/.test(String(month || '')) ? String(month) : cur;
+  grade = cleanText_(grade, 4);
+  if (!pid) throw new Error('학교가 없어요');
+  const ck = 'school|' + pid + '|' + month + (grade ? '|' + grade : '');
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get(ck);
+  if (hit) return JSON.parse(hit);
+  const schools = aggregateMonth_(month, loadSchools_(), dailySheet_().getDataRange().getValues(), grade);
+  const s = schools.filter(function (x) { return x.pid === pid; })[0];
+  const out = s ? {
+    month: month, grade: grade, schoolsTotal: schools.length, school: schoolRow_(s),
+    students: s.students.map(function (x) { return { n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days }; })
+  } : { month: month, grade: grade, schoolsTotal: schools.length, school: null, students: [] };
+  const text = JSON.stringify(out);
+  if (text.length < 95000) cache.put(ck, text, BOARD_CACHE_SEC);
   return out;
 }
 
