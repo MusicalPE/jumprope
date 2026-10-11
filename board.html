@@ -101,6 +101,8 @@
   tr.gap td { text-align: center; color: var(--muted); padding: 0 !important; line-height: 1.2; letter-spacing: .2em; border-bottom: 0 !important; }
   .modal-tabs .pop-search { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; }
   .modal-tabs .pop-search:focus { outline: none; border-color: var(--coral); }
+  .modal-tabs .pop-search { flex: 1 1 200px; width: auto; }
+  .modal-tabs .pop-mine.on::before { content: '✓ '; }
   .pop-pages { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
   .pop-empty { text-align: center; color: var(--ink-2); padding: 24px 0 8px; }
   .more-btn:hover { border-color: var(--coral); background: var(--coral-tint); }
@@ -377,16 +379,18 @@
     const tabs = pages > 1 ? rows.filter(function(x, i){ return i % PER === 0; }).map(function(x, p){
       return '<button type="button" data-pg="' + p + '">' + (p * PER + 1) + '~' + Math.min(rows.length, (p + 1) * PER) + '등</button>';
     }).join('') : '';
-    const bg = openModal(o.title, o.sub, '<div class="pop-list"></div>', '<input type="search" class="pop-search" placeholder="' + (o.school ? '이름 찾기 (예: 김하늘)' : '이름이나 학교 찾기 (예: 김하늘)') + '" aria-label="찾기">' + (tabs ? '<div class="pop-pages">' + tabs + '</div>' : ''));
-    const list = bg.querySelector('.pop-list'), inp = bg.querySelector('.pop-search'), pg = bg.querySelector('.pop-pages');
+    const bg = openModal(o.title, o.sub, '<div class="pop-list"></div>', '<input type="search" class="pop-search" placeholder="' + (o.school ? '이름 찾기 (예: 김하늘)' : '이름이나 학교 찾기 (예: 김하늘)') + '" aria-label="찾기">' + (!o.school && me ? '<button type="button" class="pop-mine">우리 학교만</button>' : '') + (tabs ? '<div class="pop-pages">' + tabs + '</div>' : ''));
+    const list = bg.querySelector('.pop-list'), inp = bg.querySelector('.pop-search'), pg = bg.querySelector('.pop-pages'), mineBtn = bg.querySelector('.pop-mine');
+    let mineOnly = false;
     const render = function(){
       const m = matcher(inp.value);
       let show;
-      if (m) { show = rows.filter(m); if (pg) pg.style.display = 'none'; }
+      if (m || mineOnly) { show = rows.filter(function(x){ return (!m || m(x)) && (!mineOnly || x.pid === me); }); if (pg) pg.style.display = 'none'; }
       else { show = rows.slice(page * PER, (page + 1) * PER); if (pg) { pg.style.display = ''; Array.prototype.forEach.call(pg.children, function(b){ b.classList.toggle('on', Number(b.dataset.pg) === page); }); } }
-      list.innerHTML = show.length ? table(o.head, show, o.row) : '<p class="pop-empty">찾는 이름이 ' + (o.school ? '이 학교 순위에' : rows.length + '등 안에') + ' 없어요.<br><span class="hint">이름은 가운데를 가려서 보여 줘요 (김하늘 → 김*늘)</span></p>';
+      list.innerHTML = show.length ? table(o.head, show, o.row) : '<p class="pop-empty">' + (mineOnly && !m ? '우리 학교 학생이 ' + rows.length + '등 안에 없어요.' : '찾는 이름이 ' + (o.school ? '이 학교 순위에' : (mineOnly ? '우리 학교 ' : '') + rows.length + '등 안에') + ' 없어요.') + '<br><span class="hint">이름은 가운데를 가려서 보여 줘요 (김하늘 → 김*늘)</span></p>';
     };
     inp.addEventListener('input', render);
+    if (mineBtn) mineBtn.addEventListener('click', function(){ mineOnly = !mineOnly; mineBtn.classList.toggle('on', mineOnly); render(); });
     if (pg) pg.addEventListener('click', function(e){ const b = e.target.closest('[data-pg]'); if (b) { page = Number(b.dataset.pg); render(); } });
     render();
   }
