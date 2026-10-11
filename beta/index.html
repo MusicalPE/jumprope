@@ -636,7 +636,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.4.7', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.4.8', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -691,11 +691,15 @@ const NAT = {
   load: function(){
     if (!this._ready) this._ready = Promise.all([
       fetch('national.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return {}; }),
-      rpc('getExtraSettings').catch(function(){ return {}; })
+      // 관리자 화면(토큰 있음)은 비밀 키까지, 학생 화면은 키 없이 학교 공개 번호(pid)만 (껍데기 4판)
+      (APP.q.token ? rpc('getExtraSettingsAdmin', [APP.q.token]).catch(function(){ return rpc('getExtraSettings'); }) : rpc('getExtraSettings')).catch(function(){ return {}; })
     ]).then(function(r){ NAT.collector = (r[0] && r[0].collector) || ''; NAT.cfg = (r[1] && r[1].nat) || {}; return NAT; });
     return this._ready;
   },
-  active: function(){ return !!(this.collector && this.cfg.on && this.cfg.key); },
+  active: function(){ return !!(this.collector && this.cfg.on && (this.cfg.key || this.cfg.pid)); },
+  /* 학교 공개 번호 (현황판 ?me=) — 4판 껍데기는 pid 를 바로 주고, 예전 껍데기는 키로 만듦 */
+  myPid: function(){ return this.cfg.pid ? Promise.resolve(this.cfg.pid) : (this.cfg.key ? this.publicId(this.cfg.key) : Promise.resolve('')); },
+  serverReport: function(){ return !!(APP.shell && APP.shell.shell >= 4); },
   /* 이 시트의 배포 번호 (…/s/<번호>/exec). 참여 번호를 만들 때 함께 저장해 두고, 다르면 복사한 시트일 수 있음 */
   deployId: function(u){ const m = String(u == null ? APP.shellUrl : u).match(/\/s\/([A-Za-z0-9_-]{20,})\//); return m ? m[1] : String(u == null ? APP.shellUrl : u); },
   /* 다른 시트에서 복사된(또는 새 배포로 주소가 바뀐) 시트면 true → 선생님이 고르기 전까지 보고하지 않음 (다른 반 기록을 덮어쓰지 않게) */
@@ -773,6 +777,9 @@ const NAT = {
     return this.load().then(function(){
       if (!NAT.active() || !NAT.approvalOk() || NAT.moved() || (gapMs && !NAT._due('today', gapMs))) return null;
       NAT._mark('today');
+      // 껍데기 4판: 비밀 키를 화면에 두지 않고 껍데기가 직접 오늘 기록을 모아 보냄
+      if (NAT.serverReport()) return rpc('natReportToday', [APP.version]);
+      if (!NAT.cfg.key) return null;
       return Promise.all([rpc('getAllStudentsPublic'), rpc('getTodaySummaryPublic'), rpc('getRecentRecordsPublic').catch(function(){ return []; })]).then(function(r){
         const students = r[0] || [], today = (r[1] && r[1].list) || [], recent = r[2] || [];
         const d = (function(){ const x = new Date(); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); })();
@@ -1950,7 +1957,7 @@ loadStreakSummary();
 /* ---- 전국 현황판: 참여 중이면 링크를 보이고 오늘 집계를 보냄 ---- */
 NAT.load().then(function(){
   if (!NAT.active()) return;
-  NAT.publicId(NAT.cfg.key).then(function(pid){
+  NAT.myPid().then(function(pid){
     const a = document.getElementById('navBoard'); if (!a) return;
     a.href = NAT.pageUrl('board.html', pid); a.style.display = '';
   });
@@ -3221,7 +3228,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
     $('natNoCollector').style.display = noCol ? '' : 'none';
     ['natOn', 'natShowName', 'natName', 'natTeacher', 'natContact', 'saveNatBtn'].forEach(function(id){ $(id).disabled = noCol; });
     const setLinks = function(pid){ $('natBoardLink').href = NAT.pageUrl('board.html', pid); $('natHallLink').href = NAT.pageUrl('hall.html', pid); };
-    setLinks(''); if (c.key && c.on) NAT.publicId(c.key).then(setLinks);
+    setLinks(''); if (c.on) NAT.myPid().then(setLinks);
   }
   function preview(days){
     const month = (function(){ const x = new Date(); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0'); })();
@@ -3574,7 +3581,9 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
       : '<details class="cl-item"><summary>' + head + '</summary><ul>' + items + '</ul></details>';
   }
   document.getElementById('versionInfo').innerHTML = '지금 쓰는 판: <b>v' + APP.version + '</b>' + (APP.channel === 'beta' ? ' (베타)' : '') + ' · 학교 껍데기 판: <b>' + APP.shell.shell + '</b> · 학교 시트: ' + esc(APP.shell.title || '') + (/견본/.test(APP.shell.title || '') ? ' <span style="color:var(--amber)">← 구글 시트 왼쪽 위 파일 이름을 "6학년 1반 줄넘기"처럼 바꿔 두세요</span>' : '');
-  if (APP.shell.shell >= APP.requiredShell && APP.shell.shell < 3) document.getElementById('shellNotice').innerHTML = '<div class="warn-box" style="background:var(--bg);">새 껍데기 <b>3판</b>이 나왔어요 (선택). <b>급수 인증</b>을 쓰려면 Shell(껍데기)를 다시 붙여 넣고 "새 버전"으로 배포하세요. 학생을 삭제할 때 기록도 함께 지워지는 고침도 들어 있어요.</div>';
+  NAT.load().then(function(){   // 전국 현황판 참여 여부를 알고 나서 안내
+  if (APP.shell.shell >= APP.requiredShell && APP.shell.shell < 4) document.getElementById('shellNotice').innerHTML = '<div class="warn-box"' + (NAT.cfg && NAT.cfg.on ? '' : ' style="background:var(--bg);"') + '>새 껍데기 <b>4판</b>이 나왔어요' + (NAT.cfg && NAT.cfg.on ? ' — <b>전국 현황판에 참여 중이면 꼭 바꿔 주세요.</b> 지금은 학생 화면에서 전국 현황판 비밀 키를 꺼내 볼 수 있어서, 4판부터는 키를 학교 시트 안에만 두고 오늘 기록도 껍데기가 직접 보내요.' : ' (선택). 전국 현황판 비밀 키를 학생 화면에 내보내지 않게 바뀌었어요.') + (APP.shell.shell < 3 ? ' 급수 인증도 4판부터 쓸 수 있어요.' : '') + ' Shell(껍데기)를 다시 붙여 넣고 "새 버전"으로 배포하세요. 기록·학생·설정은 그대로예요.</div>';
+  });
   if (APP.shell.shell < APP.requiredShell) document.getElementById('shellNotice').innerHTML = '<div class="warn-box">학교 껍데기(Shell.gs)를 새 판으로 바꿔야 하는 기능이 있어요. 관리자 메뉴 안내에 따라 Shell.gs 를 다시 붙여넣고 "새 버전"으로 배포해 주세요.</div>';
   fetch('changelog.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(list){
     if (!Array.isArray(list) || !list.length) throw new Error('내역이 비어 있어요');
