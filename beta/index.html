@@ -227,6 +227,8 @@
   .ble-cnt small { font-size: .3em; color: var(--muted); font-weight: 700; margin-left: 4px; }
   .ble-st { margin: 10px 0 16px; font-weight: 700; color: #0E8F85; min-height: 1.4em; }
   .ble-st.bad { color: var(--danger); }
+  .ble-help { margin: -6px 0 14px; padding: 10px 12px; border-radius: 10px; background: #F3F6F9; color: var(--ink-2, #374151); font-size: .85em; line-height: 1.55; text-align: left; }
+  .ble-help b { color: var(--ink, #111827); }
   .ble-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 
   button[data-action="del"], button[data-action="reject"] {
@@ -564,7 +566,7 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const INSTALL_VIDEO = 'https://youtu.be/5JLZTvS4VPc';
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.4.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.4.4', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1064,6 +1066,7 @@ document.addEventListener('DOMContentLoaded', function(){
           <div class="ble-who" id="bleWho"></div>
           <div class="ble-cnt" id="bleCnt">0<small>회</small></div>
           <div class="ble-st" id="bleSt">줄넘기를 켜고 "연결"을 눌러요</div>
+          <div class="ble-help" id="bleHelp" hidden></div>
           <div class="ble-row">
             <button type="button" id="bleConn">연결</button>
             <button type="button" id="bleDone" disabled>끝내고 기록하기</button>
@@ -1636,8 +1639,18 @@ document.getElementById('bleBtn').addEventListener('click', function(){
   document.getElementById('bleWho').textContent = (ns.options[ns.selectedIndex] || {}).text + ' · ' + type;
   document.getElementById('bleDone').disabled = true; document.getElementById('bleConn').disabled = false;
   bleSt('줄넘기를 켜고 "연결"을 눌러요 — 목록에서 JUMPITNOW를 골라요');
+  bleHelp(false);
   document.getElementById('bleModal').hidden = false;
 });
+// 안드로이드: 브라우저에 '근처 기기' 권한이 없으면 줄넘기 목록이 비어 있음 → 권한 켜는 길 안내
+function bleHelp(show){
+  const el = document.getElementById('bleHelp'), ua = navigator.userAgent;
+  if (!/Android/i.test(ua)) { el.hidden = true; return; }
+  const br = /SamsungBrowser/i.test(ua) ? '삼성 인터넷' : /Whale/i.test(ua) ? '네이버 웨일' : 'Chrome';
+  el.innerHTML = (show ? '<b>줄넘기 목록이 안 보였나요?</b><br>' : '<b>처음이면 확인해요</b> — 창에 "권한(permission)" 안내가 뜨면<br>') +
+    '휴대폰 <b>설정 → 애플리케이션 → ' + br + ' → 권한</b>에서 <b>근처 기기</b>(와 <b>위치</b>)를 <b>허용</b>으로 바꾼 뒤, 이 화면으로 돌아와 다시 "연결"을 눌러요. 블루투스도 켜져 있어야 해요.';
+  el.hidden = false;
+}
 document.getElementById('bleConn').addEventListener('click', async function(){
   const btn = this; btn.disabled = true;
   try {
@@ -1661,6 +1674,7 @@ document.getElementById('bleConn').addEventListener('click', async function(){
   } catch (e) {
     btn.disabled = false;
     bleSt(e && e.name === 'NotFoundError' ? '줄넘기를 고르지 않았어요 — 줄넘기를 켜고 다시 "연결"' : '연결하지 못했어요: ' + (e.message || e) + ' (앱에 연결돼 있으면 끊어 주세요)', true);
+    bleHelp(true);
   }
 });
 async function bleClose(){
