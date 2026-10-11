@@ -22,7 +22,7 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 12;  // 12: ?api=school 학생마다 전국 등수(nr)·연속 전국 등수(rr) — 50등 밖이어도 우리 학교 학생이 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 12;  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -707,8 +707,21 @@ function getMatSchool_(pid, month, game, diff, band) {
   const school = A.schoolList.filter(function (s) { return s.pid === pid; })[0] || null;
   const mine = A.all.filter(function (x) { return x.pid === pid && (x.correct > 0 || x.sec > 0); })
     .sort(function (a, b) { return b.correct - a.correct || b.sec - a.sec; });
+  // 전국 등수: 현황판 세 순위(정답 착지·플레이 시간·정확도)와 같은 기준, 같은 값이면 같은 등수 (해당 없으면 0)
+  const desc = function (a, b) { return b - a; };
+  const vC = [], vT = [], vA = [];
+  A.all.forEach(function (x) { if (x.correct > 0) vC.push(x.correct); if (x.sec > 0) vT.push(x.sec); if (x.runs > 0 && x.da > 0) vA.push(x.acc); });
+  vC.sort(desc); vT.sort(desc); vA.sort(desc);
+  const rankIn = function (arr, v) { let lo = 0, hi = arr.length; while (lo < hi) { const m = (lo + hi) >> 1; if (arr[m] > v) lo = m + 1; else hi = m; } return lo + 1; };
   const out = { month: month, game: game, diff: diff, band: band, schoolsTotal: A.schoolList.length, school: school,
-    students: matRanked_(mine, function (x) { return x.correct; }, 500).map(function (o) { delete o.pid; delete o.school; return o; }) };
+    correctTotal: vC.length, timeTotal: vT.length, accTotal: vA.length,
+    students: matRanked_(mine, function (x) { return x.correct; }, 500).map(function (o, i) {
+      const x = mine[i];
+      o.nrC = x.correct > 0 ? rankIn(vC, x.correct) : 0;
+      o.nrT = x.sec > 0 ? rankIn(vT, x.sec) : 0;
+      o.nrA = (x.runs > 0 && x.da > 0) ? rankIn(vA, x.acc) : 0;
+      delete o.pid; delete o.school; return o;
+    }) };
   const text = JSON.stringify(out);
   if (text.length < 95000) cache.put(ck, text, BOARD_CACHE_SEC);
   return out;
