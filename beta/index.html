@@ -166,6 +166,10 @@
   }
   .chart-wrap { margin-top: 0; }
 
+  /* 입력칸 안내 문장은 버튼 말풍선으로만 (모든 화면) */
+  .form-hint { display: none !important; }
+  [data-tip] { position: relative; }
+  [data-tip]:hover::after, [data-tip]:focus-visible::after { content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 8px); width: min(320px, 78vw); padding: 10px 12px; border-radius: 10px; background: #1F2937; color: #fff; font-size: 13px; font-weight: 500; line-height: 1.5; white-space: normal; text-align: left; z-index: 20; box-shadow: 0 8px 20px rgba(0,0,0,.18); pointer-events: none; }
   /* ---- 넓은 화면(PC·노트북·가로 태블릿): 왼쪽(기록·여행) · 오른쪽(입력·그래프·오늘 기록) 한 화면 ---- */
   @media (min-width: 1000px) {
     .container.main-wide { max-width: 1560px; }
@@ -183,9 +187,6 @@
     .dash-pend .pend-scroll { max-height: max(150px, calc(100vh - 660px)); overflow: auto; }
     .dash-pend > h2:first-child { margin-bottom: 8px; }
     .dash-pend .pend-scroll thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
-    .form-hint { display: none !important; }
-    [data-tip] { position: relative; }
-    [data-tip]:hover::after, [data-tip]:focus-visible::after { content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 8px); width: 320px; padding: 10px 12px; border-radius: 10px; background: #1F2937; color: #fff; font-size: 13px; font-weight: 500; line-height: 1.5; white-space: normal; text-align: left; z-index: 20; box-shadow: 0 8px 20px rgba(0,0,0,.18); pointer-events: none; }
   }
   /* 세로가 짧은 노트북(768~820px): 조금 더 촘촘하게 */
   @media (min-width: 1000px) and (max-height: 820px) {
