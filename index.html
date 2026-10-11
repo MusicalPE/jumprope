@@ -386,11 +386,22 @@
   .cl-item summary::before { content: '▸'; color: var(--muted); transition: transform .15s; }
   .cl-item[open] summary::before { transform: rotate(90deg); }
   .cl-item summary::-webkit-details-marker { display: none; }
-  .nat-share { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 4px 0 14px; font-size: 0.88em; color: var(--ink-2); }
-  .nat-share > div { background: var(--bg); border-radius: var(--r-sm); padding: 10px 12px; }
-  .nat-share > div:last-child { background: var(--green-tint); }
-  .nat-reg { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 0 12px; }
+  .nat-box { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line, #E5E7EB); border-radius: 14px; padding: 14px 16px; margin: 4px 0 14px; cursor: pointer; }
+  .nat-box input[type=checkbox] { width: 20px; height: 20px; margin: 0; flex: none; }
+  .nat-box.sm { padding: 12px 16px; font-size: 0.88em; color: var(--muted, #6B7280); font-weight: 600; }
+  .nat-box span { font-weight: 500; color: var(--ink-2, #374151); line-height: 1.55; } .nat-box span b { font-weight: 800; color: var(--ink, #1F2937); } .nat-box.sm span { color: var(--muted, #6B7280); }
+  .nat-reg { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 12px; }
+  .nat-reg label { font-size: 0.88em; color: var(--muted, #6B7280); font-weight: 700; }
   .nat-reg .req { color: var(--coral); }
+  .nat-share { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0 0 10px; font-size: 0.86em; color: var(--muted, #6B7280); }
+  .nat-share > div { border-radius: 14px; padding: 14px 16px; border: 1px solid transparent; line-height: 1.55; }
+  .nat-share > div b { display: flex; align-items: center; gap: 6px; font-size: 1.12em; margin-bottom: 4px; }
+  .nat-share > div b svg { width: 18px; height: 18px; flex: none; }
+  .nat-share .go { background: #EEF8F3; border-color: #CDEBDD; } .nat-share .go b { color: #0F7A55; }
+  .nat-share .op { background: #F3F7FC; border-color: #DCE6F2; } .nat-share .op b { color: #1F2937; }
+  .nat-share .no { background: #FDF3F1; border-color: #F6D9D3; } .nat-share .no b { color: #C0392B; }
+  .nat-foot { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between; border-top: 1px solid var(--line, #E5E7EB); padding-top: 14px; margin-top: 10px; }
+  .nat-foot > div { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   @media (max-width: 760px) { .nat-share, .nat-reg { grid-template-columns: 1fr; } }
   .lv-chip { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.82em; font-weight: 700; border: 1px solid rgba(0,0,0,.18); white-space: nowrap; }
   .lv-chip.lv-none { background: var(--bg); color: var(--muted); border-style: dashed; }
@@ -566,7 +577,7 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const INSTALL_VIDEO = 'https://youtu.be/5JLZTvS4VPc';
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.4.4', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.4.5', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1394,16 +1405,17 @@ document.addEventListener('DOMContentLoaded', function(){
       <h2 style="display:flex;align-items:center;gap:8px;"><span class="je-slot" data-h="30"></span>Jump Earth (점퍼스) 참여 <span class="hint" style="font-weight:600;">전국 줄넘기 현황판</span></h2>
       <p class="hint" style="margin-top:0;">켜면 우리 학교 기록이 <b>전국 현황판</b>에 모여 다른 학교와 <b>한 달 단위</b>로 순위를 겨뤄요. 매달 1일에 새로 시작하고, 지난 달 1~3등은 <b>기록실</b>에 남습니다. (기본: 꺼짐)</p>
       <div id="natNoCollector" class="warn-box" style="display:none;">전국 현황판 수집 주소가 아직 준비되지 않았어요. 준비되면 여기서 바로 켤 수 있습니다.</div>
-      <div class="nat-share">
-        <div><b>현황판에 보내는 것</b><br>가린 이름(예: 김*늘) · 학년 · 날짜별 뛴 횟수 · 카메라 인증 횟수 · 등록 학생 수</div>
-        <div><b>운영자만 보는 것</b><br>학교 이름 · 담당 교사 · 연락처 (현황판에는 안 나옴)</div>
-        <div><b>보내지 않는 것</b><br>학생 실명 · 반 · 번호 · 비밀번호 · 그 밖의 학교 시트 내용</div>
-      </div>
-      <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="natOn" style="width:auto; margin:0;"> 점퍼스(전국 현황판)에 참여하기</label>
+      <label class="nat-box"><input type="checkbox" id="natOn"><span><b>점퍼스(전국 현황판)에 참여하기</b> — 우리 학교의 날짜별 줄넘기 합계를 현황판에 보내요. 다른 학교(체육교사 보조 프로그램 학교 포함)와 함께 겨뤄요.</span></label>
       <div class="nat-reg">
         <label>학교 이름 <span class="req">*</span><input id="natName" maxlength="40" placeholder="예: 햇살초등학교"></label>
         <label>담당 교사 <span class="req">*</span><input id="natTeacher" maxlength="30" placeholder="예: 홍길동"></label>
-        <label>연락처 <span class="hint">(선택)</span><input id="natContact" maxlength="80" placeholder="예: 이메일 · 학교 전화"></label>
+        <label>연락처 (선택 사항 — 비워도 돼요)<input id="natContact" maxlength="80" placeholder="전화·이메일 (현황판 문제가 있을 때만 연락)"></label>
+      </div>
+      <label class="nat-box sm"><input type="checkbox" id="natShowName"><span>현황판에 학교 이름 공개 (끄면 "익명 학교 ○○○○"로 보여요)</span></label>
+      <div class="nat-share">
+        <div class="go"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>현황판에 보내는 것</b>가린 이름(김*늘) · 학년 · 날짜별 횟수 · 카메라 인증 횟수 · 등록 학생 수</div>
+        <div class="op"><b><svg viewBox="0 0 24 24" fill="#5B3A8C"><circle cx="12" cy="8" r="4.5"/><path d="M3.5 21c.8-4.4 4.2-7 8.5-7s7.7 2.6 8.5 7z"/></svg>운영자(음악적체육인)만 보는 것</b>학교 이름 · 담당 교사 · 연락처(선택 사항, 안 적어도 참여에 문제 없음)</div>
+        <div class="no"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>보내지 않는 것</b>학생 실명 · 반 · 번호 · 비밀번호 · 그 밖의 시트 내용</div>
       </div>
       <p class="hint" style="margin-top:0;">학교 이름·담당 교사·연락처는 현황판 <b>운영자만</b> 봅니다(문의·장난 보고 확인용). 담당 교사·연락처는 학교 시트에 남기지 않고 <b>이 기기</b>에만 기억해 둬요. 다른 기기에서 관리할 때는 다시 넣어 주세요.</p>
       <p class="hint" style="margin-top:0;">전국 현황판에 참여하려면 <b>승인 절차</b>가 켜져 있어야 해요. 참여를 켜면 승인 절차도 함께 켜지고, 선생님이 승인한 기록만 현황판에 올라갑니다. 카메라 판정기로 센 기록은 승인 없이 바로 반영돼요(카메라 설정에서 승인 대기로 바꿀 수 있음).</p>
@@ -1416,12 +1428,9 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
       <p id="natApprovalWarn" class="warn-box" style="display:none;">승인 절차가 꺼져 있어서 현황판에 보내지 않고 있어요. <b>저장</b>을 누르면 승인 절차를 켜고 다시 보냅니다.</p>
       <p id="natRegWarn" class="warn-box" style="display:none;">담당 교사가 아직 등록되지 않았어요. 담당 교사 이름을 넣고 <b>저장</b>해 주세요.</p>
-      <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="natShowName" style="width:auto; margin:0;"> 현황판에 학교 이름 공개 <span class="hint">(끄면 "익명 학교 ABCD" 로 표시)</span></label>
-      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:6px;">
-        <button type="button" id="saveNatBtn">저장</button>
-        <button type="button" class="btn-outline" id="natSyncBtn">지금 보내기</button>
-        <a class="btn-outline" id="natBoardLink">현황판 보기 →</a>
-        <a class="btn-outline" id="natHallLink"><b class="jn">Jumpers!</b>기록실 →</a>
+      <div class="nat-foot">
+        <div><a class="btn-outline" id="natBoardLink">현황판 보기 →</a><a class="btn-outline" id="natHallLink"><b class="jn">Jumpers!</b>기록실 →</a></div>
+        <div><button type="button" class="btn-outline" id="natSyncBtn">지금 보내기</button><button type="button" id="saveNatBtn">저장</button></div>
       </div>
       <p id="natMsg" class="hint"></p>
       <p class="hint" style="margin-bottom:0;">학생이 기록을 저장할 때마다 오늘 집계가 보내지고, 관리자 메뉴를 열면 이번 달·지난 달 전체를 한 번 더 맞춥니다(늦게 넣은 기록·승인 반영). 참여를 끄면 현황판에 올라간 우리 학교 기록은 지워져요.</p>
