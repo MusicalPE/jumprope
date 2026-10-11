@@ -278,7 +278,7 @@
       b.addEventListener('click', function(){
         const m = months.filter(function(x){ return x.month === b.dataset.m; })[0]; if (!m) return;
         if (b.dataset.more === 'stu') openModal('전국 학생 순위 · ' + m.students50.length + '등까지', mLabel(m.month) + ' 동안 뛴 횟수 합계', stuTable50(m.students50));
-        else if (b.dataset.more === 'run') openModal('며칠 연속 뛰었나 · ' + m.streaks50.length + '등까지', mLabel(m.month) + ' 안에서 하루도 빠지지 않고 이어서 뛴 날 수', runTable50(m.streaks50));
+        else if (b.dataset.more === 'run') openModal('며칠 연속 뛰었나 · ' + m.streaks50.length + '등까지', mLabel(m.month) + ' · 이어서 뛴 날 수', runTable50(m.streaks50));
         else schModal(m, 'total');
       });
     });

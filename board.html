@@ -402,8 +402,8 @@
     // 며칠 연속 뛰었나 (수집기 9판 이상)
     if (Array.isArray(data.streaks)) {
       const sk = data.streaks;
-      html += '<div class="card"><div class="card-head"><div><h2>🔥 며칠 연속 뛰었나</h2><span class="hint">' + mLabel(data.month) + ' 안에서 하루도 빠지지 않고 이어서 뛴 날 수 · 이틀 이상부터</span></div></div>';
-      if (!sk.length) html += '<div class="empty">아직 이틀 연속 뛴 친구가 없어요. 첫 주인공이 되어 보세요!</div>';
+      html += '<div class="card"><div class="card-head"><div><h2>🔥 며칠 연속 뛰었나</h2><span class="hint">이어서 뛴 날 수 - 이틀 이상부터</span></div></div>';
+      if (!sk.length) html += '<div class="empty"><span style="display:inline-block">아직 이틀 연속 뛴 친구가 없어요.</span><br><span style="display:inline-block">첫 주인공이 되어 보세요!</span></div>';
       else {
         html += '<div class="table-wrap">' + runTable(sk.slice(0, SHOW_STU)) + '</div>';
         if (sk.length > SHOW_STU) html += '<div style="text-align:center;"><button type="button" class="more-btn" id="runMore">' + sk.length + '등까지 보기 →</button></div>';
@@ -415,7 +415,7 @@
     if ($('ejMapBtn')) $('ejMapBtn').onclick = showEarthMap;
     ejDraw();
 
-    $('runMore') && $('runMore').addEventListener('click', function(){ const sk = data.streaks || []; openModal('며칠 연속 뛰었나 · ' + sk.length + '등까지', mLabel(data.month) + (data.grade ? ' · ' + esc(data.grade) + '학년' : '') + ' 안에서 이어서 뛴 날 수', runTable(sk)); });
+    $('runMore') && $('runMore').addEventListener('click', function(){ const sk = data.streaks || []; openModal('며칠 연속 뛰었나 · ' + sk.length + '등까지', mLabel(data.month) + (data.grade ? ' · ' + esc(data.grade) + '학년' : '') + ' · 이어서 뛴 날 수', runTable(sk)); });
     $('stuMore') && $('stuMore').addEventListener('click', function(){ const st = data.students || []; openModal('전국 학생 순위 · ' + st.length + '등까지', mLabel(data.month) + (data.grade ? ' · ' + esc(data.grade) + '학년' : '') + ' 동안 뛴 횟수 합계', stuTable(st, st)); });
     $('sortSeg') && $('sortSeg').addEventListener('click', function(e){ const b = e.target.closest('button'); if (b) { sortBy = b.dataset.k; draw(); } });
     Array.prototype.forEach.call(document.querySelectorAll('tr.school'), function(tr){
