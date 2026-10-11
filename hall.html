@@ -150,6 +150,31 @@
   .ins-card.me { border-color: var(--coral); background: var(--coral-tint); }
   .ins-card b.t { display: block; margin-bottom: 4px; }
   @media (max-width: 760px) { .podiums { grid-template-columns: 1fr; } }
+  /* 한 달 칸은 학교(m-l)와 학생(m-r) 두 조각 — 좁은 화면에서는 한 칸처럼 이어 붙여요 */
+  .card.m-l, .card.m-r { display: flow-root; }
+  .card.m-l { margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding-bottom: 0; box-shadow: none; }
+  .card.m-r { border-top-left-radius: 0; border-top-right-radius: 0; padding-top: 0; box-shadow: none; }
+  .bw-l, .bw-r { filter: drop-shadow(0 2px 6px rgba(0,0,0,.05)); }
+  /* 넓은 화면(PC·노트북·가로 태블릿): 두 칸 — 왼쪽 로고·학교 1~3등, 오른쪽 학생·연속·학교별 */
+  @media (min-width: 1000px) {
+    .container { max-width: 1560px; }
+    .bw { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-rows: auto 1fr; column-gap: 18px; align-items: start; }
+    .bw > .hero { grid-column: 1; grid-row: 1; }
+    .bw > #body { display: contents; }
+    .bw-l { grid-column: 1; grid-row: 2; }
+    .bw-r { grid-column: 2; grid-row: 1 / span 2; }
+    .bw > #body > .hint, .bw > #body > .loading, .bw > #body > .err, .bw > #body > .card.empty { grid-column: 1 / -1; }
+    .bw .hero-mid { word-break: keep-all; }
+    .bw .hero-grid { grid-template-columns: 34% minmax(0,1fr); row-gap: 12px; }
+    .bw .hero-grid .hero-logo { grid-row: 1 / span 3; }
+    .bw .hero-grid .hero-sels { grid-column: 2; justify-content: center; flex-direction: row; flex-wrap: wrap; gap: 8px; }
+    .bw .hero-grid .hero-sels select { width: auto; margin: 0; }
+    .bw .hero-slogan { grid-column: 2; letter-spacing: .12em; }
+    .bw .hero-slogan span { margin: 0 .6em; }
+    .card.m-l, .card.m-r { border-radius: var(--r-lg); padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow); }
+    .bw-l, .bw-r { filter: none; }
+    .m-l .podiums { margin-bottom: 0; }
+  }
 </style>
 </head>
 <body>
@@ -162,6 +187,7 @@
     </nav>
   </header>
 
+  <div class="bw">
   <div class="hero">
     <div class="hero-grid">
       <div class="hero-logo"><img src="img/jump-earth-logo.webp" width="1100" height="824" alt="Jump Earth 점퍼스 · 전국 줄넘기 현황판"></div>
@@ -175,6 +201,7 @@
   </div>
 
   <div id="body"><div class="loading">기록실을 불러오는 중…</div></div>
+  </div>
   <p class="foot">학생 이름은 가려서 보여 줍니다 (예: 김*늘) · 학교 이름은 학교가 공개를 켠 경우에만 보여요<br>Made by <b>음악적체육인</b></p>
 </div>
 
@@ -249,13 +276,14 @@
     sel.style.display = '';
     $('body').innerHTML = months.map(function(m){
       const st = m.students || [];
-      return '<div class="card month"><div class="month-head"><h2>' + mLabel(m.month) + '</h2><span class="hint">참여 ' + m.schoolCount + '개 학교 · 전체 ' + n(m.total) + '회 · <a href="board.html?month=' + m.month + (me ? '&me=' + encodeURIComponent(me) : '') + '">그 달 현황판 →</a></span></div>' +
+      return '<div class="bw-l"><div class="card month m-l"><div class="month-head"><h2>' + mLabel(m.month) + '</h2><span class="hint">참여 ' + m.schoolCount + '개 학교 · 전체 ' + n(m.total) + '회 · <a href="board.html?month=' + m.month + (me ? '&me=' + encodeURIComponent(me) : '') + '">그 달 현황판 →</a></span></div>' +
         '<div class="podiums">' +
           podium('🏫 학교 합계', m.schools.total || [], function(s){ return n(s.total) + '회'; }) +
           podium('⚖️ 1인당 평균', m.schools.avg || [], function(s){ return n(s.avg) + '회'; }) +
           podium('🙋 참여율', m.schools.rate || [], function(s){ return s.rate + '%'; }) +
         '</div>' +
         ((m.schools50 && (m.schools50.total || []).length > 3) ? '<div style="text-align:center;margin:-4px 0 12px;"><button type="button" class="more-btn" data-more="sch" data-m="' + m.month + '">학교 순위 ' + Math.min(50, m.schoolCount) + '등까지 보기 →</button></div>' : '') +
+        '</div></div><div class="bw-r"><div class="card month m-r">' +
         '<div class="podium stars"><h3>⭐ 전국 학생 1~3등</h3>' + (st.length ? st.map(function(x){
           return '<div class="pl">' + rankHtml(x.rank) + '<span class="who">' + esc(x.n) + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + ' <span class="sub">' + esc(x.school) + '</span></span><span class="val">' + n(x.c) + '회' + (x.cam ? ' · 📷' + n(x.cam) : '') + '</span></div>';
         }).join('') : '<p class="hint" style="margin:0;">기록 없음</p>') +
@@ -272,7 +300,7 @@
               return '<div class="pl">' + rankHtml(r) + '<span class="who">' + esc(x.n) + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</span><span class="val">' + n(x.c) + '회</span></div>';
             }).join('') + '</div>';
           }).join('') + '</div></details>' : '') +
-        '</div>';
+        '</div></div>';
     }).join('') + '<p class="hint" style="text-align:center;">1인당 평균·참여율은 등록 학생 ' + (data.minRegistered || 5) + '명 이상인 학교만 순위를 매겨요.</p>';
     Array.prototype.forEach.call(document.querySelectorAll('[data-more]'), function(b){
       b.addEventListener('click', function(){
