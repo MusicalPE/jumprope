@@ -22,7 +22,7 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 11;  // 11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 12;  // 12: ?api=school 학생마다 전국 등수(nr)·연속 전국 등수(rr) — 50등 밖이어도 우리 학교 학생이 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -426,10 +426,17 @@ function getSchool_(pid, month, grade) {
   if (hit) return JSON.parse(hit);
   const schools = aggregateMonth_(month, loadSchools_(), dailySheet_().getDataRange().getValues(), grade);
   const s = schools.filter(function (x) { return x.pid === pid; })[0];
+  // 전국 등수: 50등 밖이어도 우리 학교 학생이 전국 몇 등인지 (같은 횟수·같은 날 수면 같은 등수)
+  const allC = [], allR = [];
+  schools.forEach(function (x) { x.students.forEach(function (y) { allC.push(y.c); if (y.run >= 2) allR.push(y.run); }); });
+  const desc = function (a, b) { return b - a; };
+  allC.sort(desc); allR.sort(desc);
+  const rankIn = function (arr, v) { let lo = 0, hi = arr.length; while (lo < hi) { const m = (lo + hi) >> 1; if (arr[m] > v) lo = m + 1; else hi = m; } return lo + 1; };
   const out = s ? {
     month: month, grade: grade, schoolsTotal: schools.length, school: schoolRow_(s),
-    students: s.students.map(function (x) { return { n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days }; })
-  } : { month: month, grade: grade, schoolsTotal: schools.length, school: null, students: [] };
+    studentsTotal: allC.length, runTotal: allR.length,
+    students: s.students.map(function (x) { return { n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days, run: x.run, nr: rankIn(allC, x.c), rr: x.run >= 2 ? rankIn(allR, x.run) : 0 }; })
+  } : { month: month, grade: grade, schoolsTotal: schools.length, studentsTotal: allC.length, runTotal: allR.length, school: null, students: [] };
   const text = JSON.stringify(out);
   if (text.length < 95000) cache.put(ck, text, BOARD_CACHE_SEC);
   return out;

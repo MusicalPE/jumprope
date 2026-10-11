@@ -104,6 +104,9 @@
   .modal-tabs .pop-search { flex: 1 1 200px; width: auto; }
   .modal-tabs .pop-mine.on::before { content: '✓ '; }
   .pop-pages { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+  .rank.wide { width: auto; min-width: 26px; padding: 0 7px; border-radius: 999px; }
+  .pop-note { margin: 8px 0 0; }
+  .pop-pages:empty { display: none; }
   .pop-empty { text-align: center; color: var(--ink-2); padding: 24px 0 8px; }
   .more-btn:hover { border-color: var(--coral); background: var(--coral-tint); }
   .modal-bg { position: fixed; inset: 0; background: rgba(17,24,39,.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
@@ -355,11 +358,13 @@
   }
   const gradeSub = function(x){ return x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : ''; };
   const STU_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">횟수</th><th class="num hide-sm">📷</th></tr>';
-  const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x._r) + '</td><td><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + esc(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
+  const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + esc(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   const RUN_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">연속</th><th class="num hide-sm">횟수</th></tr>';
-  const runRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x._r) + '</td><td><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + esc(x.school) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>'; };
-  const IN_HEAD = '<tr><th>학교 안 순위</th><th>이름</th><th class="num">횟수</th><th class="num">뛴 날</th><th class="num">📷</th></tr>';
-  const inRow = function(x){ return '<tr><td>' + rankHtml(x._r) + '</td><td><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + x.days + '일</td><td class="num mono">' + n(x.cam) + '</td></tr>'; };
+  const runRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + esc(x.school) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>'; };
+  const IN_HEAD = '<tr><th>학교 안 순위</th><th>이름</th><th class="num">횟수</th><th class="num">전국</th><th class="num hide-sm">뛴 날</th><th class="num hide-sm">📷</th></tr>';
+  const inRow = function(x){ return '<tr><td>' + rankHtml(x._r) + '</td><td><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + (x.nr ? n(x.nr) + '등' : '–') + '</td><td class="num mono hide-sm">' + x.days + '일</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
+  // 등수 칸: 50등 밖(전국 1,030등 등)도 숫자로
+  const rankCell = function(r){ return r > 99 ? '<span class="rank wide">' + n(r) + '</span>' : rankHtml(r); };
   const table = function(head, rows, row, cls){ return '<table' + (cls ? ' class="' + cls + '"' : '') + '><thead>' + head + '</thead><tbody>' + rows.map(row).join('') + '</tbody></table>'; };
 
   // 이름 찾기: 이름은 가운데가 * 로 가려져 있어서, 찾는 이름도 똑같이 가려서 맞춰 봐요 (김하늘 → 김*늘)
@@ -374,25 +379,49 @@
   }
   // 순위 팝업: 10명씩 쪽 나누기 + 이름(학교) 찾기
   function rankPopup(o){
-    const rows = o.rows, pages = Math.ceil(rows.length / PER);
-    let page = 0;
-    const tabs = pages > 1 ? rows.filter(function(x, i){ return i % PER === 0; }).map(function(x, p){
-      return '<button type="button" data-pg="' + p + '">' + (p * PER + 1) + '~' + Math.min(rows.length, (p + 1) * PER) + '등</button>';
-    }).join('') : '';
-    const bg = openModal(o.title, o.sub, '<div class="pop-list"></div>', '<input type="search" class="pop-search" placeholder="' + (o.school ? '이름 찾기 (예: 김하늘)' : '이름이나 학교 찾기 (예: 김하늘)') + '" aria-label="찾기">' + (!o.school && me ? '<button type="button" class="pop-mine">우리 학교만</button>' : '') + (tabs ? '<div class="pop-pages">' + tabs + '</div>' : ''));
+    const bg = openModal(o.title, o.sub, '<div class="pop-list"></div>', '<input type="search" class="pop-search" placeholder="' + (o.school ? '이름 찾기 (예: 김하늘)' : '이름이나 학교 찾기 (예: 김하늘)') + '" aria-label="찾기">' + (o.mine ? '<button type="button" class="pop-mine">우리 학교만</button>' : '') + '<div class="pop-pages"></div>');
     const list = bg.querySelector('.pop-list'), inp = bg.querySelector('.pop-search'), pg = bg.querySelector('.pop-pages'), mineBtn = bg.querySelector('.pop-mine');
-    let mineOnly = false;
+    let mineOnly = false, page = 0;
     const render = function(){
       const m = matcher(inp.value);
+      let base = o.rows, note = '';
+      if (mineOnly) {
+        const mr = o.mine();   // 우리 학교 학생 전체 + 전국 등수 (수집기 12판), 예전 수집기면 50등 안에서만
+        if (!mr) { pg.innerHTML = ''; list.innerHTML = '<p class="pop-empty">우리 학교 순위를 불러오는 중이에요. 잠시 뒤 다시 눌러 주세요.</p>'; return; }
+        base = mr.rows; note = mr.note || '';
+      }
+      const pages = Math.ceil(base.length / PER);
+      if (page >= pages) page = 0;
       let show;
-      if (m || mineOnly) { show = rows.filter(function(x){ return (!m || m(x)) && (!mineOnly || x.pid === me); }); if (pg) pg.style.display = 'none'; }
-      else { show = rows.slice(page * PER, (page + 1) * PER); if (pg) { pg.style.display = ''; Array.prototype.forEach.call(pg.children, function(b){ b.classList.toggle('on', Number(b.dataset.pg) === page); }); } }
-      list.innerHTML = show.length ? table(o.head, show, o.row) : '<p class="pop-empty">' + (mineOnly && !m ? '우리 학교 학생이 ' + rows.length + '등 안에 없어요.' : '찾는 이름이 ' + (o.school ? '이 학교 순위에' : (mineOnly ? '우리 학교 ' : '') + rows.length + '등 안에') + ' 없어요.') + '<br><span class="hint">이름은 가운데를 가려서 보여 줘요 (김하늘 → 김*늘)</span></p>';
+      if (m) { show = base.filter(m); pg.innerHTML = ''; }
+      else {
+        show = base.slice(page * PER, (page + 1) * PER);
+        pg.innerHTML = pages > 1 ? Array.from({ length: pages }, function(_, p){
+          const a = base[p * PER], b = base[Math.min(base.length, (p + 1) * PER) - 1];
+          const lab = mineOnly ? (p * PER + 1) + '~' + Math.min(base.length, (p + 1) * PER) + '번째' : (p * PER + 1) + '~' + Math.min(base.length, (p + 1) * PER) + '등';
+          return '<button type="button" data-pg="' + p + '"' + (p === page ? ' class="on"' : '') + ' title="' + (a && b ? n(a._r) + '~' + n(b._r) + '등' : '') + '">' + lab + '</button>';
+        }).join('') : '';
+      }
+      list.innerHTML = (note ? '<p class="hint pop-note">' + note + '</p>' : '') + (show.length ? table(o.head, show, o.row) : '<p class="pop-empty">' + (mineOnly && !m ? '우리 학교 학생이 아직 없어요.' : '찾는 이름이 ' + (o.school ? '이 학교 순위에' : (mineOnly ? '우리 학교에' : o.rows.length + '등 안에')) + ' 없어요.') + '<br><span class="hint">이름은 가운데를 가려서 보여 줘요 (김하늘 → 김*늘)</span></p>');
     };
     inp.addEventListener('input', render);
-    if (mineBtn) mineBtn.addEventListener('click', function(){ mineOnly = !mineOnly; mineBtn.classList.toggle('on', mineOnly); render(); });
-    if (pg) pg.addEventListener('click', function(e){ const b = e.target.closest('[data-pg]'); if (b) { page = Number(b.dataset.pg); render(); } });
+    if (mineBtn) mineBtn.addEventListener('click', function(){ mineOnly = !mineOnly; page = 0; mineBtn.classList.toggle('on', mineOnly); render(); });
+    pg.addEventListener('click', function(e){ const b = e.target.closest('[data-pg]'); if (b) { page = Number(b.dataset.pg); render(); } });
     render();
+  }
+  // '우리 학교만': 수집기 12판이면 우리 학교 학생 전부를 전국 등수와 함께, 아니면 받아 온 50등 안에서만
+  function mineRows(kind, nat){
+    const d = schoolData(me);
+    if (!d) return null;
+    const sc = d.school || {}, st = d.students || [];
+    if (!st.length || st[0].nr == null) return { rows: nat.filter(function(x){ return x.pid === me; }), note: '전국 ' + nat.length + '등 안에 든 우리 학교 학생이에요' };
+    const base = { school: sc.label, pid: me };
+    if (kind === 'run') {
+      const live = {}; nat.forEach(function(x){ if (x.pid === me && x.live) live[x.n + '|' + x.g + '|' + x.run] = 1; });
+      return { rows: st.filter(function(x){ return x.run >= 2; }).sort(function(a, b){ return b.run - a.run || b.c - a.c; })
+        .map(function(x){ return Object.assign({}, x, base, { _r: x.rr, live: !!live[x.n + '|' + x.g + '|' + x.run] }); }), note: '우리 학교 학생의 전국 등수예요 (이틀 이상 이어서 뛴 ' + n(d.runTotal) + '명 중)' };
+    }
+    return { rows: st.map(function(x){ return Object.assign({}, x, base, { _r: x.nr }); }), note: '우리 학교 학생의 전국 등수예요 (전국 ' + n(d.studentsTotal) + '명 중)' };
   }
 
   // 학교 하나의 자료 (우리 학교 줄 + 학교 안 학생 전체). 새 수집기(10판)는 그 학교만 따로 받아 와요
@@ -515,8 +544,8 @@
     ejDraw();
 
     const subOf = function(t){ return mLabel(data.month) + (data.grade ? ' · ' + esc(data.grade) + '학년' : '') + t; };
-    $('runMore') && $('runMore').addEventListener('click', function(){ const sk = ranked(data.streaks || [], 'run'); rankPopup({ title: '며칠 연속 뛰었나 · ' + sk.length + '등까지', sub: subOf(' · 이어서 뛴 날 수'), rows: sk, head: RUN_HEAD, row: runRow }); });
-    $('stuMore') && $('stuMore').addEventListener('click', function(){ const st = ranked(data.students || [], 'c'); rankPopup({ title: '전국 학생 순위 · ' + st.length + '등까지', sub: subOf(' 동안 뛴 횟수 합계'), rows: st, head: STU_HEAD, row: stuRow }); });
+    $('runMore') && $('runMore').addEventListener('click', function(){ const sk = ranked(data.streaks || [], 'run'); rankPopup({ title: '며칠 연속 뛰었나 · ' + sk.length + '등까지', sub: subOf(' · 이어서 뛴 날 수'), rows: sk, head: RUN_HEAD, row: runRow, mine: me ? function(){ return mineRows('run', sk); } : null }); });
+    $('stuMore') && $('stuMore').addEventListener('click', function(){ const st = ranked(data.students || [], 'c'); rankPopup({ title: '전국 학생 순위 · ' + st.length + '등까지', sub: subOf(' 동안 뛴 횟수 합계'), rows: st, head: STU_HEAD, row: stuRow, mine: me ? function(){ return mineRows('c', st); } : null }); });
     Array.prototype.forEach.call(document.querySelectorAll('[data-insch]'), function(b){
       b.addEventListener('click', function(e){
         e.stopPropagation();
