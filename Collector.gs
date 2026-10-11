@@ -22,7 +22,7 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 8;   // 8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 9;   // 9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -266,13 +266,13 @@ function aggregateMonth_(month, schools, dv, grade) {
     list.forEach(function (r) {
       const c = Number(r[3]) || 0, cam = Number(r[4]) || 0;
       s.total += c; s.camera += cam;
-      const x = s.st[r[0]] || (s.st[r[0]] = { k: r[0], n: r[1], g: r[2], c: 0, cam: 0, days: 0 });
-      x.n = r[1]; x.g = r[2]; x.c += c; x.cam += cam; x.days++;
+      const x = s.st[r[0]] || (s.st[r[0]] = { k: r[0], n: r[1], g: r[2], c: 0, cam: 0, days: 0, ds: {} });
+      x.n = r[1]; x.g = r[2]; x.c += c; x.cam += cam; x.days++; if (c > 0) x.ds[d] = 1;
     });
   }
   const list = Object.keys(by).map(function (pid) {
     const s = by[pid], info = schools[pid];
-    const students = Object.keys(s.st).map(function (k) { return s.st[k]; }).sort(function (a, b) { return b.c - a.c; });
+    const students = Object.keys(s.st).map(function (k) { const x = s.st[k], r = run_(x.ds); x.run = r.run; x.runEnd = r.end; delete x.ds; return x; }).sort(function (a, b) { return b.c - a.c; });
     const participants = students.length;
     const gReg = grade ? (Number(info.regByGrade[grade]) || 0) : info.registered;
     const registered = Math.max(gReg, participants);
@@ -346,6 +346,29 @@ function allTime_(dv, schools) {
   return out;
 }
 
+// 한 달 안에서 하루도 빠지지 않고 이어서 뛴 가장 긴 날 수 (날짜는 그 달 안만 들어옴)
+function run_(ds) {
+  const days = Object.keys(ds).sort();
+  let best = 0, bestEnd = '', cur = 0, prev = 0;
+  days.forEach(function (d) {
+    const t = Date.UTC(Number(d.slice(0, 4)), Number(d.slice(5, 7)) - 1, Number(d.slice(8, 10))) / 86400000;
+    cur = (prev && t - prev === 1) ? cur + 1 : 1; prev = t;
+    if (cur >= best) { best = cur; bestEnd = d; }
+  });
+  return { run: best, end: bestEnd };
+}
+// 전국 '며칠 연속' 순위: 2일 이상만, 같은 날 수면 같은 등수(뛴 횟수 많은 순으로 보여 줌)
+// live: 이번 달이고 어제나 오늘까지 이어지고 있으면 true
+function nationalStreaks_(schools, n, live) {
+  const all = [], y = live ? Utilities.formatDate(new Date(Date.now() - 86400000), TZ_, 'yyyy-MM-dd') : '';
+  schools.forEach(function (s) {
+    s.students.forEach(function (x) { if (x.run >= 2) all.push({ n: x.n, g: x.g, run: x.run, c: x.c, pid: s.pid, school: s.label, live: !!(live && x.runEnd >= y) }); });
+  });
+  all.sort(function (a, b) { return b.run - a.run || b.c - a.c; });
+  const out = all.slice(0, n);
+  out.forEach(function (x, i) { x.rank = (i > 0 && out[i - 1].run === x.run) ? out[i - 1].rank : i + 1; });
+  return out;
+}
 function getBoard_(month, grade) {
   const cur = month_(today_());
   month = /^\d{4}-\d{2}$/.test(String(month || '')) ? String(month) : cur;
@@ -369,6 +392,7 @@ function getBoard_(month, grade) {
       camera: schools.reduce(function (a, s) { return a + s.camera; }, 0)
     },
     students: nationalStudents_(schools, 50),
+    streaks: nationalStreaks_(schools, 50, month === cur),
     schools: schools.map(function (s) {
       const o = Object.assign({}, s);
       o.students = s.students.slice(0, 30).map(function (x) { return { n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days }; });
@@ -400,12 +424,12 @@ function getHall_(month) {
   const want = list.indexOf(String(month || '')) >= 0 ? String(month) : (list[0] || '');
   let detail = null;
   if (want) {
-    const hit = cache.get('hall8|' + want);
+    const hit = cache.get('hall9|' + want);
     if (hit) detail = JSON.parse(hit);
     else {
       detail = hallMonth_(want, loadSchools_(), rows());
       const text = JSON.stringify(detail);
-      if (text.length < 95000) cache.put('hall8|' + want, text, want === prevMonth_(cur) ? 3600 : HALL_CACHE_SEC);
+      if (text.length < 95000) cache.put('hall9|' + want, text, want === prevMonth_(cur) ? 3600 : HALL_CACHE_SEC);
     }
   }
   return { current: cur, updated: new Date().toISOString(), minRegistered: MIN_REGISTERED_FOR_RATIO, list: list, month: detail };
@@ -439,6 +463,7 @@ function hallMonth_(m, schoolsInfo, dv) {
     schools: { total: top3(schools, 'total'), avg: top3(schools, 'avg'), rate: top3(schools, 'rate') },
     students: st3,
     students50: st50,
+    streaks50: (function () { return nationalStreaks_(schools, 50, false).map(function (x) { delete x.live; return x; }); })(),
     schools50: { total: top50(schools, 'total'), avg: top50(schools, 'avg'), rate: top50(schools, 'rate') },
     // 학교별 학생 1~3등 (학교 안 순위)
     inSchool: schools.slice(0, 30).map(function (s) {
@@ -453,7 +478,7 @@ function refreshCache() {
   const months = monthsIn_(dailySheet_().getDataRange().getValues());
   const cur = month_(today_());
   const keys = ['hall|list|' + cur, 'board|' + cur, 'alltime'];
-  months.forEach(function (m) { keys.push('hall|' + m, 'hall8|' + m, 'board|' + m); GRADES_.forEach(function (g) { keys.push('board|' + m + '|' + g); }); });
+  months.forEach(function (m) { keys.push('hall|' + m, 'hall8|' + m, 'hall9|' + m, 'board|' + m); GRADES_.forEach(function (g) { keys.push('board|' + m + '|' + g); }); });
   c.removeAll(keys);
   return keys.length;
 }

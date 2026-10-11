@@ -86,6 +86,7 @@
   @keyframes ejHop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
   @keyframes ejShadow { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(.7); opacity: .6; } }
   @media (prefers-reduced-motion: reduce) { .ej-kid { animation: none; } }
+  .run-live { display: inline-block; font-size: .72em; font-weight: 700; color: var(--coral-dark); background: #FFF1EA; border-radius: 999px; padding: 1px 7px; vertical-align: 1px; white-space: nowrap; }
   .ej-msg { margin: 6px 0 0; font-size: 0.85em; color: #4B5E3A; } .ej-msg b { color: #2F3D22; }
   .ej-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: .85em; color: #4B5E3A; }
   .ej-foot a { color: var(--coral-dark); font-weight: 700; text-decoration: none; cursor: pointer; }
@@ -326,6 +327,12 @@
     return h + '</tbody></table>';
   }
 
+  function runTable(rows){
+    return '<table><thead><tr><th>순위</th><th>이름</th><th>학교</th><th class="num">연속</th><th class="num hide-sm">횟수</th></tr></thead><tbody>' + rows.map(function(x){
+      return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  }
+
   function draw(){
     const sel = $('monthSel'), months = (data.months || []).slice();
     if (months.indexOf(data.current) === -1) months.unshift(data.current);
@@ -392,11 +399,23 @@
       if (st.length > SHOW_STU) html += '<div style="text-align:center;"><button type="button" class="more-btn" id="stuMore">전국 ' + st.length + '등까지 보기 →</button></div>';
     }
     html += '</div>';
+    // 며칠 연속 뛰었나 (수집기 9판 이상)
+    if (Array.isArray(data.streaks)) {
+      const sk = data.streaks;
+      html += '<div class="card"><div class="card-head"><div><h2>🔥 며칠 연속 뛰었나</h2><span class="hint">' + mLabel(data.month) + ' 안에서 하루도 빠지지 않고 이어서 뛴 날 수 · 이틀 이상부터</span></div></div>';
+      if (!sk.length) html += '<div class="empty">아직 이틀 연속 뛴 친구가 없어요. 첫 주인공이 되어 보세요!</div>';
+      else {
+        html += '<div class="table-wrap">' + runTable(sk.slice(0, SHOW_STU)) + '</div>';
+        if (sk.length > SHOW_STU) html += '<div style="text-align:center;"><button type="button" class="more-btn" id="runMore">' + sk.length + '등까지 보기 →</button></div>';
+      }
+      html += '</div>';
+    }
     html += '<p class="hint" style="text-align:center;">집계는 몇 분마다 새로 고쳐져요 · 마지막 갱신 ' + new Date(data.updated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + '</p>';
     $('body').innerHTML = html;
     if ($('ejMapBtn')) $('ejMapBtn').onclick = showEarthMap;
     ejDraw();
 
+    $('runMore') && $('runMore').addEventListener('click', function(){ const sk = data.streaks || []; openModal('며칠 연속 뛰었나 · ' + sk.length + '등까지', mLabel(data.month) + (data.grade ? ' · ' + esc(data.grade) + '학년' : '') + ' 안에서 이어서 뛴 날 수', runTable(sk)); });
     $('stuMore') && $('stuMore').addEventListener('click', function(){ const st = data.students || []; openModal('전국 학생 순위 · ' + st.length + '등까지', mLabel(data.month) + (data.grade ? ' · ' + esc(data.grade) + '학년' : '') + ' 동안 뛴 횟수 합계', stuTable(st, st)); });
     $('sortSeg') && $('sortSeg').addEventListener('click', function(e){ const b = e.target.closest('button'); if (b) { sortBy = b.dataset.k; draw(); } });
     Array.prototype.forEach.call(document.querySelectorAll('tr.school'), function(tr){
