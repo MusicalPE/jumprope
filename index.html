@@ -188,6 +188,22 @@
     .dash-pend > h2:first-child { margin-bottom: 8px; }
     .dash-pend .pend-scroll thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
   }
+  /* 넓은 화면 + 급수 칸이 있을 때: 왼쪽 칸들을 조금씩 낮게 (급수 칸이 없으면 그대로) */
+  @media (min-width: 1000px) {
+    .dash-l.has-level > .card { margin-top: 12px; }
+    .dash-l.has-level .hero { padding-top: 16px; padding-bottom: 14px; }
+    .dash-l.has-level .hero h1 { font-size: 1.32em; margin-bottom: 2px; }
+    .dash-l.has-level .hero-sub { margin-bottom: 10px; }
+    .dash-l.has-level .today-lead { padding: 8px 12px; }
+    .dash-l.has-level .note-panel { padding-top: 8px; padding-bottom: 8px; margin-top: 12px; margin-bottom: 12px; }
+    .dash-l.has-level .note-eyebrow { display: none; }
+    .dash-l.has-level .stat-grid { margin-bottom: 0; }
+    .dash-l.has-level .stat-card { padding-top: 10px; padding-bottom: 10px; }
+    .dash-l.has-level .stat-value { font-size: 1.3em; }
+    .dash-l.has-level .jr-scene { padding-top: 88px; }
+    .dash-l.has-level .jr-land { top: 26px; }
+    .dash-l.has-level #levelCard > h2:first-child { padding-top: 10px; padding-bottom: 10px; margin-bottom: 12px; }
+  }
   /* 세로가 짧은 노트북(768~820px): 조금 더 촘촘하게 */
   @media (min-width: 1000px) and (max-height: 820px) {
     .container.main-wide { padding-top: 12px; }
@@ -620,7 +636,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.4.6', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.4.7', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1832,6 +1848,7 @@ google.script.run.withSuccessHandler(function(list){
       who.style.display = '';
     });
     document.getElementById('levelCard').style.display = '';
+    const dl = document.querySelector('.dash-l'); if (dl) dl.classList.add('has-level');   // 넓은 화면: 급수 칸 자리를 위해 왼쪽을 촘촘하게
   });
 }).getAllStudentsPublic();
 
