@@ -22,7 +22,7 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 10;  // 10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 11;  // 11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -42,6 +42,7 @@ function doGet(e) {
     else if (q.api === 'school') out = getSchool_(q.pid, q.month, q.grade);
     else if (q.api === 'hall') out = getHall_(q.month);
     else if (q.api === 'matBoard') out = getMatBoard_(q.month, q.game, q.diff, q.band);
+    else if (q.api === 'matSchool') out = getMatSchool_(q.pid, q.month, q.game, q.diff, q.band);
     else out = { collector: COLLECTOR_VERSION, today: today_() };
     out = { ok: true, result: out };
   } catch (err) {
@@ -521,7 +522,7 @@ const MAT_MAX_ROWS_PER_DAY = 3000;
 const MAT_MAX_ATTEMPTS_DAY = 5000;      // 한 학생·한 게임·한 난이도 하루 시도 상한
 const MAT_MAX_SEC_DAY = 2 * 3600;     // 하루 2시간까지만 인정
 const MAT_BANDS_ = { '1-2': ['1', '2'], '3-4': ['3', '4'], '5-6': ['5', '6'] };
-const MAT_TOP_ = 30;
+const MAT_TOP_ = 50;   // 매트 학생 순위 50등까지 (현황판은 10등, 나머지는 팝업)
 
 function matSheet_() { return sheet_(SH_MAT, ['PublicId', 'Date', 'Rows', 'UpdatedAt']); }
 function matVer_() { return CacheService.getScriptCache().get('matver') || '0'; }
@@ -598,17 +599,8 @@ function matReport_(p) {
 
 // ?api=matBoard&month=YYYY-MM&game=stroop&diff=normal&band=3-4
 // 학생 순위 셋(누적 정답 착지 · 누적 플레이 시간 · 정확도[완주한 판만]) + 학교 순위(정답 착지 합)
-function getMatBoard_(month, game, diff, band) {
-  const cur = month_(today_());
-  month = /^\d{4}-\d{2}$/.test(String(month || '')) ? String(month) : cur;
-  game = MAT_GAMES_.indexOf(String(game)) >= 0 ? String(game) : 'stroop';
-  diff = cleanText_(diff, 12);
-  band = MAT_BANDS_[band] ? String(band) : '';
-  const cache = CacheService.getScriptCache();
-  const ck = 'mat|' + matVer_() + '|' + month + '|' + game + '|' + diff + '|' + band;
-  const hit = cache.get(ck);
-  if (hit) return JSON.parse(hit);
-
+// 매트 기록 모으기 (현황판·학교 하나가 함께 씀): 고른 달·게임·난이도·학년군
+function matAggregate_(month, game, diff, band) {
   const schools = loadSchools_();
   const mv = matSheet_().getDataRange().getValues();
   const st = {}, sc = {}, months = {}, diffs = {}, games = {};
@@ -642,32 +634,75 @@ function getMatBoard_(month, game, diff, band) {
     });
   }
   const all = Object.keys(st).map(function (k) { const x = st[k]; x.acc = x.da ? Math.round(x.dc / x.da * 1000) / 10 : null; return x; });
-  const pub = function (x) { return { n: x.n, g: x.g, school: x.school, correct: x.correct, attempts: x.attempts, sec: x.sec, runs: x.runs, acc: x.acc }; };
-  const ranked = function (arr, val) {
-    let r = 0;
-    return arr.slice(0, MAT_TOP_).map(function (x, i) { r = (i > 0 && val(arr[i - 1]) === val(x)) ? r : i + 1; const o = pub(x); o.rank = r; return o; });
-  };
-  const byCorrect = all.filter(function (x) { return x.correct > 0; }).sort(function (a, b) { return b.correct - a.correct || b.sec - a.sec; });
-  const byTime = all.filter(function (x) { return x.sec > 0; }).sort(function (a, b) { return b.sec - a.sec || b.correct - a.correct; });
-  const byAcc = all.filter(function (x) { return x.runs > 0 && x.da > 0; }).sort(function (a, b) { return b.acc - a.acc || b.dc - a.dc; });
-  const schoolList = Object.keys(sc).map(function (p) { const s = sc[p]; return { label: s.label, named: s.named, correct: s.correct, sec: s.sec, participants: Object.keys(s.students).length }; })
+  const schoolList = Object.keys(sc).map(function (p) { const s = sc[p]; return { pid: s.pid, label: s.label, named: s.named, correct: s.correct, sec: s.sec, participants: Object.keys(s.students).length }; })
     .sort(function (a, b) { return b.correct - a.correct || b.sec - a.sec; });
   let r = 0;
   schoolList.forEach(function (s, i) { r = (i > 0 && schoolList[i - 1].correct === s.correct) ? r : i + 1; s.rank = r; });
+  return { all: all, schoolList: schoolList, months: months, diffs: diffs, games: games, climbYears: climbYears, climbSince: climbSince };
+}
+const matPub_ = function (x) { return { n: x.n, g: x.g, pid: x.pid, school: x.school, correct: x.correct, attempts: x.attempts, sec: x.sec, runs: x.runs, acc: x.acc }; };
+function matRanked_(arr, val, top) {
+  let r = 0;
+  return arr.slice(0, top).map(function (x, i) { r = (i > 0 && val(arr[i - 1]) === val(x)) ? r : i + 1; const o = matPub_(x); o.rank = r; return o; });
+}
+const MAT_TOP_SCHOOLS_ = 10;
+
+function getMatBoard_(month, game, diff, band) {
+  const cur = month_(today_());
+  month = /^\d{4}-\d{2}$/.test(String(month || '')) ? String(month) : cur;
+  game = MAT_GAMES_.indexOf(String(game)) >= 0 ? String(game) : 'stroop';
+  diff = cleanText_(diff, 12);
+  band = MAT_BANDS_[band] ? String(band) : '';
+  const cache = CacheService.getScriptCache();
+  const ck = 'mat|' + matVer_() + '|' + month + '|' + game + '|' + diff + '|' + band;
+  const hit = cache.get(ck);
+  if (hit) return JSON.parse(hit);
+
+  const A = matAggregate_(month, game, diff, band), all = A.all;
+  const byCorrect = all.filter(function (x) { return x.correct > 0; }).sort(function (a, b) { return b.correct - a.correct || b.sec - a.sec; });
+  const byTime = all.filter(function (x) { return x.sec > 0; }).sort(function (a, b) { return b.sec - a.sec || b.correct - a.correct; });
+  const byAcc = all.filter(function (x) { return x.runs > 0 && x.da > 0; }).sort(function (a, b) { return b.acc - a.acc || b.dc - a.dc; });
 
   const out = {
     month: month, current: cur, updated: new Date().toISOString(),
     game: game, diff: diff, band: band,
-    months: Object.keys(months).sort().reverse(),
-    games: Object.keys(games), diffs: Object.keys(diffs),
-    climb: { year: schoolYear_(today_()), years: climbYears, since: climbSince, unitM: 1 },
-    summary: { schools: schoolList.length, students: all.length, correct: all.reduce(function (a, x) { return a + x.correct; }, 0), sec: all.reduce(function (a, x) { return a + x.sec; }, 0) },
-    correct: ranked(byCorrect, function (x) { return x.correct; }),
-    time: ranked(byTime, function (x) { return x.sec; }),
-    accuracy: ranked(byAcc, function (x) { return x.acc; }),
-    schools: schoolList.slice(0, MAT_TOP_)
+    months: Object.keys(A.months).sort().reverse(),
+    games: Object.keys(A.games), diffs: Object.keys(A.diffs),
+    climb: { year: schoolYear_(today_()), years: A.climbYears, since: A.climbSince, unitM: 1 },
+    summary: { schools: A.schoolList.length, students: all.length, correct: all.reduce(function (a, x) { return a + x.correct; }, 0), sec: all.reduce(function (a, x) { return a + x.sec; }, 0) },
+    correct: matRanked_(byCorrect, function (x) { return x.correct; }, MAT_TOP_),
+    time: matRanked_(byTime, function (x) { return x.sec; }, MAT_TOP_),
+    accuracy: matRanked_(byAcc, function (x) { return x.acc; }, MAT_TOP_),
+    // 학교 순위는 10등까지만 (우리 학교 줄과 학교 안 순위는 ?api=matSchool 로 그 학교만)
+    schoolsTotal: A.schoolList.length,
+    schools: A.schoolList.slice(0, MAT_TOP_SCHOOLS_),
+    v: COLLECTOR_VERSION
   };
   const text = JSON.stringify(out);
   if (text.length < 90000) cache.put(ck, text, BOARD_CACHE_SEC);
+  return out;
+}
+
+// ?api=matSchool&pid=…&month=…&game=…&diff=…&band=… : 학교 하나의 줄(순위 포함) + 학교 안 학생 전체 순위(정답 착지 순, 이름은 가린 채)
+function getMatSchool_(pid, month, game, diff, band) {
+  const cur = month_(today_());
+  pid = cleanText_(pid, 16);
+  month = /^\d{4}-\d{2}$/.test(String(month || '')) ? String(month) : cur;
+  game = MAT_GAMES_.indexOf(String(game)) >= 0 ? String(game) : 'stroop';
+  diff = cleanText_(diff, 12);
+  band = MAT_BANDS_[band] ? String(band) : '';
+  if (!pid) throw new Error('학교가 없어요');
+  const cache = CacheService.getScriptCache();
+  const ck = 'matsc|' + matVer_() + '|' + pid + '|' + month + '|' + game + '|' + diff + '|' + band;
+  const hit = cache.get(ck);
+  if (hit) return JSON.parse(hit);
+  const A = matAggregate_(month, game, diff, band);
+  const school = A.schoolList.filter(function (s) { return s.pid === pid; })[0] || null;
+  const mine = A.all.filter(function (x) { return x.pid === pid && (x.correct > 0 || x.sec > 0); })
+    .sort(function (a, b) { return b.correct - a.correct || b.sec - a.sec; });
+  const out = { month: month, game: game, diff: diff, band: band, schoolsTotal: A.schoolList.length, school: school,
+    students: matRanked_(mine, function (x) { return x.correct; }, 500).map(function (o) { delete o.pid; delete o.school; return o; }) };
+  const text = JSON.stringify(out);
+  if (text.length < 95000) cache.put(ck, text, BOARD_CACHE_SEC);
   return out;
 }
