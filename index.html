@@ -932,6 +932,7 @@ function render(view){
   document.getElementById('app').innerHTML = tpl.innerHTML.split('{{BASE}}').join(APP.base).split('{{TOKEN}}').join(encodeURIComponent(APP.q.token || ''));
   VIEWS[name]();
   document.querySelectorAll('.je-slot').forEach(function(el){ if (!el.firstChild) el.innerHTML = jeLogo(+el.getAttribute('data-h') || 20); });
+  document.querySelectorAll('.laurel-slot').forEach(function(el){ if (!el.firstChild) el.innerHTML = laurelSvg({ dark: true, size: 22, style: 'vertical-align:-5px;margin-right:4px' }); });
 }
 function showSetup(msg){
   document.getElementById('app').innerHTML =
@@ -1429,7 +1430,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <p id="natApprovalWarn" class="warn-box" style="display:none;">승인 절차가 꺼져 있어서 현황판에 보내지 않고 있어요. <b>저장</b>을 누르면 승인 절차를 켜고 다시 보냅니다.</p>
       <p id="natRegWarn" class="warn-box" style="display:none;">담당 교사가 아직 등록되지 않았어요. 담당 교사 이름을 넣고 <b>저장</b>해 주세요.</p>
       <div class="nat-foot">
-        <div><a class="btn-outline" id="natBoardLink"><b class="jn">Jump Earth!</b>현황판 →</a><a class="btn-outline" id="natHallLink"><b class="jn">Jumpers!</b>기록실 →</a></div>
+        <div><a class="btn-outline" id="natBoardLink"><span class="je-slot"></span><b class="jn">Jump Earth!</b>현황판 →</a><a class="btn-outline" id="natHallLink"><span class="laurel-slot"></span><b class="jn">Jumpers!</b>기록실 →</a></div>
         <div><button type="button" class="btn-outline" id="natSyncBtn">지금 보내기</button><button type="button" id="saveNatBtn">저장</button></div>
       </div>
       <p id="natMsg" class="hint"></p>
