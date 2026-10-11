@@ -1648,7 +1648,7 @@ function bleHelp(show){
   if (!/Android/i.test(ua)) { el.hidden = true; return; }
   const br = /SamsungBrowser/i.test(ua) ? '삼성 인터넷' : /Whale/i.test(ua) ? '네이버 웨일' : 'Chrome';
   el.innerHTML = (show ? '<b>줄넘기 목록이 안 보였나요?</b><br>' : '<b>처음이면 확인해요</b> — 창에 "권한(permission)" 안내가 뜨면<br>') +
-    '휴대폰 <b>설정 → 애플리케이션 → ' + br + ' → 권한</b>에서 <b>근처 기기</b>(와 <b>위치</b>)를 <b>허용</b>으로 바꾼 뒤, 이 화면으로 돌아와 다시 "연결"을 눌러요. 블루투스도 켜져 있어야 해요.';
+    '휴대폰 <b>설정 → 애플리케이션 → ' + br + ' → 권한</b>에서 <b>근처 기기</b>(와 <b>위치</b>)를 <b>허용</b>으로 바꾼 뒤, 이 화면으로 돌아와 다시 "연결"을 눌러요. 홈 화면에 설치한 <b>점퍼스</b> 앱이 아니라 <b>' + br + '</b> 앱에서 바꿔야 해요. 블루투스도 켜져 있어야 해요.';
   el.hidden = false;
 }
 document.getElementById('bleConn').addEventListener('click', async function(){
