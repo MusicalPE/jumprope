@@ -248,7 +248,8 @@
     let pins = '', lbls = '';
     EJ.forEach(function(c, i){ const x = xOf(EJ_KM[i]), y = yAt(x, tr), on = cur >= EJ_KM[i] * 1000, big = c[5];
       const show = narrow ? (i === 0 || i === EJ.length - 1 || i === ai) : (big || (i === ai && EJ.every(function(d, j){ return !d[5] || j === i || Math.abs(EJ_KM[j] - EJ_KM[i]) > goalKm * 0.05; })));
-      pins += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (big ? 6 : 4) + '" fill="' + (on ? '#F26A3D' : '#fff') + '" stroke="' + (on ? '#fff' : '#1F6FB5') + '" stroke-width="2"><title>' + c[0] + ' · ' + EJ_KM[i].toLocaleString('ko-KR') + 'km</title></circle>';
+      if (narrow && !big && i !== ai) return;   // 휴대폰: 큰 도시와 지금 도시만
+      pins += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (narrow ? (big ? 5 : 4) : (big ? 6 : 4)) + '" fill="' + (on ? '#F26A3D' : '#fff') + '" stroke="' + (on ? '#fff' : '#1F6FB5') + '" stroke-width="2"><title>' + c[0] + ' · ' + EJ_KM[i].toLocaleString('ko-KR') + 'km</title></circle>';
       if (show) lbls += '<text class="ej-lbl" x="' + Math.min(W - 26, Math.max(26, x)).toFixed(1) + '" y="' + (y + 24).toFixed(1) + '" text-anchor="middle" font-size="' + fs + '" font-weight="800" fill="#fff" stroke="#14507F" stroke-width="3" paint-order="stroke">' + c[0] + '</text>'; });
     const ky = yAt(xc, tr), kw = narrow ? 46 : 56, kh = kw * 72 / 56;
     const boat = ejState.onSea ? '<path d="M' + (xc - kw * .45) + ' ' + (ky - 4) + ' H' + (xc + kw * .45) + ' L' + (xc + kw * .32) + ' ' + (ky + 4) + ' H' + (xc - kw * .32) + ' Z" fill="#B45309" stroke="#7C2D12" stroke-width="1.2"/>' : '';
