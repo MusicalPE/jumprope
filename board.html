@@ -150,13 +150,13 @@
     .tag-me { display: block; width: fit-content; margin: 2px 0 0; }
     td.num .sub { display: block; margin-left: 0; }
   }
-  /* 넓은 화면(PC·노트북·가로 태블릿): 두 칸 — 왼쪽 로고·지구 대장정·숫자·학교 순위, 오른쪽 학생 순위·연속 */
+  /* 넓은 화면(PC·노트북·가로 태블릿): 두 칸 — 왼쪽 로고·지구 대장정·숫자, 오른쪽 순위들(학교·학생·연속) */
   @media (min-width: 1000px) {
     .container { max-width: 1560px; }
     .bw { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-rows: auto 1fr; column-gap: 18px; align-items: start; }
     .bw > .hero { grid-column: 1; grid-row: 1; }
     .bw > #body { display: contents; }
-    .bw-l { grid-column: 1; grid-row: 2; }
+    .bw-l { grid-column: 1; grid-row: 2; position: sticky; top: 16px; }   /* 오른쪽 순위를 내려 봐도 지구 대장정은 따라와요 */
     .bw-r { grid-column: 2; grid-row: 1 / span 2; }
     .bw > #body > .hint, .bw > #body > .loading, .bw > #body > .err { grid-column: 1 / -1; }
     .bw .hero-mid #heroSub { word-break: keep-all; }
@@ -380,7 +380,9 @@
       '<div class="kpi"><span>참여 학생</span><b class="mono">' + n(s.participants) + '</b></div>' +
       '<div class="kpi"><span>📷 카메라 인증</span><b class="mono">' + n(s.camera) + '</b></div></div>';
 
-    // 학교 순위 (넓은 화면: 지구 대장정·숫자·학교 순위는 왼쪽, 학생 순위·연속은 오른쪽)
+    // 넓은 화면: 지구 대장정·숫자는 왼쪽, 순위들(학교·학생·연속)은 오른쪽
+    html += '</div><div class="bw-r">';
+    // 학교 순위
     const schools = (data.schools || []).slice();
     const key = { total: 'total', avg: 'avg', rate: 'rate' }[sortBy];
     schools.sort(function(a, b){
@@ -409,7 +411,6 @@
     }
     html += '</div>';
 
-    html += '</div><div class="bw-r">';
     // 전국 학생 순위
     const st = data.students || [];
     html += '<div class="card"><div class="card-head"><div><h2>전국 학생 순위</h2><span class="hint">' + mLabel(data.month) + ' 동안 뛴 횟수 합계</span></div></div>';
