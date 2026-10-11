@@ -165,6 +165,45 @@
     box-shadow: var(--shadow); padding: 20px; margin-top: 16px;
   }
   .chart-wrap { margin-top: 0; }
+
+  /* ---- 넓은 화면(PC·노트북·가로 태블릿): 왼쪽(기록·여행) · 오른쪽(입력·그래프·오늘 기록) 한 화면 ---- */
+  @media (min-width: 1000px) {
+    .container.main-wide { max-width: 1560px; }
+    .dash { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    .dash-l > :first-child, .dash-r > :first-child { margin-top: 0; }
+    .dash-r .card { margin-top: 0; margin-bottom: 16px; }
+    .dash-l > .card { margin-top: 16px; }
+    .dash-chart { background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--r-lg); box-shadow: var(--shadow); padding: 16px 20px 12px; margin-bottom: 16px; }
+    .dash-chart .chart-head { margin-top: 0; }
+    .dash-chart .chart-wrap { border: 0; box-shadow: none; padding: 0; height: 190px; position: relative; }
+    .dash-chart > .hint { display: none; }
+    .dash-chart .chart-head h1 { margin-bottom: 4px; }
+    .dash-r #formMsg:empty { display: none; }
+    .dash-r #recordForm .form-row { margin-bottom: 4px; }
+    .dash-pend .pend-scroll { max-height: max(150px, calc(100vh - 660px)); overflow: auto; }
+    .dash-pend > h2:first-child { margin-bottom: 8px; }
+    .dash-pend .pend-scroll thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+    .form-hint { display: none !important; }
+    [data-tip] { position: relative; }
+    [data-tip]:hover::after, [data-tip]:focus-visible::after { content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 8px); width: 320px; padding: 10px 12px; border-radius: 10px; background: #1F2937; color: #fff; font-size: 13px; font-weight: 500; line-height: 1.5; white-space: normal; text-align: left; z-index: 20; box-shadow: 0 8px 20px rgba(0,0,0,.18); pointer-events: none; }
+  }
+  /* 세로가 짧은 노트북(768~820px): 조금 더 촘촘하게 */
+  @media (min-width: 1000px) and (max-height: 820px) {
+    .container.main-wide { padding-top: 12px; }
+    .dash-l .hero { padding-top: 18px; padding-bottom: 16px; }
+    .dash-l .note-panel { padding-top: 10px; padding-bottom: 10px; }
+    .dash-chart .chart-wrap { height: 150px; }
+    .dash-r .card > h2:first-child { padding-top: 10px; padding-bottom: 10px; margin-bottom: 12px; }
+    .dash-pend .pend-scroll { max-height: max(140px, calc(100vh - 600px)); }
+  }
+  @media (min-width: 1000px) and (max-width: 1279px) {
+    .dash-l .lead-row { flex-wrap: nowrap; }
+    .dash-l .today-lead { min-width: 0; flex: 1 1 0; }
+    .dash-l .today-lead-name { font-size: 1em; }
+    .dash { gap: 16px; }
+    .dash-l .stat-grid { gap: 10px; }
+    .dash-l .stat-card { padding: 12px 14px; }
+  }
   .card > h2:first-child {
     margin: -20px -20px 16px; padding: 14px 20px; border-bottom: 1px solid var(--line-2);
     font-size: 1.02em; display: flex; align-items: center; gap: 8px;
@@ -577,7 +616,10 @@ try { if ('serviceWorker' in navigator && location.protocol === 'https:') naviga
 /* 껍데기가 들어 있는 빈 견본 시트 — 사본을 만들면 Apps Script 까지 같이 복사됨 (배포만 하면 됨) */
 const INSTALL_VIDEO = 'https://youtu.be/5JLZTvS4VPc';
 const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy';
-const APP = { version: '2.4.5', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+// 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
+const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
+if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
+const APP = { version: '2.4.6', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -970,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <div id="app"></div>
 <div class="dev-credit">Made by <b>음악적체육인</b></div>
 <template id="v-main">
-  <div class="container">
+  <div class="container main-wide">
     <header class="topbar">
       <a class="brand" href="{{BASE}}">
         <span class="brand-mark"></span>
@@ -984,6 +1026,7 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
     </header>
 
+    <div class="dash"><div class="dash-l">
     <div class="hero">
       <h1 data-our="{our} 줄넘기 기록">우리 반 줄넘기 기록</h1>
       <p class="hero-sub" id="clock"></p>
@@ -1040,6 +1083,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <div class="lv-dist" id="levelDist"></div>
       <div class="lv-who" id="levelWho" style="display:none;"></div>
     </div>
+    </div><div class="dash-r">
 
     <div class="card">
       <h2>오늘 기록 입력</h2>
@@ -1063,13 +1107,13 @@ document.addEventListener('DOMContentLoaded', function(){
           <label>뛴 횟수 <input type="number" id="countInput" min="1" required></label>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-          <button type="submit">저장</button>
-          <button type="button" id="cameraBtn" class="btn-outline" style="display:none; padding:10px 16px;">📷 카메라로 뛰기</button>
-          <button type="button" id="bleBtn" class="btn-outline" style="display:none; padding:10px 16px;">내 줄넘기로 뛰기</button>
+          <button type="submit" data-tip="여러 번 뛰었으면 그때마다 넣어요. 그날 뛴 횟수가 모두 더해집니다.">저장</button>
+          <button type="button" id="cameraBtn" class="btn-outline" data-tip="직접 세어 입력하는 대신 학년·반·이름·종류를 고른 뒤 누르면 판정기가 열려요. 뛰고 나서 &quot;끝내고 기록하기&quot;를 누르면 횟수가 자동으로 들어옵니다." style="display:none; padding:10px 16px;">📷 카메라로 뛰기</button>
+          <button type="button" id="bleBtn" class="btn-outline" data-tip="스마트 줄넘기(JUMPITNOW)를 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬)" style="display:none; padding:10px 16px;">내 줄넘기로 뛰기</button>
         </div>
-        <p id="bleHint" class="hint" style="display:none; margin:8px 0 0;">스마트 줄넘기(JUMPITNOW)가 있으면 <b>내 줄넘기로 뛰기</b>를 눌러 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬에서 돼요)</p>
-        <p id="cameraHint" class="hint" style="display:none; margin:8px 0 0;">직접 세어 입력하는 대신, 학년·반·이름·종류를 고른 뒤 <b>📷 카메라로 뛰기</b>를 누르면 판정기가 열려요. 뛰고 나서 "끝내고 기록하기"를 누르면 횟수가 자동으로 들어옵니다.</p>
-        <p class="hint" style="margin:8px 0 0;">여러 번 뛰었으면 그때마다 넣어요. 그날 뛴 횟수가 모두 더해집니다.</p>
+        <p id="bleHint" class="hint form-hint" style="display:none; margin:8px 0 0;">스마트 줄넘기(JUMPITNOW)가 있으면 <b>내 줄넘기로 뛰기</b>를 눌러 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬에서 돼요)</p>
+        <p id="cameraHint" class="hint form-hint" style="display:none; margin:8px 0 0;">직접 세어 입력하는 대신, 학년·반·이름·종류를 고른 뒤 <b>📷 카메라로 뛰기</b>를 누르면 판정기가 열려요. 뛰고 나서 "끝내고 기록하기"를 누르면 횟수가 자동으로 들어옵니다.</p>
+        <p class="hint form-hint" style="margin:8px 0 0;">여러 번 뛰었으면 그때마다 넣어요. 그날 뛴 횟수가 모두 더해집니다.</p>
         <p id="formMsg"></p>
       </form>
       <div class="ble-modal" id="bleModal" hidden>
@@ -1088,8 +1132,9 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
     </div>
 
+    <div class="dash-chart">
     <div class="chart-head">
-      <h1>학생별 누적 줄넘기 기록</h1>
+      <h1 data-tip="그래프는 선생님이 승인한 기록만 반영돼요. 색깔은 줄넘기 종류이고, 막대(학생 이름)를 누르면 그 학생 기록으로 가요.">학생별 누적 줄넘기 기록</h1>
       <label class="chart-filter">보기
         <select id="chartTypeFilter"><option value="">전체 (종류별로 쌓아서)</option></select>
       </label>
@@ -1098,15 +1143,17 @@ document.addEventListener('DOMContentLoaded', function(){
       <canvas id="barChart" height="120"></canvas>
     </div>
     <p class="hint"><span id="chartHintApproval">그래프는 선생님이 승인한 기록만 반영됩니다. </span>색깔은 줄넘기 종류이고, 위의 "보기"에서 한 종류만 골라 볼 수도 있어요. 막대(학생 이름)를 클릭하면 개별 기록 페이지로 이동합니다.</p>
+    </div>
 
-    <div class="card">
+    <div class="card dash-pend">
       <h2 id="pendingTitle">오늘 입력된 기록</h2>
-      <table id="pendingTable">
+      <div class="pend-scroll"><table id="pendingTable">
         <thead><tr><th>학년</th><th>반</th><th>번호</th><th>이름</th><th>종류</th><th>날짜</th><th>횟수</th></tr></thead>
         <tbody></tbody>
-      </table>
+      </table></div>
       <p id="pendingEmpty" class="hint" style="display:none;">아직 기록이 없습니다.</p>
     </div>
+    </div></div>
   </div>
 
 
@@ -2047,6 +2094,7 @@ function renderChart() {
     data: { labels: list.map(function(s){ return s.name; }), datasets: datasets },
     options: {
       responsive: true,
+      maintainAspectRatio: !WIDE_MQ.matches,   // 넓은 PC 화면에서는 칸 높이에 맞춤
       onClick: function(evt, elements) {
         if (elements.length > 0) {
           const idx = elements[0].index;
