@@ -361,13 +361,14 @@
   const table = function(head, rows, row, cls){ return '<table' + (cls ? ' class="' + cls + '"' : '') + '><thead>' + head + '</thead><tbody>' + rows.map(row).join('') + '</tbody></table>'; };
 
   // 이름 찾기: 이름은 가운데가 * 로 가려져 있어서, 찾는 이름도 똑같이 가려서 맞춰 봐요 (김하늘 → 김*늘)
-  const maskName = function(t){ const c = Array.from(t); if (c.length <= 1) return t; if (c.length === 2) return c[0] + '*'; return c[0] + new Array(c.length - 1).join('*') + c[c.length - 1]; };
   function matcher(qv){
     const q = String(qv || '').replace(/\s+/g, '');
     if (!q) return null;
     if (q.indexOf('*') >= 0) { const re = new RegExp('^' + q.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.') + '$'); return function(x){ return re.test(x.n) || String(x.school || '').indexOf(q.replace(/\*/g, '')) >= 0 && q.replace(/\*/g, '').length > 1; }; }
-    const mq = maskName(q);
-    return function(x){ return x.n === mq || String(x.n).indexOf(q) >= 0 || (q.length > 1 && String(x.school || '').replace(/\s+/g, '').indexOf(q) >= 0); };
+    // 앞에서부터 한 글자씩: 가려진 * 자리는 어떤 글자든 맞는 걸로 (강 → 강민 → 강민호 모두 '강*호'를 찾아요)
+    const qc = Array.from(q);
+    const nameOk = function(nm){ const c = Array.from(String(nm)); return qc.length <= c.length && qc.every(function(ch, i){ return c[i] === '*' || c[i] === ch; }); };
+    return function(x){ return nameOk(x.n) || String(x.n).indexOf(q) >= 0 || (q.length > 1 && String(x.school || '').replace(/\s+/g, '').indexOf(q) >= 0); };
   }
   // 순위 팝업: 10명씩 쪽 나누기 + 이름(학교) 찾기
   function rankPopup(o){
