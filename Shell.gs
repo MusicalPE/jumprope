@@ -9,7 +9,7 @@
  * 배포 설정: 다음 사용자로 실행 = 나, 액세스 권한 = 모든 사용자
  *************************************************************/
 
-const SHELL_VERSION = 4;                      // 껍데기 판 (화면이 확인함)  2: 새 학교는 승인 절차 기본 켜짐, 카메라 기록은 기본 바로 승인  3: 급수(Levels 시트)  4: 전국 현황판 비밀 키를 학생 화면에 내보내지 않음(오늘 기록은 이 껍데기가 직접 보냄)
+const SHELL_VERSION = 5;                      // 껍데기 판 (화면이 확인함)  2: 새 학교는 승인 절차 기본 켜짐, 카메라 기록은 기본 바로 승인  3: 급수(Levels 시트)  4: 전국 현황판 비밀 키를 학생 화면에 내보내지 않음(오늘 기록은 이 껍데기가 직접 보냄)  5: 한 번에 최고 연속(스마트 줄넘기·카메라 판정기) 기록·전국 현황판 보고
 const APP_URL = 'https://musicalpe.github.io/jumprope/';
 const BETA_URL = 'https://musicalpe.github.io/jumprope/beta/';
 
@@ -154,7 +154,7 @@ function setExtraSettings(token, patch) {
 }
 /************ 전국 현황판: 오늘 기록 보내기 (4판) ************
  * 학생 기기는 비밀 키를 모르니까, 기록을 저장한 뒤 이 함수를 부르면 껍데기가 오늘 승인된 기록을 모아 수집기로 보냄.
- * 학교 밖으로 나가는 것: 가린 이름(김*늘)·학년·횟수·카메라 횟수·등록 학생 수 (반·번호·실명·비밀번호는 안 나감) */
+ * 학교 밖으로 나가는 것: 가린 이름(김*늘)·학년·횟수·카메라 횟수·한 번에 최고 연속(5판)·등록 학생 수 (반·번호·실명·비밀번호는 안 나감) */
 const DEFAULT_COLLECTOR_URL = 'https://script.google.com/macros/s/AKfycbx8T0Jbj9HGNVtoAq7QpiUZLlqDa6x2qgluIuoviXXf1_qgGfqQUhL-_Aua8ucizJ1-mA/exec';
 function natPid_(key) { return hashPw_('jr-school|' + key).slice(0, 10); }
 function natMask_(n) {
@@ -191,15 +191,16 @@ function natReportToday(app) {
     for (let i = 1; i < rc.length; i++) {
       if ((rc[i][5] || 'approved') !== 'approved' || formatDate_(rc[i][3]) !== today) continue;
       const sid = String(rc[i][2]).trim(), n = Number(rc[i][4]) || 0;
-      const v = per[sid] || (per[sid] = [0, 0]);
+      const v = per[sid] || (per[sid] = [0, 0, 0]);
       v[0] += n; if (String(rc[i][8] || '') === 'camera') v[1] += n;
+      v[2] = Math.max(v[2], Number(rc[i][9]) || 0);   // 5판: 그날 한 번에 최고 연속
     }
     const rows = [], byGrade = {};
     for (let i = 1; i < st.length; i++) {
       const sid = String(st[i][0]).trim(), g = String(st[i][1] || '').trim();
       if (g) byGrade[g] = (byGrade[g] || 0) + 1;
       const v = per[sid];
-      if (v && v[0] > 0) rows.push([hashPw_('jr-student|' + c.key + '|' + sid).slice(0, 10), natMask_(st[i][4]), g, v[0], Math.min(v[1], v[0])]);
+      if (v && v[0] > 0) rows.push([hashPw_('jr-student|' + c.key + '|' + sid).slice(0, 10), natMask_(st[i][4]), g, v[0], Math.min(v[1], v[0]), Math.min(v[2], v[0])]);
     }
     if (!rows.length) return { skipped: 'empty' };
     const payload = {
@@ -224,7 +225,7 @@ function getAllDataAdmin(token) {
   for (let i = 1; i < st.length; i++) students.push({ id: String(st[i][0]).trim(), grade: st[i][1], cls: st[i][2], number: st[i][3], name: st[i][4], order: st[i][6] });
   const rc = getRecordsSheet_().getDataRange().getValues();
   const records = [];
-  for (let i = 1; i < rc.length; i++) records.push({ recordId: rc[i][0], studentId: String(rc[i][2]).trim(), date: formatDate_(rc[i][3]), count: Number(rc[i][4]) || 0, status: rc[i][5] || 'approved', time: formatTime_(rc[i][6]), type: typeLabel_(rc[i][7]), source: String(rc[i][8] || '') });
+  for (let i = 1; i < rc.length; i++) records.push({ recordId: rc[i][0], studentId: String(rc[i][2]).trim(), date: formatDate_(rc[i][3]), count: Number(rc[i][4]) || 0, status: rc[i][5] || 'approved', time: formatTime_(rc[i][6]), type: typeLabel_(rc[i][7]), source: String(rc[i][8] || ''), best: Number(rc[i][9]) || 0 });
   return { students: students, records: records };
 }
 // 승인 절차: 한 번도 정한 적이 없으면 새 학교(기록 없음)는 켜짐, 이미 쓰던 학교(기록 있음)는 예전처럼 꺼짐으로 정해 둔다
@@ -259,7 +260,7 @@ function getStudentsSheet_() {
   return sh;
 }
 
-const RECORDS_HEADER_ = ['RecordID', 'Timestamp', 'StudentID', 'Date', 'Count', 'Status', 'Time', 'Type', 'Source'];
+const RECORDS_HEADER_ = ['RecordID', 'Timestamp', 'StudentID', 'Date', 'Count', 'Status', 'Time', 'Type', 'Source', 'Best'];   // Best(5판): 한 번에 최고 연속 — 스마트 줄넘기·카메라 판정기로 잰 기록만
 // Source 열: 'camera' = 카메라 판정기(줄넘기 판정기)가 자동으로 넣은 기록, 비어 있으면 직접 입력
 
 /************ 줄넘기 종류 설정 (관리자 메뉴에서 변경) ************/
@@ -765,7 +766,8 @@ function getStudentDetailAuthed(id, password) {
 }
 
 /************ 기록 입력 (비밀번호 없이, 승인 대기로 저장) ************/
-function addRecord(id, dateStr, count, timeStr, typeStr) {
+// best(5판): 스마트 줄넘기("내 줄넘기로 뛰기")가 잰 한 번에 최고 연속. 손으로 넣는 기록은 비워 둠
+function addRecord(id, dateStr, count, timeStr, typeStr, best) {
   const students = getStudentsSheet_().getDataRange().getValues();
   const target = String(id).trim();
   let found = false;
@@ -782,7 +784,8 @@ function addRecord(id, dateStr, count, timeStr, typeStr) {
 
   // v2: 입력할 때마다 한 줄씩 쌓는다 (그날 여러 번 뛰면 모두 더해짐). 승인 절차를 켰으면 한 건씩 승인 대기.
   if (cnt > 5000) return { ok: false, message: '한 번에 5000회까지만 입력할 수 있어요.' };
-  getRecordsSheet_().appendRow([Utilities.getUuid(), new Date(), target, String(dateStr).trim(), Math.round(cnt), approvalOn_() ? 'pending' : 'approved', time, type, '']);
+  const bst = Math.min(Math.round(Number(best) || 0), Math.round(cnt));
+  getRecordsSheet_().appendRow([Utilities.getUuid(), new Date(), target, String(dateStr).trim(), Math.round(cnt), approvalOn_() ? 'pending' : 'approved', time, type, bst > 0 ? 'rope' : '', bst > 0 ? bst : '']);
   return { ok: true, approval: approvalOn_(), message: approvalOn_() ? '입력되었습니다! 선생님 승인 후 그래프에 반영됩니다.' : '저장되었습니다! 그래프에 바로 반영됩니다.' };
 }
 
@@ -1213,6 +1216,7 @@ function handleCameraApi_(q) {
     if (api === 'rope_x_save') {
       const cnt = Math.round(Number(q.count));
       if (!cnt || cnt < 1) return cameraJson_({ ok: false, error: '1회 이상일 때만 기록할 수 있어요.' });
+      const bst = Math.max(0, Math.min(Math.round(Number(q.best) || 0), cnt));   // 5판: 판정기가 센 한 번에 최고 연속
       if (cnt > 5000) return cameraJson_({ ok: false, error: '횟수가 너무 큽니다.' });
       const type = link.type;
       const now = new Date();
@@ -1235,8 +1239,10 @@ function handleCameraApi_(q) {
         sh.getRange(rowIndex, 7).setValue(timeStr);
         sh.getRange(rowIndex, 8).setValue(type);
         sh.getRange(rowIndex, 9).setValue('camera');
+        const prevBest = prevStatus === 'rejected' ? 0 : (Number(data[rowIndex - 1][9]) || 0);
+        if (bst > prevBest || prevStatus === 'rejected') sh.getRange(rowIndex, 10).setValue(bst > 0 ? bst : '');
       } else {
-        sh.appendRow([Utilities.getUuid(), now, info.id, dateStr, cnt, status, timeStr, type, 'camera']);
+        sh.appendRow([Utilities.getUuid(), now, info.id, dateStr, cnt, status, timeStr, type, 'camera', bst > 0 ? bst : '']);
       }
       const todayTotal = todayTotalForStudent_(info.id);
       return cameraJson_({ ok: true, data: { 횟수: cnt, 오늘: todayTotal, 하루목표: goal, 달성: todayTotal >= goal, 승인대기: status === 'pending' } });

@@ -641,7 +641,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.4.13', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.5.0', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -742,7 +742,7 @@ const NAT = {
         const s = byId[id], sk = h.slice(0, 10);
         Object.keys(perStudent[id]).forEach(function(d){
           const v = perStudent[id][d]; if (!v[0]) return;
-          (days[d] = days[d] || []).push([sk, NAT.mask(s.name), String(s.grade || ''), v[0], Math.min(v[1], v[0])]);
+          (days[d] = days[d] || []).push([sk, NAT.mask(s.name), String(s.grade || ''), v[0], Math.min(v[1], v[0]), Math.min(v[2] || 0, v[0])]);
         });
       });
     });
@@ -813,8 +813,8 @@ const NAT = {
         const per = {};
         (all.records || []).forEach(function(r){
           if (r.status !== 'approved' || !r.date || r.date < from) return;
-          const v = ((per[r.studentId] = per[r.studentId] || {})[r.date] = per[r.studentId][r.date] || [0, 0]);
-          v[0] += r.count; if (r.source === 'camera') v[1] += r.count;
+          const v = ((per[r.studentId] = per[r.studentId] || {})[r.date] = per[r.studentId][r.date] || [0, 0, 0]);
+          v[0] += r.count; if (r.source === 'camera') v[1] += r.count; v[2] = Math.max(v[2], r.best || 0);   // 5판: 한 번에 최고 연속
         });
         return NAT.buildDays(all.students || [], per, from).then(function(days){
           return NAT.post('report', Object.assign(NAT.meta(all.students || [], true), { days: days })).then(function(res){
@@ -1710,7 +1710,23 @@ google.script.run.withSuccessHandler(function(types){
    서비스 FFF0 · 쓰기 FFF6 · 알림 FFF7 · 명령 16바이트(끝 = 앞 15바이트 합)
    09 04 = 자유 시작 / 09 99 = 멈춤 / 01 YY MM DD hh mm ss = 시간 · 뛰는 동안 1초마다 09 04 [초 2바이트] [횟수 4바이트]
    기록은 addRecord 로 넣음 → 승인 절차가 켜져 있으면 선생님 확인 뒤 반영 */
-const BLE = { dev: null, tx: null, rx: null, cnt: 0, sec: 0, running: false, sid: '', type: '' };
+const BLE = { dev: null, tx: null, rx: null, cnt: 0, sec: 0, running: false, sid: '', type: '', trk: null };
+// 한 번에 최고 연속(5판): 줄넘기는 횟수만 알려 줘서 약 1초마다 오는 횟수로 봄 — 그 사이 늘어난 수가 0이거나
+// 그 친구 평소 빠르기보다 확 줄면(한 번 사이 45%, 두 번 사이 62% 아래) 걸린 것. 걸림과 걸림 사이에 이어 뛴 가장 많은 수가 최고 연속
+function trkNew(){ return { t: 0, c: 0, seg: 0, best: 0, rates: [], dip: false, started: false, warm: false, pdc: 0, pdt: 0 }; }
+function trkStep(o, c, t){
+  if (!o) return;
+  if (!o.started) { if (c > 0) { o.started = true; o.best = c; } o.c = c; o.t = t; return; }
+  const dt = (t - o.t) / 1000; if (dt < 0.5) return;
+  const dc = c - o.c; if (dc < 0) { o.c = c; o.t = t; return; }
+  const r = dc / dt, r2 = o.pdt ? (dc + o.pdc) / (dt + o.pdt) : r, med = o.rates.length ? o.rates.slice().sort(function(a, b){ return a - b; })[o.rates.length >> 1] : 0;
+  const slow = dc === 0 || (o.rates.length >= 2 && (r < med * 0.45 || (!o.dip && r2 < med * 0.62)));
+  o.pdc = dc; o.pdt = dt;
+  if (slow) { o.dip = true; o.seg = c; }
+  else { if (o.dip && (o.rates.length < 2 || r >= med * 0.6)) o.dip = false;
+    if (!o.dip) { if (o.warm) { o.rates.push(r); if (o.rates.length > 8) o.rates.shift(); } o.warm = true; } }
+  o.c = c; o.t = t; if (!o.dip) o.best = Math.max(o.best, c - o.seg);
+}
 function bleFrame(b){ const f = new Uint8Array(16); b.forEach(function(x, i){ f[i] = x; }); let s = 0; for (let i = 0; i < 15; i++) s += f[i]; f[15] = s & 255; return f; }
 const bleBcd = function(n){ return parseInt(String(n).padStart(2, '0'), 16); };
 function bleSend(b){ return BLE.tx ? BLE.tx.writeValue(bleFrame(b)).catch(function(e){ console.warn('ble', e); }) : Promise.resolve(); }
@@ -1730,7 +1746,7 @@ document.getElementById('bleBtn').addEventListener('click', function(){
   const id = document.getElementById('nameSelect').value, type = document.getElementById('typeSelect').value, msg = document.getElementById('formMsg');
   if (!id) { msg.textContent = '학년/반/이름을 먼저 선택해주세요.'; return; }
   if (!type) { msg.textContent = '줄넘기 종류를 먼저 선택해주세요.'; return; }
-  BLE.sid = id; BLE.type = type; BLE.cnt = 0; BLE.sec = 0; BLE.done = false; bleShow(); bleTimerReset();
+  BLE.sid = id; BLE.type = type; BLE.cnt = 0; BLE.sec = 0; BLE.done = false; BLE.trk = trkNew(); bleShow(); bleTimerReset();
   const ns = document.getElementById('nameSelect');
   document.getElementById('bleWho').textContent = (ns.options[ns.selectedIndex] || {}).text + ' · ' + type;
   document.getElementById('bleDone').disabled = true; document.getElementById('bleConn').disabled = false;
@@ -1759,8 +1775,8 @@ document.getElementById('bleConn').addEventListener('click', async function(){
     BLE.rx.addEventListener('characteristicvaluechanged', function(ev){
       const v = new Uint8Array(ev.target.value.buffer);
       if (BLE.done) return;   // 끝낸 뒤(다시 혼자 세는 상태로 돌려놓을 때) 오는 숫자는 무시
-      if (v[0] === 0x09 && v[1] === 0x04 && v.length >= 8) { BLE.sec = (v[2] << 8) | v[3]; BLE.cnt = ((v[4] << 24) | (v[5] << 16) | (v[6] << 8) | v[7]) >>> 0; bleShow(); if (BLE.cnt > 0) bleTimerStart(); bleSt('세는 중'); }
-      else if (v[0] === 0x0b && v[1] === 0x04) { BLE.running = true; BLE.cnt = 0; bleShow(); bleTimerReset(); bleSt('시작! 뛰어 보세요'); document.getElementById('bleDone').disabled = false; }
+      if (v[0] === 0x09 && v[1] === 0x04 && v.length >= 8) { BLE.sec = (v[2] << 8) | v[3]; BLE.cnt = ((v[4] << 24) | (v[5] << 16) | (v[6] << 8) | v[7]) >>> 0; trkStep(BLE.trk, BLE.cnt, Date.now()); bleShow(); if (BLE.cnt > 0) bleTimerStart(); bleSt('세는 중'); }
+      else if (v[0] === 0x0b && v[1] === 0x04) { BLE.running = true; BLE.cnt = 0; BLE.trk = trkNew(); bleShow(); bleTimerReset(); bleSt('시작! 뛰어 보세요'); document.getElementById('bleDone').disabled = false; }
     });
     await BLE.rx.startNotifications();
     const d = new Date();
@@ -1783,15 +1799,15 @@ async function bleClose(){
 document.getElementById('bleDone').addEventListener('click', async function(){
   const btn = this; btn.disabled = true; bleTimerStop();   // 누른 순간까지가 뛴 시간
   if (BLE.tx) { await bleSend([0x09, 0x99]); await new Promise(function(r){ setTimeout(r, 700); }); }   // 멈춤 → 마지막 숫자
-  const cnt = BLE.cnt, took = BLE.t0 ? BLE.t1 - BLE.t0 : 0, tookTxt = took >= 1000 ? ' · ' + bleTimeText(took) : ''; BLE.done = true; await bleClose();
+  const cnt = BLE.cnt, took = BLE.t0 ? BLE.t1 - BLE.t0 : 0, best = BLE.trk ? Math.min(BLE.trk.best, cnt) : 0, tookTxt = (took >= 1000 ? ' · ' + bleTimeText(took) : '') + (best > 0 ? ' · 최고 연속 ' + best + '회' : ''); BLE.done = true; await bleClose();
   if (!(cnt > 0)) { bleSt('뛴 횟수가 0이에요 — 기록하지 않았어요', true); return; }
   bleSt('기록하는 중… ' + cnt + '회' + tookTxt);
   const d = new Date(), pad = function(n){ return String(n).padStart(2, '0'); };
   const dateStr = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()), timeStr = pad(d.getHours()) + ':' + pad(d.getMinutes());
-  rpc('addRecord', [BLE.sid, dateStr, cnt, timeStr, BLE.type]).then(function(res){
+  rpc('addRecord', [BLE.sid, dateStr, cnt, timeStr, BLE.type, best]).then(function(res){
     if (res && res.ok === false) { bleSt(res.message || '기록하지 못했어요', true); return; }
     bleSt(cnt + '회' + tookTxt + ' 기록했어요!' + (res && res.approval ? ' 선생님이 확인하면 반영돼요.' : ''));
-    document.getElementById('formMsg').textContent = '내 줄넘기로 ' + cnt + '회' + (tookTxt ? ' (' + bleTimeText(took) + ' 동안)' : '') + ' 기록했어요.' + (res && res.approval ? ' 선생님 승인 후 반영됩니다.' : '');
+    document.getElementById('formMsg').textContent = '내 줄넘기로 ' + cnt + '회' + (took >= 1000 ? ' (' + bleTimeText(took) + ' 동안)' : '') + ' 기록했어요.' + (best > 0 ? ' 한 번에 최고 연속 ' + best + '회!' : '') + (res && res.approval ? ' 선생님 승인 후 반영됩니다.' : '');
     google.script.run.withSuccessHandler(drawChart).getStudentsSummary();
     loadPending(); loadTodaySummary(); loadWeekSummary(); loadStreakSummary(); NAT.reportToday(0);
     setTimeout(function(){ document.getElementById('bleModal').hidden = true; }, 1800);
@@ -3631,7 +3647,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
   }
   document.getElementById('versionInfo').innerHTML = '지금 쓰는 판: <b>v' + APP.version + '</b>' + (APP.channel === 'beta' ? ' (베타)' : '') + ' · 학교 껍데기 판: <b>' + APP.shell.shell + '</b> · 학교 시트: ' + esc(APP.shell.title || '') + (/견본/.test(APP.shell.title || '') ? ' <span style="color:var(--amber)">← 구글 시트 왼쪽 위 파일 이름을 "6학년 1반 줄넘기"처럼 바꿔 두세요</span>' : '');
   NAT.load().then(function(){   // 전국 현황판 참여 여부를 알고 나서 안내
-  if (APP.shell.shell >= APP.requiredShell && APP.shell.shell < 4) document.getElementById('shellNotice').innerHTML = '<div class="warn-box"' + (NAT.cfg && NAT.cfg.on ? '' : ' style="background:var(--bg);"') + '>새 껍데기 <b>4판</b>이 나왔어요' + (NAT.cfg && NAT.cfg.on ? ' — <b>전국 현황판에 참여 중이면 꼭 바꿔 주세요.</b> 지금은 학생 화면에서 전국 현황판 비밀 키를 꺼내 볼 수 있어서, 4판부터는 키를 학교 시트 안에만 두고 오늘 기록도 껍데기가 직접 보내요.' : ' (선택). 전국 현황판 비밀 키를 학생 화면에 내보내지 않게 바뀌었어요.') + (APP.shell.shell < 3 ? ' 급수 인증도 4판부터 쓸 수 있어요.' : '') + ' Shell(껍데기)를 다시 붙여 넣고 "새 버전"으로 배포하세요. 기록·학생·설정은 그대로예요.</div>';
+  if (APP.shell.shell >= APP.requiredShell && APP.shell.shell < 5) document.getElementById('shellNotice').innerHTML = '<div class="warn-box"' + (NAT.cfg && NAT.cfg.on && APP.shell.shell < 4 ? '' : ' style="background:var(--bg);"') + '>새 껍데기 <b>5판</b>이 나왔어요. 스마트 줄넘기나 카메라 판정기로 뛰면 <b>한 번에 최고 연속</b>(걸리지 않고 이어 뛴 가장 많은 수)이 기록되고, 전국 현황판에도 올라가요.' + (NAT.cfg && NAT.cfg.on && APP.shell.shell < 4 ? ' <b>전국 현황판에 참여 중이면 꼭 바꿔 주세요</b> — 4판부터는 전국 현황판 비밀 키를 학생 화면에 내보내지 않아요.' : '') + (APP.shell.shell < 3 ? ' 급수 인증도 3판부터 쓸 수 있어요.' : '') + (APP.shell.live ? ' 점프 라이브를 쓰는 학교는 <b>점프 라이브판 5판</b>으로 바꿔 주세요.' : '') + ' Shell(껍데기)를 다시 붙여 넣고 "새 버전"으로 배포하세요. 기록·학생·설정은 그대로예요.</div>';
   });
   if (APP.shell.shell < APP.requiredShell) document.getElementById('shellNotice').innerHTML = '<div class="warn-box">학교 껍데기(Shell.gs)를 새 판으로 바꿔야 하는 기능이 있어요. 관리자 메뉴 안내에 따라 Shell.gs 를 다시 붙여넣고 "새 버전"으로 배포해 주세요.</div>';
   fetch('changelog.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(list){

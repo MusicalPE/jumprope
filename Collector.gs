@@ -17,12 +17,12 @@
  *              Name 은 현황판에 보이는 이름(공개한 학교만), SchoolName·Teacher·Contact 는 운영자만 보는 칸
  *              (현황판·기록실 응답에는 절대 나가지 않음. 담당 교사·연락처는 관리자 화면에서 보낼 때만 옴)
  *  - Daily   : PublicId, Date, Total, Participants, Camera, Students(JSON), UpdatedAt
- *              Students = [[학생키, 가린이름, 학년, 횟수, 카메라횟수], ...]
+ *              Students = [[학생키, 가린이름, 학년, 횟수, 카메라횟수, 최고연속], ...]  (최고연속: 껍데기 5판부터, 스마트 줄넘기·카메라 판정기로 잰 한 번에 이어 뛴 가장 많은 수)
  *  - MatDaily: PublicId, Date, Rows(JSON), UpdatedAt   ← 색깔 매트 놀이터(카메라 판정·교사 승인 기록만)
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 12;  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 13;  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -166,9 +166,9 @@ function report_(p) {
     const rowOf = {};
     for (let i = 1; i < dv.length; i++) if (String(dv[i][0]) === pid) rowOf[fmtDate_(dv[i][1])] = i + 1;
     days.forEach(function (d) {
-      const prevCam = {};
-      if (p.camPartial && rowOf[d.date]) {
-        try { JSON.parse(dv[rowOf[d.date] - 1][5] || '[]').forEach(function (s) { prevCam[s[0]] = s[4] || 0; }); } catch (e) {}
+      const prevCam = {}, prevBest = {};
+      if (p.camPartial && rowOf[d.date]) {   // 일부만 보내는 예전 보고: 카메라 횟수·최고 연속은 앞서 받은 값을 지킴
+        try { JSON.parse(dv[rowOf[d.date] - 1][5] || '[]').forEach(function (s) { prevCam[s[0]] = s[4] || 0; prevBest[s[0]] = s[5] || 0; }); } catch (e) {}
       }
       const seen = {};
       const list = [];
@@ -180,7 +180,8 @@ function report_(p) {
         seen[sk] = 1;
         let cam = Math.min(int_(s[4], MAX_COUNT_PER_STUDENT_DAY), c);
         if (p.camPartial) cam = Math.min(Math.max(cam, prevCam[sk] || 0), c);
-        list.push([sk, maskName_(cleanText_(s[1], 20)), cleanText_(s[2], 4), c, cam]);
+        const best = Math.min(Math.max(int_(s[5], MAX_COUNT_PER_STUDENT_DAY), Number(prevBest[sk]) || 0), c);
+        list.push(best ? [sk, maskName_(cleanText_(s[1], 20)), cleanText_(s[2], 4), c, cam, best] : [sk, maskName_(cleanText_(s[1], 20)), cleanText_(s[2], 4), c, cam]);
       });
       const total = list.reduce(function (a, s) { return a + s[3]; }, 0);
       const cam = list.reduce(function (a, s) { return a + s[4]; }, 0);
@@ -266,10 +267,10 @@ function aggregateMonth_(month, schools, dv, grade) {
     if (!list.length) continue;
     s.days++;
     list.forEach(function (r) {
-      const c = Number(r[3]) || 0, cam = Number(r[4]) || 0;
+      const c = Number(r[3]) || 0, cam = Number(r[4]) || 0, best = Number(r[5]) || 0;
       s.total += c; s.camera += cam;
-      const x = s.st[r[0]] || (s.st[r[0]] = { k: r[0], n: r[1], g: r[2], c: 0, cam: 0, days: 0, ds: {} });
-      x.n = r[1]; x.g = r[2]; x.c += c; x.cam += cam; x.days++; if (c > 0) x.ds[d] = 1;
+      const x = s.st[r[0]] || (s.st[r[0]] = { k: r[0], n: r[1], g: r[2], c: 0, cam: 0, days: 0, best: 0, ds: {} });
+      x.n = r[1]; x.g = r[2]; x.c += c; x.cam += cam; x.days++; if (c > 0) x.ds[d] = 1; if (best > x.best) x.best = best;
     });
   }
   const list = Object.keys(by).map(function (pid) {
@@ -371,6 +372,17 @@ function nationalStreaks_(schools, n, live) {
   out.forEach(function (x, i) { x.rank = (i > 0 && out[i - 1].run === x.run) ? out[i - 1].rank : i + 1; });
   return out;
 }
+// 전국 '한 번에 최고 연속' 순위: 스마트 줄넘기·카메라 판정기로 잰 기록(껍데기 5판)만. 같은 수면 같은 등수
+function nationalBest_(schools, n) {
+  const all = [];
+  schools.forEach(function (s) {
+    s.students.forEach(function (x) { if (x.best > 0) all.push({ n: x.n, g: x.g, best: x.best, c: x.c, pid: s.pid, school: s.label }); });
+  });
+  all.sort(function (a, b) { return b.best - a.best || b.c - a.c; });
+  const out = all.slice(0, n);
+  out.forEach(function (x, i) { x.rank = (i > 0 && out[i - 1].best === x.best) ? out[i - 1].rank : i + 1; });
+  return out;
+}
 function getBoard_(month, grade) {
   const cur = month_(today_());
   month = /^\d{4}-\d{2}$/.test(String(month || '')) ? String(month) : cur;
@@ -395,6 +407,7 @@ function getBoard_(month, grade) {
     },
     students: nationalStudents_(schools, 50),
     streaks: nationalStreaks_(schools, 50, month === cur),
+    ropeBest: nationalBest_(schools, 50),
     // 학교 순위는 합계·1인당 평균·참여율 중 하나라도 10등 안인 학교만 (학교가 많아져도 가볍게)
     // 우리 학교 줄과 학교 안 학생 순위는 ?api=school 로 그 학교만 따로 받아 가요
     schoolsTotal: schools.length,
@@ -427,16 +440,16 @@ function getSchool_(pid, month, grade) {
   const schools = aggregateMonth_(month, loadSchools_(), dailySheet_().getDataRange().getValues(), grade);
   const s = schools.filter(function (x) { return x.pid === pid; })[0];
   // 전국 등수: 50등 밖이어도 우리 학교 학생이 전국 몇 등인지 (같은 횟수·같은 날 수면 같은 등수)
-  const allC = [], allR = [];
-  schools.forEach(function (x) { x.students.forEach(function (y) { allC.push(y.c); if (y.run >= 2) allR.push(y.run); }); });
+  const allC = [], allR = [], allB = [];
+  schools.forEach(function (x) { x.students.forEach(function (y) { allC.push(y.c); if (y.run >= 2) allR.push(y.run); if (y.best > 0) allB.push(y.best); }); });
   const desc = function (a, b) { return b - a; };
-  allC.sort(desc); allR.sort(desc);
+  allC.sort(desc); allR.sort(desc); allB.sort(desc);
   const rankIn = function (arr, v) { let lo = 0, hi = arr.length; while (lo < hi) { const m = (lo + hi) >> 1; if (arr[m] > v) lo = m + 1; else hi = m; } return lo + 1; };
   const out = s ? {
     month: month, grade: grade, schoolsTotal: schools.length, school: schoolRow_(s),
-    studentsTotal: allC.length, runTotal: allR.length,
-    students: s.students.map(function (x) { return { n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days, run: x.run, nr: rankIn(allC, x.c), rr: x.run >= 2 ? rankIn(allR, x.run) : 0 }; })
-  } : { month: month, grade: grade, schoolsTotal: schools.length, studentsTotal: allC.length, runTotal: allR.length, school: null, students: [] };
+    studentsTotal: allC.length, runTotal: allR.length, bestTotal: allB.length,
+    students: s.students.map(function (x) { return { n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days, run: x.run, best: x.best, nr: rankIn(allC, x.c), rr: x.run >= 2 ? rankIn(allR, x.run) : 0, nb: x.best > 0 ? rankIn(allB, x.best) : 0 }; })
+  } : { month: month, grade: grade, schoolsTotal: schools.length, studentsTotal: allC.length, runTotal: allR.length, bestTotal: allB.length, school: null, students: [] };
   const text = JSON.stringify(out);
   if (text.length < 95000) cache.put(ck, text, BOARD_CACHE_SEC);
   return out;

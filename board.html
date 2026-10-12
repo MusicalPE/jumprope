@@ -365,6 +365,9 @@
   const inRow = function(x){ return '<tr><td>' + rankHtml(x._r) + '</td><td><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + (x.nr ? n(x.nr) + '등' : '–') + '</td><td class="num mono hide-sm">' + x.days + '일</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   // 등수 칸: 50등 밖(전국 1,030등 등)도 숫자로
   const rankCell = function(r){ return r > 99 ? '<span class="rank wide">' + n(r) + '</span>' : rankHtml(r); };
+  const SHOW_BEST = 5;   // 왼쪽 칸이라 5등까지만 바로 보이고 나머지는 팝업
+  const BEST_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">최고 연속</th></tr>';
+  const bestRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + esc(x.school) + '</td><td class="num"><b class="mono">' + n(x.best) + '회</b></td></tr>'; };
   const table = function(head, rows, row, cls){ return '<table' + (cls ? ' class="' + cls + '"' : '') + '><thead>' + head + '</thead><tbody>' + rows.map(row).join('') + '</tbody></table>'; };
 
   // 이름 찾기: 이름은 가운데가 * 로 가려져 있어서, 찾는 이름도 똑같이 가려서 맞춰 봐요 (김하늘 → 김*늘)
@@ -416,6 +419,11 @@
     const sc = d.school || {}, st = d.students || [];
     if (!st.length || st[0].nr == null) return { rows: nat.filter(function(x){ return x.pid === me; }), note: '전국 ' + nat.length + '등 안에 든 우리 학교 학생이에요' };
     const base = { school: sc.label, pid: me };
+    if (kind === 'best') {
+      if (st[0].nb == null) return { rows: nat.filter(function(x){ return x.pid === me; }), note: '전국 ' + nat.length + '등 안에 든 우리 학교 학생이에요' };
+      return { rows: st.filter(function(x){ return x.best > 0; }).sort(function(a, b){ return b.best - a.best || b.c - a.c; })
+        .map(function(x){ return Object.assign({}, x, base, { _r: x.nb }); }), note: '우리 학교 학생의 전국 등수예요 (최고 연속 기록이 있는 ' + n(d.bestTotal) + '명 중)' };
+    }
     if (kind === 'run') {
       const live = {}; nat.forEach(function(x){ if (x.pid === me && x.live) live[x.n + '|' + x.g + '|' + x.run] = 1; });
       return { rows: st.filter(function(x){ return x.run >= 2; }).sort(function(a, b){ return b.run - a.run || b.c - a.c; })
@@ -471,6 +479,17 @@
       '<div class="kpi"><span>전체 횟수</span><b class="mono">' + n(s.total) + '</b></div>' +
       '<div class="kpi"><span>참여 학생</span><b class="mono">' + n(s.participants) + '</b></div>' +
       '<div class="kpi"><span>📷 카메라 인증</span><b class="mono">' + n(s.camera) + '</b></div></div>';
+    // 한 번에 최고 연속 (수집기 13판 이상): 스마트 줄넘기·카메라 판정기로 잰 기록만 — 줄이 걸리지 않고 이어 뛴 가장 많은 수
+    if (Array.isArray(data.ropeBest)) {
+      const rb = ranked(data.ropeBest, 'best');
+      html += '<div class="card"><div class="card-head"><div><h2>⚡ 한 번에 최고 연속</h2><span class="hint">걸리지 않고 이어 뛴 가장 많은 수 · 스마트 줄넘기나 카메라 판정기로 뛴 기록만</span></div></div>';
+      if (!rb.length) html += '<div class="empty"><span style="display:inline-block">스마트 줄넘기나 카메라 판정기로 뛰면 여기에 올라와요.</span><br><span style="display:inline-block">학교 껍데기 5판부터 기록돼요.</span></div>';
+      else {
+        html += '<div class="table-wrap">' + table(BEST_HEAD, rb.slice(0, SHOW_BEST), bestRow) + '</div>';
+        html += '<div class="more-row"><button type="button" class="more-btn" id="bestMore">' + (rb.length > SHOW_BEST ? rb.length + '등까지 보기 · 이름 찾기 →' : '이름 찾기 →') + '</button></div>';
+      }
+      html += '<p class="hint" style="margin:8px 4px 0">스마트 줄넘기나 카메라 판정기가 있어야 참여할 수 있어요</p></div>';
+    }
 
     // 넓은 화면: 지구 대장정·숫자는 왼쪽, 순위들(학교·학생·연속)은 오른쪽
     html += '</div><div class="bw-r">';
@@ -544,6 +563,7 @@
     ejDraw();
 
     const subOf = function(t){ return mLabel(data.month) + (data.grade ? ' · ' + esc(data.grade) + '학년' : '') + t; };
+    $('bestMore') && $('bestMore').addEventListener('click', function(){ const rb = ranked(data.ropeBest || [], 'best'); rankPopup({ title: '한 번에 최고 연속 · ' + rb.length + '등까지', sub: subOf(' · 걸리지 않고 이어 뛴 가장 많은 수'), rows: rb, head: BEST_HEAD, row: bestRow, mine: me ? function(){ return mineRows('best', rb); } : null }); });
     $('runMore') && $('runMore').addEventListener('click', function(){ const sk = ranked(data.streaks || [], 'run'); rankPopup({ title: '며칠 연속 뛰었나 · ' + sk.length + '등까지', sub: subOf(' · 이어서 뛴 날 수'), rows: sk, head: RUN_HEAD, row: runRow, mine: me ? function(){ return mineRows('run', sk); } : null }); });
     $('stuMore') && $('stuMore').addEventListener('click', function(){ const st = ranked(data.students || [], 'c'); rankPopup({ title: '전국 학생 순위 · ' + st.length + '등까지', sub: subOf(' 동안 뛴 횟수 합계'), rows: st, head: STU_HEAD, row: stuRow, mine: me ? function(){ return mineRows('c', st); } : null }); });
     Array.prototype.forEach.call(document.querySelectorAll('[data-insch]'), function(b){
