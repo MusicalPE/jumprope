@@ -514,6 +514,7 @@ function hallMonth_(m, schoolsInfo, dv) {
     students: st3,
     students50: st50,
     streaks50: (function () { return nationalStreaks_(schools, 50, false).map(function (x) { delete x.live; return x; }); })(),
+    best50: nationalBest_(schools, 50),   // 13판: 한 번에 최고 연속
     schools50: { total: top50(schools, 'total'), avg: top50(schools, 'avg'), rate: top50(schools, 'rate') },
     // 학교별 학생 1~3등 (학교 안 순위)
     inSchool: schools.slice(0, 30).map(function (s) {

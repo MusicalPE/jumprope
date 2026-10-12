@@ -235,6 +235,11 @@
       return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num">' + n(x.c) + '회' + (x.cam ? ' <span class="sub">📷' + n(x.cam) + '</span>' : '') + '</td></tr>';
     }).join('') + '</tbody></table>';
   }
+  function bestTable50(list){
+    return '<table><thead><tr><th>순위</th><th>이름</th><th>학교</th><th class="num">최고 연속</th></tr></thead><tbody>' + list.map(function(x){
+      return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num">' + n(x.best) + '회</td></tr>';
+    }).join('') + '</tbody></table>';
+  }
   function runTable50(list){
     return '<table><thead><tr><th>순위</th><th>이름</th><th>학교</th><th class="num">연속</th></tr></thead><tbody>' + list.map(function(x){
       return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num">' + x.run + '일 <span class="sub">' + n(x.c) + '회</span></td></tr>';
@@ -283,6 +288,11 @@
           podium('🙋 참여율', m.schools.rate || [], function(s){ return s.rate + '%'; }) +
         '</div>' +
         ((m.schools50 && (m.schools50.total || []).length > 3) ? '<div style="text-align:center;margin:-4px 0 12px;"><button type="button" class="more-btn" data-more="sch" data-m="' + m.month + '">학교 순위 ' + Math.min(50, m.schoolCount) + '등까지 보기 →</button></div>' : '') +
+        (Array.isArray(m.best50) ? '<div class="podium stars" style="margin-top:12px"><h3>⚡ 한 번에 최고 연속 1~3등</h3>' + (m.best50.length ? m.best50.filter(function(x){ return x.rank <= 3; }).map(function(x){
+          return '<div class="pl' + (x.pid === me ? ' me' : '') + '">' + rankHtml(x.rank) + '<span class="who">' + esc(x.n) + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + ' <span class="sub">' + esc(x.school) + '</span></span><span class="val">' + n(x.best) + '회</span></div>';
+        }).join('') : '<p class="hint" style="margin:0;">스마트 줄넘기나 카메라 판정기로 잰 기록이 없어요</p>') +
+        '<p class="hint" style="margin:6px 0 0;">걸리지 않고 이어 뛴 가장 많은 수 · 스마트 줄넘기나 카메라 판정기로 뛴 기록만</p>' +
+        (m.best50.length > 3 ? '<div style="text-align:center;"><button type="button" class="more-btn" data-more="best" data-m="' + m.month + '">' + m.best50.length + '등까지 보기 →</button></div>' : '') + '</div>' : '') +
         '</div></div><div class="bw-r"><div class="card month m-r">' +
         '<div class="podium stars"><h3>⭐ 전국 학생 1~3등</h3>' + (st.length ? st.map(function(x){
           return '<div class="pl">' + rankHtml(x.rank) + '<span class="who">' + esc(x.n) + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + ' <span class="sub">' + esc(x.school) + '</span></span><span class="val">' + n(x.c) + '회' + (x.cam ? ' · 📷' + n(x.cam) : '') + '</span></div>';
@@ -306,6 +316,7 @@
       b.addEventListener('click', function(){
         const m = months.filter(function(x){ return x.month === b.dataset.m; })[0]; if (!m) return;
         if (b.dataset.more === 'stu') openModal('전국 학생 순위 · ' + m.students50.length + '등까지', mLabel(m.month) + ' 동안 뛴 횟수 합계', stuTable50(m.students50));
+        else if (b.dataset.more === 'best') openModal('한 번에 최고 연속 · ' + m.best50.length + '등까지', mLabel(m.month) + ' · 걸리지 않고 이어 뛴 가장 많은 수', bestTable50(m.best50));
         else if (b.dataset.more === 'run') openModal('며칠 연속 뛰었나 · ' + m.streaks50.length + '등까지', mLabel(m.month) + ' · 이어서 뛴 날 수', runTable50(m.streaks50));
         else schModal(m, 'total');
       });
