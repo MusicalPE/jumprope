@@ -641,7 +641,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.5.0', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.5.1', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1856,7 +1856,8 @@ google.script.run.withSuccessHandler(function(list){
   allStudents = list;
   document.getElementById('statStudents').textContent = list.length;
   APP.ourLabel = ourLabel(list); applyOurLabel();   // 우리 반 / 우리 N학년 / 우리 학교
-  const grades = [...new Set(list.map(s => s.grade))];
+  const numCmp = (a, b) => (Number(a) || 99) - (Number(b) || 99) || String(a).localeCompare(String(b), 'ko');   // 1학년, 2학년 … 순서대로
+  const grades = [...new Set(list.map(s => s.grade))].sort(numCmp);
   const gradeSelect = document.getElementById('gradeSelect');
   grades.forEach(g => {
     const opt = document.createElement('option');
@@ -1899,7 +1900,7 @@ document.getElementById('gradeSelect').addEventListener('change', function(){
   classSelect.innerHTML = '<option value="">선택</option>';
   nameSelect.innerHTML = '<option value="">반 먼저 선택</option>';
   if (!grade) return;
-  const classes = [...new Set(allStudents.filter(s => String(s.grade) === grade).map(s => s.cls))];
+  const classes = [...new Set(allStudents.filter(s => String(s.grade) === grade).map(s => s.cls))].sort((a, b) => (Number(a) || 99) - (Number(b) || 99) || String(a).localeCompare(String(b), 'ko'));
   classes.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c; opt.textContent = c + '반';
