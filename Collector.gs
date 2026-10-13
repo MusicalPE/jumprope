@@ -22,7 +22,7 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 13;  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 14;  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -232,40 +232,64 @@ function clearCache_() {
 }
 const GRADES_ = ['1', '2', '3', '4', '5', '6'];
 
+// 학교 이름 맞추기: 띄어쓰기·대소문자 무시, "초등학교"는 "초"로 (서울햇살초등학교 = 서울 햇살초)
+function schoolKey_(n) { return String(n || '').replace(/\s+/g, '').toLowerCase().replace(/초등학교$/, '초').replace(/중학교$/, '중'); }
+// 학교 정보. 학교 이름(SchoolName)이 같은 여러 시트(반마다 따로 설치)는 한 학교로 합침:
+//  map[각 시트 pid].canon = 대표 pid(먼저 참여한 시트), 대표 정보의 등록 학생 수·학년별 수는 합계
 function loadSchools_() {
   const v = schoolsSheet_().getDataRange().getValues();
-  const map = {};
+  const map = {}, groups = {};
   for (let i = 1; i < v.length; i++) {
     const pid = String(v[i][0]);
     if (!pid) continue;
     const named = Number(v[i][2]) === 1 && String(v[i][1]).trim();
     map[pid] = {
-      pid: pid,
+      pid: pid, canon: pid,
       label: named ? String(v[i][1]).trim() : '익명 학교 ' + pid.slice(0, 4).toUpperCase(),
       named: !!named,
       registered: Number(v[i][3]) || 0,
       regByGrade: (function () { try { return JSON.parse(v[i][10] || '{}') || {}; } catch (e) { return {}; } })(),
-      hidden: String(v[i][6]).trim() === '1'
+      hidden: String(v[i][6]).trim() === '1',
+      first: v[i][4] instanceof Date ? v[i][4].getTime() : i
     };
+    const k = schoolKey_(v[i][7]);
+    if (k.length >= 3) (groups[k] = groups[k] || []).push(pid);
   }
+  Object.keys(groups).forEach(function (k) {
+    const ids = groups[k].filter(function (p) { return !map[p].hidden; });
+    if (ids.length < 2) return;
+    ids.sort(function (a, b) { return map[a].first - map[b].first; });
+    const c = map[ids[0]], named = ids.map(function (p) { return map[p]; }).filter(function (x) { return x.named; })[0];
+    const merged = Object.assign({}, c, { registered: 0, regByGrade: {}, members: ids });
+    if (named) { merged.label = named.label; merged.named = true; }
+    ids.forEach(function (p) {
+      const x = map[p]; merged.registered += x.registered;
+      Object.keys(x.regByGrade || {}).forEach(function (g) { merged.regByGrade[g] = (merged.regByGrade[g] || 0) + (Number(x.regByGrade[g]) || 0); });
+      if (p !== c.pid) map[p] = Object.assign({}, x, { canon: c.pid });
+    });
+    map[c.pid] = merged;
+  });
   return map;
 }
+// 합쳐진 시트의 pid → 대표 pid (현황판·기록실이 "우리 학교"를 찾을 때)
+function aliasOf_(schools) { const a = {}; Object.keys(schools).forEach(function (p) { if (schools[p].canon !== p) a[p] = schools[p].canon; }); return a; }
 
 // 한 달치를 학교별·학생별로 묶기
 // grade 가 있으면 그 학년 학생만 묶음 (학년별 순위). 1인당 평균·참여율은 학년별 등록 수를 보낸 학교만 순위
 function aggregateMonth_(month, schools, dv, grade) {
   const by = {};
   for (let i = 1; i < dv.length; i++) {
-    const pid = String(dv[i][0]);
+    const raw = String(dv[i][0]);
     const d = fmtDate_(dv[i][1]);
-    if (month_(d) !== month || !schools[pid] || schools[pid].hidden) continue;
+    if (month_(d) !== month || !schools[raw] || schools[raw].hidden) continue;
+    const pid = schools[raw].canon;   // 같은 학교 여러 반 시트는 한 학교로
     let s = by[pid];
-    if (!s) s = by[pid] = { total: 0, camera: 0, days: 0, st: {} };
+    if (!s) s = by[pid] = { total: 0, camera: 0, days: 0, dset: {}, st: {} };
     let list = [];
     try { list = JSON.parse(dv[i][5] || '[]'); } catch (e) {}
     if (grade) list = list.filter(function (r) { return String(r[2]) === grade; });
     if (!list.length) continue;
-    s.days++;
+    if (!s.dset[d]) { s.dset[d] = 1; s.days++; }
     list.forEach(function (r) {
       const c = Number(r[3]) || 0, cam = Number(r[4]) || 0, best = Number(r[5]) || 0;
       s.total += c; s.camera += cam;
@@ -408,6 +432,7 @@ function getBoard_(month, grade) {
     students: nationalStudents_(schools, 50),
     streaks: nationalStreaks_(schools, 50, month === cur),
     ropeBest: nationalBest_(schools, 50),
+    alias: aliasOf_(info),
     // 학교 순위는 합계·1인당 평균·참여율 중 하나라도 10등 안인 학교만 (학교가 많아져도 가볍게)
     // 우리 학교 줄과 학교 안 학생 순위는 ?api=school 로 그 학교만 따로 받아 가요
     schoolsTotal: schools.length,
@@ -433,6 +458,7 @@ function getSchool_(pid, month, grade) {
   month = /^\d{4}-\d{2}$/.test(String(month || '')) ? String(month) : cur;
   grade = cleanText_(grade, 4);
   if (!pid) throw new Error('학교가 없어요');
+  { const info = loadSchools_(); if (info[pid]) pid = info[pid].canon; }
   const ck = 'school|' + pid + '|' + month + (grade ? '|' + grade : '');
   const cache = CacheService.getScriptCache();
   const hit = cache.get(ck);
@@ -482,7 +508,7 @@ function getHall_(month) {
       if (text.length < 95000) cache.put('hall9|' + want, text, want === prevMonth_(cur) ? 3600 : HALL_CACHE_SEC);
     }
   }
-  return { current: cur, updated: new Date().toISOString(), minRegistered: MIN_REGISTERED_FOR_RATIO, list: list, month: detail };
+  return { current: cur, updated: new Date().toISOString(), minRegistered: MIN_REGISTERED_FOR_RATIO, list: list, month: detail, alias: aliasOf_(loadSchools_()) };
 }
 
 function hallMonth_(m, schoolsInfo, dv) {
