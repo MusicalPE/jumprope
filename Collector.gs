@@ -233,7 +233,9 @@ function clearCache_() {
 const GRADES_ = ['1', '2', '3', '4', '5', '6'];
 
 // 학교 이름 맞추기: 띄어쓰기·대소문자 무시, "초등학교"는 "초"로 (서울햇살초등학교 = 서울 햇살초)
-function schoolKey_(n) { return String(n || '').replace(/\s+/g, '').toLowerCase().replace(/초등학교$/, '초').replace(/중학교$/, '중'); }
+// 현황판에 보이는 이름은 정식 명칭으로 통일: 띄어쓰기 빼고, 끝이 "초"·"초교"면 "초등학교", "중"이면 "중학교" (서울 햇살초 → 서울햇살초등학교)
+function officialName_(n) { return String(n || '').replace(/\s+/g, '').replace(/초교?$/, '초등학교').replace(/중$/, '중학교'); }
+function schoolKey_(n) { return officialName_(n).toLowerCase(); }
 // 학교 정보. 학교 이름(SchoolName)이 같은 여러 시트(반마다 따로 설치)는 한 학교로 합침:
 //  map[각 시트 pid].canon = 대표 pid(먼저 참여한 시트), 대표 정보의 등록 학생 수·학년별 수는 합계
 function loadSchools_() {
@@ -245,7 +247,7 @@ function loadSchools_() {
     const named = Number(v[i][2]) === 1 && String(v[i][1]).trim();
     map[pid] = {
       pid: pid, canon: pid,
-      label: named ? String(v[i][1]).trim() : '익명 학교 ' + pid.slice(0, 4).toUpperCase(),
+      label: named ? officialName_(v[i][1]) : '익명 학교 ' + pid.slice(0, 4).toUpperCase(),
       named: !!named,
       registered: Number(v[i][3]) || 0,
       regByGrade: (function () { try { return JSON.parse(v[i][10] || '{}') || {}; } catch (e) { return {}; } })(),
