@@ -673,7 +673,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.5.4', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.5.5', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1170,16 +1170,16 @@ document.addEventListener('DOMContentLoaded', function(){
         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
           <button type="submit" data-tip="여러 번 뛰었으면 그때마다 넣어요. 그날 뛴 횟수가 모두 더해집니다.">저장</button>
           <button type="button" id="cameraBtn" class="btn-outline" data-tip="직접 세어 입력하는 대신 학년·반·이름·종류를 고른 뒤 누르면 판정기가 열려요. 뛰고 나서 &quot;끝내고 기록하기&quot;를 누르면 횟수가 자동으로 들어옵니다." style="display:none; padding:10px 16px;">📷 카메라로 뛰기</button>
-          <button type="button" id="bleBtn" class="btn-outline" data-tip="스마트 줄넘기(JUMPITNOW)를 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬)" style="display:none; padding:10px 16px;">내 줄넘기로 뛰기</button>
+          <button type="button" id="bleBtn" class="btn-outline" data-tip="스마트 줄넘기(JUMPITNOW)를 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬)" style="display:none; padding:10px 16px;">스마트 줄넘기로 뛰기</button>
         </div>
-        <p id="bleHint" class="hint form-hint" style="display:none; margin:8px 0 0;">스마트 줄넘기(JUMPITNOW)가 있으면 <b>내 줄넘기로 뛰기</b>를 눌러 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬에서 돼요)</p>
+        <p id="bleHint" class="hint form-hint" style="display:none; margin:8px 0 0;">JUMPITNOW 줄넘기가 있으면 <b>스마트 줄넘기로 뛰기</b>를 눌러 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬에서 돼요)</p>
         <p id="cameraHint" class="hint form-hint" style="display:none; margin:8px 0 0;">직접 세어 입력하는 대신, 학년·반·이름·종류를 고른 뒤 <b>📷 카메라로 뛰기</b>를 누르면 판정기가 열려요. 뛰고 나서 "끝내고 기록하기"를 누르면 횟수가 자동으로 들어옵니다.</p>
         <p class="hint form-hint" style="margin:8px 0 0;">여러 번 뛰었으면 그때마다 넣어요. 그날 뛴 횟수가 모두 더해집니다.</p>
         <p id="formMsg"></p>
       </form>
       <div class="ble-modal" id="bleModal" hidden>
         <div class="ble-box">
-          <h3>내 줄넘기로 뛰기</h3>
+          <h3>스마트 줄넘기로 뛰기</h3>
           <div class="ble-who" id="bleWho"></div>
           <div class="ble-cnt" id="bleCnt">0<small>회</small></div>
           <div class="ble-time" id="bleTime">0:00</div>
@@ -1487,8 +1487,8 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
     <div class="card">
       <h2>스마트 줄넘기 블루투스 연동 (JUMPITNOW)</h2>
-      <p class="hint">켜면 메인 화면 입력 폼에 <b>내 줄넘기로 뛰기</b> 버튼이 생깁니다. 학생이 자기 스마트 줄넘기를 블루투스로 연결해 뛰면, 줄넘기가 센 횟수가 그대로 기록으로 들어가요. 손으로만 돌려도 올라가는 경우가 있어 <b>승인 절차를 켜 두면 선생님 확인 뒤 반영</b>됩니다. 안드로이드 크롬·크롬북·PC 크롬/엣지에서 되고, 아이폰에서는 버튼이 보이지 않아요.</p>
-      <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;"><input type="checkbox" id="bleEnabled" style="width:auto; margin:0;"> 스마트 줄넘기 블루투스 사용 (메인 화면에 "내 줄넘기로 뛰기" 버튼)</label>
+      <p class="hint">켜면 메인 화면 입력 폼에 <b>스마트 줄넘기로 뛰기</b> 버튼이 생깁니다. 학생이 자기 스마트 줄넘기를 블루투스로 연결해 뛰면, 줄넘기가 센 횟수가 그대로 기록으로 들어가요. 손으로만 돌려도 올라가는 경우가 있어 <b>승인 절차를 켜 두면 선생님 확인 뒤 반영</b>됩니다. 안드로이드 크롬·크롬북·PC 크롬/엣지에서 되고, 아이폰에서는 버튼이 보이지 않아요.</p>
+      <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;"><input type="checkbox" id="bleEnabled" style="width:auto; margin:0;"> 스마트 줄넘기 블루투스 사용 (메인 화면에 "스마트 줄넘기로 뛰기" 버튼)</label>
       <p id="bleMsg" class="hint"></p>
     </div>
     </section>
@@ -1839,7 +1839,7 @@ document.getElementById('bleDone').addEventListener('click', async function(){
   rpc('addRecord', [BLE.sid, dateStr, cnt, timeStr, BLE.type, best]).then(function(res){
     if (res && res.ok === false) { bleSt(res.message || '기록하지 못했어요', true); return; }
     bleSt(cnt + '회' + tookTxt + ' 기록했어요!' + (res && res.approval ? ' 선생님이 확인하면 반영돼요.' : ''));
-    document.getElementById('formMsg').textContent = '내 줄넘기로 ' + cnt + '회' + (took >= 1000 ? ' (' + bleTimeText(took) + ' 동안)' : '') + ' 기록했어요.' + (best > 0 ? ' 한 번에 최고 연속 ' + best + '회!' : '') + (res && res.approval ? ' 선생님 승인 후 반영됩니다.' : '');
+    document.getElementById('formMsg').textContent = '스마트 줄넘기로 ' + cnt + '회' + (took >= 1000 ? ' (' + bleTimeText(took) + ' 동안)' : '') + ' 기록했어요.' + (best > 0 ? ' 한 번에 최고 연속 ' + best + '회!' : '') + (res && res.approval ? ' 선생님 승인 후 반영됩니다.' : '');
     google.script.run.withSuccessHandler(drawChart).getStudentsSummary();
     loadPending(); loadTodaySummary(); loadWeekSummary(); loadStreakSummary(); NAT.reportToday(0);
     setTimeout(function(){ document.getElementById('bleModal').hidden = true; }, 1800);
@@ -2750,7 +2750,7 @@ loadCameraSettings();
 rpc('getExtraSettings').then(function(x){ document.getElementById('bleEnabled').checked = !!(x && x.bleRope); }).catch(function(){});
 document.getElementById('bleEnabled').addEventListener('change', function(){
   const on = this.checked, m = document.getElementById('bleMsg'); m.textContent = '저장 중...';
-  rpc('setExtraSettings', [token, { bleRope: on ? true : null }]).then(function(){ m.textContent = on ? '켰어요. 메인 화면에 "내 줄넘기로 뛰기" 버튼이 보입니다' + (APP.settings && APP.settings.approvalOn ? ' (승인 절차 켜짐 — 선생님 확인 뒤 반영).' : '. 승인 절차가 꺼져 있으면 바로 반영되니, 설정 탭에서 승인 절차를 켜 두길 권해요.') : '껐어요.'; })
+  rpc('setExtraSettings', [token, { bleRope: on ? true : null }]).then(function(){ m.textContent = on ? '켰어요. 메인 화면에 "스마트 줄넘기로 뛰기" 버튼이 보입니다' + (APP.settings && APP.settings.approvalOn ? ' (승인 절차 켜짐 — 선생님 확인 뒤 반영).' : '. 승인 절차가 꺼져 있으면 바로 반영되니, 설정 탭에서 승인 절차를 켜 두길 권해요.') : '껐어요.'; })
     .catch(function(e){ m.textContent = '저장하지 못했어요: ' + (e.message || e); });
 });
 document.getElementById('saveCamBtn').addEventListener('click', function(){
