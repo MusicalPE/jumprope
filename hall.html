@@ -128,6 +128,7 @@
     .hide-sm { display: none; }
     .hero h1 { font-size: 1.3em; }
   }
+  td.nm { white-space: nowrap; }   /* 이름·학년은 한 줄로 (좁은 화면에서는 학교 칸이 줄바꿈) */
 </style>
 <style>
   .month { margin-bottom: 18px; }
@@ -232,17 +233,17 @@
 
   function stuTable50(list){
     return '<table><thead><tr><th>순위</th><th>이름</th><th>학교</th><th class="num">횟수</th></tr></thead><tbody>' + list.map(function(x){
-      return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num">' + n(x.c) + '회' + (x.cam ? ' <span class="sub">📷' + n(x.cam) + '</span>' : '') + '</td></tr>';
+      return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num">' + n(x.c) + '회' + (x.cam ? ' <span class="sub">📷' + n(x.cam) + '</span>' : '') + '</td></tr>';
     }).join('') + '</tbody></table>';
   }
   function bestTable50(list){
     return '<table><thead><tr><th>순위</th><th>이름</th><th>학교</th><th class="num">최고 연속</th></tr></thead><tbody>' + list.map(function(x){
-      return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num">' + n(x.best) + '회</td></tr>';
+      return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num">' + n(x.best) + '회</td></tr>';
     }).join('') + '</tbody></table>';
   }
   function runTable50(list){
     return '<table><thead><tr><th>순위</th><th>이름</th><th>학교</th><th class="num">연속</th></tr></thead><tbody>' + list.map(function(x){
-      return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num">' + x.run + '일 <span class="sub">' + n(x.c) + '회</span></td></tr>';
+      return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + esc(x.school) + '</td><td class="num">' + x.run + '일 <span class="sub">' + n(x.c) + '회</span></td></tr>';
     }).join('') + '</tbody></table>';
   }
   const SCH_KINDS = { total: ['🏫 학교 합계', function(s){ return n(s.total) + '회'; }], avg: ['⚖️ 1인당 평균', function(s){ return n(s.avg) + '회'; }], rate: ['🙋 참여율', function(s){ return s.rate + '%'; }] };
