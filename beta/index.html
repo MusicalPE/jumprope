@@ -411,6 +411,38 @@
   .theme-preview small { display: block; font-weight: 500; opacity: 0.9; }
 
 
+  /* ---- 학생별 누적 기록 표 (2.5.4) ---- */
+  .chart-head h1.tbl-open { cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .chart-head h1.tbl-open .tbl-chip { font-size: 0.68em; font-weight: 700; color: var(--coral); background: #FFF1EB; border: 1px solid #FFD9CA; border-radius: 999px; padding: 2px 9px; }
+  .chart-head h1.tbl-open:hover .tbl-chip { background: var(--coral); color: #fff; border-color: var(--coral); }
+  .tbl-sheet { background: var(--surface); border-radius: 22px; box-shadow: 0 30px 80px rgba(0,0,0,0.25); width: min(620px, 100%); max-height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+  .tbl-sheet .qr-sheet-head { border-radius: 0; text-align: left; padding: 18px 22px 14px; }
+  .tbl-sheet .qr-sheet-head h2 { font-size: 1.3em; }
+  .tbl-tools { display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-bottom: 1px solid var(--line-2); flex-wrap: wrap; }
+  .tbl-tools .seg { display: inline-flex; background: #F3F4F6; border-radius: 999px; padding: 3px; }
+  .tbl-tools .seg button { border: 0; background: transparent; border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 0.86em; font-weight: 700; color: var(--muted); cursor: pointer; }
+  .tbl-tools .seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+  .tbl-tools .sp { flex: 1; }
+  .tbl-tools input { border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.88em; width: 140px; }
+  .tbl-scroll { overflow: auto; padding: 0 6px 6px; }
+  .tbl-sheet table { width: 100%; border-collapse: collapse; font-size: 0.92em; }
+  .tbl-sheet th { position: sticky; top: 0; background: #fff; color: var(--muted); font-weight: 700; font-size: 0.82em; text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .tbl-sheet th.l, .tbl-sheet td.l { text-align: left; }
+  .tbl-sheet td { padding: 8px 10px; border-bottom: 1px solid var(--line-2); text-align: right; white-space: nowrap; }
+  .tbl-sheet td.rk { color: var(--muted); font-weight: 700; width: 36px; text-align: center; }
+  .tbl-sheet tr.top td.rk { color: var(--coral); }
+  .tbl-sheet td.nm a { color: var(--ink); font-weight: 700; text-decoration: none; }
+  .tbl-sheet td.nm a:hover { color: var(--coral); text-decoration: underline; }
+  .tbl-sheet td.nm small { color: var(--muted); font-weight: 600; margin-left: 4px; }
+  .tbl-sheet td.sum { font-weight: 800; }
+  .tbl-sheet td.sum i { display: block; height: 4px; border-radius: 2px; background: var(--coral); opacity: 0.35; margin-top: 3px; margin-left: auto; }
+  .tbl-sheet td.z { color: #C4C8CE; }
+  .tbl-sheet tfoot td { font-weight: 800; border-top: 2px solid var(--line); border-bottom: 0; background: #FAFAFB; }
+  .tbl-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 16px 14px; border-top: 1px solid var(--line-2); }
+  .tbl-tools .seg button:hover { background: #fff; color: var(--ink); }
+  .tbl-tools .seg button:not(.on) { box-shadow: none; }
+  @media (max-width: 560px) { .tbl-sheet .tc { display: none; } .tbl-tools input { width: 110px; } }
+
   /* ---- 학생 접속 QR (v1.6.1) ---- */
   .qr-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(17,24,39,0.62); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 20px; }
   .qr-sheet { background: var(--surface); border-radius: 26px; box-shadow: 0 30px 80px rgba(0,0,0,0.25); width: min(560px, 100%); max-height: 100%; overflow: auto; text-align: center; }
@@ -641,7 +673,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.5.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.5.4', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1164,7 +1196,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     <div class="dash-chart">
     <div class="chart-head">
-      <h1 data-tip="그래프는 선생님이 승인한 기록만 반영돼요. 색깔은 줄넘기 종류이고, 막대(학생 이름)를 누르면 그 학생 기록으로 가요.">학생별 누적 줄넘기 기록</h1>
+      <h1 class="tbl-open" id="chartTitle" role="button" tabindex="0" title="눌러서 이름과 횟수를 표로 보기">학생별 누적 줄넘기 기록 <span class="tbl-chip">표로 보기</span></h1>
       <label class="chart-filter">보기
         <select id="chartGradeFilter" aria-label="학년 고르기" hidden></select>
         <select id="chartClassFilter" aria-label="반 고르기" hidden></select>
@@ -2148,6 +2180,60 @@ function typeColor(name, i) {
   if (name === '(종류 없음)') return NO_TYPE_COLOR;
   return TYPE_COLORS[Math.max(0, i) % TYPE_COLORS.length];
 }
+
+// 학생별 누적 기록 표 (그래프 제목을 누르면) — 지금 '보기'에 고른 학년·반·종류 그대로
+const tEsc = function(v){ return String(v == null ? "" : v).replace(/[&<>"']/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]; }); };
+const TBL = { sort: 'cnt', q: '' };
+function tableList() {
+  const filter = document.getElementById('chartTypeFilter').value;
+  let list = summaryCache.list.slice();
+  if (CHART_G.multi && CHART_G.g) list = list.filter(function(s){ return String(s.grade || '').trim() === CHART_G.g && (!CHART_G.c || String(s.cls || '').trim() === CHART_G.c); });
+  const val = function(s){ return filter ? (s.byType[filter] || 0) : s.total; };
+  if (filter) list = list.filter(function(s){ return val(s) > 0; });
+  return { list: list, filter: filter, val: val };
+}
+function tableOpen() {
+  if (document.getElementById('tblOverlay')) return;
+  const ov = document.createElement('div'); ov.className = 'qr-overlay'; ov.id = 'tblOverlay';
+  ov.innerHTML = '<div class="tbl-sheet" role="dialog" aria-label="학생별 누적 줄넘기 기록 표"><div class="qr-sheet-head"><h2>학생별 누적 줄넘기 기록</h2><p id="tblSub"></p></div>' +
+    '<div class="tbl-tools"><span class="seg" id="tblSort"><button data-s="cnt">많이 뛴 순</button><button data-s="name">이름순</button></span><span class="sp"></span><input id="tblQ" type="search" placeholder="이름 찾기"></div>' +
+    '<div class="tbl-scroll"><table><thead id="tblHead"></thead><tbody id="tblBody"></tbody><tfoot id="tblFoot"></tfoot></table></div>' +
+    '<div class="tbl-foot"><button type="button" class="btn-outline" id="tblClose">닫기</button></div></div>';
+  document.body.appendChild(ov);
+  const close = function(){ ov.remove(); document.removeEventListener('keydown', esc); };
+  const esc = function(e){ if (e.key === 'Escape') close(); };
+  ov.addEventListener('click', function(e){ if (e.target === ov) close(); });
+  document.getElementById('tblClose').onclick = close; document.addEventListener('keydown', esc);
+  document.getElementById('tblSort').onclick = function(e){ const b = e.target.closest('[data-s]'); if (!b) return; TBL.sort = b.dataset.s; tableRender(); };
+  document.getElementById('tblQ').oninput = function(e){ TBL.q = e.target.value.trim(); tableRender(); };
+  tableRender();
+}
+function tableRender() {
+  const T = tableList(), types = summaryCache.types, f = T.filter;
+  const multi = new Set(T.list.map(function(s){ return String(s.grade) + '-' + String(s.cls); })).size > 1;
+  const cols = f ? [] : types.filter(function(t){ return T.list.some(function(s){ return (s.byType[t] || 0) > 0; }); });
+  const showCols = cols.length > 1 && cols.length <= 4;   // 종류가 2~4개면 종류별 칸도 보여 줌
+  let rows = T.list.slice().sort(function(a, b){ return T.val(b) - T.val(a) || String(a.name).localeCompare(String(b.name), 'ko'); });
+  const rank = {}; let prev = null, r = 0; rows.forEach(function(s, i){ const v = T.val(s); if (v !== prev) { r = i + 1; prev = v; } rank[s.id] = r; });
+  if (TBL.sort === 'name') rows.sort(function(a, b){ return (String(a.grade) + '-' + String(a.cls)).localeCompare(String(b.grade) + '-' + String(b.cls), 'ko', { numeric: true }) || String(a.name).localeCompare(String(b.name), 'ko'); });
+  const top = Math.max(1, ...rows.map(T.val)), sum = rows.reduce(function(a, s){ return a + T.val(s); }, 0);
+  const shown = TBL.q ? rows.filter(function(s){ return String(s.name).indexOf(TBL.q) >= 0; }) : rows;
+  const where = (CHART_G.multi && CHART_G.g ? CHART_G.g + '학년' + (CHART_G.c ? ' ' + CHART_G.c + '반' : ' 전체 반') : '전체') + ' · ' + (f || '모든 종류');
+  document.getElementById('tblSub').textContent = where + ' · ' + rows.length + '명 · 합계 ' + sum.toLocaleString() + '회';
+  Array.prototype.forEach.call(document.querySelectorAll('#tblSort button'), function(b){ b.classList.toggle('on', b.dataset.s === TBL.sort); });
+  document.getElementById('tblHead').innerHTML = '<tr><th style="text-align:center">순위</th><th class="l">이름</th>' + (showCols ? cols.map(function(t){ return '<th class="tc">' + tEsc(t) + '</th>'; }).join('') : '') + '<th>' + (f ? tEsc(f) : '합계') + '</th></tr>';
+  document.getElementById('tblBody').innerHTML = shown.map(function(s){
+    const v = T.val(s);
+    return '<tr class="' + (rank[s.id] <= 3 && v > 0 ? 'top' : '') + '"><td class="rk">' + rank[s.id] + '</td>' +
+      '<td class="l nm"><a href="#" data-id="' + tEsc(s.id) + '">' + tEsc(s.name) + '</a>' + (multi ? '<small>' + tEsc(s.grade) + '-' + tEsc(s.cls) + '</small>' : '') + '</td>' +
+      (showCols ? cols.map(function(t){ const n = s.byType[t] || 0; return '<td class="tc' + (n ? '' : ' z') + '">' + (n ? n.toLocaleString() : '—') + '</td>'; }).join('') : '') +
+      '<td class="sum">' + v.toLocaleString() + '<i style="width:' + Math.round(v / top * 100) + '%"></i></td></tr>';
+  }).join('') || '<tr><td colspan="9" class="l" style="color:var(--muted);text-align:center;padding:20px">찾는 학생이 없어요</td></tr>';
+  document.getElementById('tblFoot').innerHTML = TBL.q ? '' : '<tr><td></td><td class="l">합계 (' + rows.length + '명)</td>' + (showCols ? cols.map(function(t){ return '<td class="tc">' + rows.reduce(function(a, s){ return a + (s.byType[t] || 0); }, 0).toLocaleString() + '</td>'; }).join('') : '') + '<td>' + sum.toLocaleString() + '</td></tr>';
+  Array.prototype.forEach.call(document.querySelectorAll('#tblBody a[data-id]'), function(a){ a.onclick = function(e){ e.preventDefault(); window.top.location.href = baseUrl + '&page=student&id=' + a.dataset.id + '&_=' + Date.now(); }; });
+}
+document.getElementById('chartTitle').addEventListener('click', tableOpen);
+document.getElementById('chartTitle').addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tableOpen(); } });
 
 function renderChart() {
   const types = summaryCache.types;
