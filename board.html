@@ -368,16 +368,16 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
   }
   const gradeSub = function(x){ return x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : ''; };
   const STU_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">횟수</th><th class="num hide-sm">📷</th></tr>';
-  const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + esc(shortSch(x.school)) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
+  const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   const RUN_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">연속</th><th class="num hide-sm">횟수</th></tr>';
-  const runRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + esc(shortSch(x.school)) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>'; };
+  const runRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>'; };
   const IN_HEAD = '<tr><th>학교 안 순위</th><th>이름</th><th class="num">횟수</th><th class="num">전국</th><th class="num hide-sm">뛴 날</th><th class="num hide-sm">📷</th></tr>';
   const inRow = function(x){ return '<tr><td>' + rankHtml(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + (x.nr ? n(x.nr) + '등' : '–') + '</td><td class="num mono hide-sm">' + x.days + '일</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   // 등수 칸: 50등 밖(전국 1,030등 등)도 숫자로
   const rankCell = function(r){ return r > 99 ? '<span class="rank wide">' + n(r) + '</span>' : rankHtml(r); };
   const SHOW_BEST = 5;   // 왼쪽 칸이라 5등까지만 바로 보이고 나머지는 팝업
   const BEST_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">최고 연속</th></tr>';
-  const bestRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + esc(shortSch(x.school)) + '</td><td class="num"><b class="mono">' + n(x.best) + '회</b></td></tr>'; };
+  const bestRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + n(x.best) + '회</b></td></tr>'; };
   const table = function(head, rows, row, cls){ return '<table' + (cls ? ' class="' + cls + '"' : '') + '><thead>' + head + '</thead><tbody>' + rows.map(row).join('') + '</tbody></table>'; };
 
   // 이름 찾기: 이름은 가운데가 * 로 가려져 있어서, 찾는 이름도 똑같이 가려서 맞춰 봐요 (김하늘 → 김*늘)
