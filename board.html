@@ -179,6 +179,8 @@
     .bw .hero-slogan span { margin: 0 .6em; }
   }
   td.nm { white-space: nowrap; }   /* 이름·학년은 한 줄로 (좁은 화면에서는 학교 칸이 줄바꿈) */
+  .sch { white-space: nowrap; } .sch-s { display: none; }
+  @media (max-width: 560px) { .sch-f { display: none; } .sch-s { display: inline; } }
 </style>
 </head>
 <body>
@@ -214,6 +216,8 @@
 // 지역 두 글자와 학교 이름 사이는 띄어 씀 (전주송원초등학교 → 전주 송원초등학교). 지역이 안 붙은 이름(송원초등학교)은 그대로
 function schName(v){ const t = String(v == null ? '' : v).trim(); const m = /^([가-힣]{2})([가-힣]+?)(초등학교|초|중학교|중)$/.exec(t); return m && t.indexOf(' ') < 0 ? m[1] + ' ' + m[2] + m[3] : t; }
 function shortSch(v){ return schName(v).replace(/초등학교$/, '초'); }
+// 학교 순위표: 넓은 화면은 정식 이름, 휴대폰은 짧은 이름 — 둘 다 한 줄로
+function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }; const f = schName(v), sh = shortSch(v); return f === sh ? '<span class="sch">' + esc(f) + '</span>' : '<span class="sch sch-f">' + esc(f) + '</span><span class="sch sch-s">' + esc(sh) + '</span>'; }
 
 (function(){
   const q = {}; new URLSearchParams(location.search).forEach(function(v, k){ q[k] = v; });
@@ -523,7 +527,7 @@ function shortSch(v){ return schName(v).replace(/초등학교$/, '초'); }
         const isMe = sc.pid === me;
         let h = '<tr class="school' + (isMe ? ' me' : '') + (tail ? ' tail' : '') + '" data-pid="' + esc(sc.pid) + '">' +
           '<td>' + rankHtml(sc.rank[key]) + '</td>' +
-          '<td><span class="' + (sc.named ? '' : 'anon') + '">' + esc(schName(sc.label)) + '</span>' + (isMe ? '<span class="tag-me">우리 학교</span>' : '') + '</td>' +
+          '<td><span class="' + (sc.named ? '' : 'anon') + '">' + schHtml(sc.label) + '</span>' + (isMe ? '<span class="tag-me">우리 학교</span>' : '') + '</td>' +
           '<td class="num mono">' + n(sc.total) + '</td>' +
           (sc.noReg ? '<td class="num mono">–</td><td class="num mono">–</td>' :
           '<td class="num mono">' + n(sc.avg) + '</td>' +
