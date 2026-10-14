@@ -641,7 +641,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.5.2', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.5.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -2178,12 +2178,37 @@ function renderChart() {
 
   const ctx = document.getElementById('barChart').getContext('2d');
   if (barChartInstance) barChartInstance.destroy();
+  // 막대 위에 합계 횟수 (종류별로 쌓았으면 쌓은 합계)
+  const totalLabels = {
+    id: 'totalLabels',
+    afterDatasetsDraw: function(chart) {
+      const c = chart.ctx, n = chart.data.labels.length;
+      const metas = chart.data.datasets.map(function(ds, i){ return chart.getDatasetMeta(i); }).filter(function(m){ return !m.hidden; });
+      if (!metas.length) return;
+      const barW = metas[0].data[0] ? metas[0].data[0].width : 0;
+      const size = Math.max(9, Math.min(14, Math.round(barW / 4)));
+      c.save();
+      c.font = '700 ' + size + "px 'Pretendard', 'Noto Sans KR', sans-serif";
+      c.fillStyle = '#374151'; c.textAlign = 'center'; c.textBaseline = 'bottom';
+      for (let j = 0; j < n; j++) {
+        let sum = 0, top = Infinity, x = null;
+        metas.forEach(function(m){ const el = m.data[j]; const v = chart.data.datasets[m.index].data[j] || 0; if (!el || !v) return; sum += v; top = Math.min(top, el.y); x = el.x; });
+        if (!sum || x == null) continue;
+        const t = sum.toLocaleString();
+        if (c.measureText(t).width > barW * 1.6 + 8) continue;   // 학생이 많아 막대가 아주 좁으면 생략 (툴팁으로)
+        c.fillText(t, x, top - 3);
+      }
+      c.restore();
+    }
+  };
   barChartInstance = new Chart(ctx, {
     type: 'bar',
+    plugins: [totalLabels],
     data: { labels: list.map(function(s){ return s.name; }), datasets: datasets },
     options: {
       responsive: true,
       maintainAspectRatio: !WIDE_MQ.matches,   // 넓은 PC 화면에서는 칸 높이에 맞춤
+      layout: { padding: { top: 18 } },
       onClick: function(evt, elements) {
         if (elements.length > 0) {
           const idx = elements[0].index;
