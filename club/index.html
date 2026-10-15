@@ -937,6 +937,7 @@ const LEVELS = {
    한 반만 → 우리 반, 한 학년의 여러 반 → 우리 N학년, 그 밖(여러 학년) → 우리 클럽
    바뀔 글자에는 data-our="{our} 급수" 처럼 표시해 두고, 학생 목록을 불러온 뒤 applyOurLabel() 로 한꺼번에 바꿈 */
 function ourLabel(list){
+  return '우리 클럽';   // 클럽판: 반·학년이 섞여도 늘 "우리 클럽"
   const classes = {}, grades = {};
   (list || []).forEach(function(s){ const g = String(s.grade == null ? '' : s.grade).trim().replace(/학년$/, ''); classes[g + '-' + String(s.cls == null ? '' : s.cls).trim()] = 1; grades[g] = 1; });
   const gs = Object.keys(grades);
