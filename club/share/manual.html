@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<title>줄넘기 기록 관리 클럽판 v2.6.0 사용설명서</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 16mm; }
+  body { font-family: 'Noto Sans CJK KR','Noto Sans KR','Malgun Gothic',sans-serif; color:#1F2937; font-size:10.5pt; line-height:1.65; margin:0; }
+  h1 { font-size:24pt; margin:0 0 4px; }
+  h2 { font-size:15pt; margin:22px 0 8px; padding-bottom:5px; border-bottom:2px solid #F26A3D; break-after:avoid; }
+  h3 { font-size:11.5pt; margin:14px 0 4px; break-after:avoid; }
+  p { margin:5px 0; }
+  .cover { background:linear-gradient(135deg,#F26A3D,#FF8A65); color:#fff; border-radius:14px; padding:26px 28px; margin-bottom:18px; }
+  .cover p { margin:4px 0 0; opacity:.95; font-size:11.5pt; }
+  .cover .meta { margin-top:14px; font-size:9.5pt; opacity:.9; }
+  ol, ul { margin:4px 0 6px; padding-left:22px; }
+  li { margin:2px 0; }
+  .box { background:#F3F5F8; border-radius:10px; padding:10px 14px; margin:8px 0; break-inside:avoid; }
+  .tip { background:#FFF1EC; border-left:4px solid #F26A3D; border-radius:6px; padding:8px 12px; margin:8px 0; break-inside:avoid; }
+  .warn { background:#FEF3C7; border-left:4px solid #D97706; border-radius:6px; padding:8px 12px; margin:8px 0; break-inside:avoid; }
+  code { background:#EEF0F3; border-radius:4px; padding:1px 5px; font-size:9.5pt; }
+  figure { margin:8px 0 12px; text-align:center; break-inside:avoid; }
+  figure img { max-width:80%; border:1px solid #E5E7EB; border-radius:8px; }
+  figure.half img { max-width:52%; }
+  figure.phone img { max-width:34%; }
+  figcaption { font-size:8.8pt; color:#6B7280; margin-top:3px; }
+  table { width:100%; border-collapse:collapse; margin:6px 0; break-inside:avoid; }
+  th, td { border:1px solid #E5E7EB; padding:6px 9px; text-align:left; vertical-align:top; font-size:9.8pt; }
+  th { background:#F3F5F8; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:start; }
+  .pb { break-before:page; }
+  .toc li { margin:1px 0; }
+  .foot { break-before:avoid; text-align:center; color:#9CA3AF; font-size:9pt; margin-top:24px; }
+</style></head>
+<body>
+
+<div class="cover">
+  <h1>🏆 줄넘기 기록 관리 · 클럽판 v2.6.0</h1>
+  <p><b>스포츠클럽 · 태권도장 · 줄넘기 교실</b>을 위한 판이에요. 학생은 휴대폰으로 그날 뛴 줄넘기 횟수를 넣고, 반 전체 그래프·학생별 누적·전국 클럽 현황판까지 한눈에.</p>
+  <p>전국 현황판은 클럽 현황판과 따로, <b>Jump Earth! 클럽 리그</b>에서 전국의 클럽·도장과 겨뤄요.</p>
+  <p><b>2.6 새 기능</b> — 점프 Live (Lite): 클럽 시트만으로 반 전체가 함께 뛰고, 끝나고 한 번에 결과 공개. 친구들과 함께 뛰기(학생 방).</p>
+  <p>클럽 시트에 <b>껍데기(Shell) 하나만</b> 설치하면, 새 기능은 자동으로 들어옵니다.</p>
+  <div class="meta">사용설명서 · 2026년 10월 · Made by 음악적체육인 · https://musicalpe.github.io/jumprope/club/</div>
+</div>
+
+<div class="box toc"><b>차례</b>
+<ol>
+  <li>꾸러미에 들어 있는 것</li><li>처음 설치 (2분, 한 번만)</li><li>첫 설정 — 비밀번호 · 학생 등록 · QR</li>
+  <li>수업에서 쓰기</li><li>Jump Earth! 클럽 리그 · Jumpers! 기록실</li><li>급수 인증 · 인증서 · 국토 대장정</li>
+  <li><b>점프 Live (Lite) · 친구들과 함께 뛰기 (2.6 새 기능)</b></li>
+  <li>업데이트</li><li>자주 묻는 질문 · 문제 해결</li>
+</ol></div>
+
+<h2>1. 꾸러미에 들어 있는 것</h2>
+<table>
+  <tr><th style="width:34%">파일</th><th>쓰임</th></tr>
+  <tr><td><code>Shell(클럽용 껍데기).txt</code></td><td>견본 시트를 쓰지 않고 직접 설치할 때(방법 B)나 껍데기를 새 판으로 바꿀 때 Apps Script 에 붙여넣는 코드. <b>메모장으로 열어 전체 복사</b>하면 됩니다.</td></tr>
+  <tr><td><code>사용설명서.pdf</code></td><td>지금 보고 있는 문서</td></tr>
+</table>
+<p>화면과 기능은 인터넷(GitHub)에서 열리기 때문에 따로 내려받을 파일은 이것뿐입니다. 학생·기록·설정은 <b>선생님 구글 드라이브의 스프레드시트</b>에만 저장됩니다.</p>
+
+<h2 class="pb">2. 처음 설치 (2분, 한 번만)</h2>
+<h3>방법 A — 견본 시트 사본 만들기 (추천)</h3>
+<div class="warn" style="margin-top:0;">학교용 견본·껍데기가 아니라 <b>클럽용</b>을 써야 해요. 학교용을 쓰면 기록이 학교 현황판으로 가요. (클럽 앱이 알아채고 경고를 띄워요)</div>
+<p class="tip" style="margin-top:0;">▶ <b>설치 영상(1분, 학교판으로 찍었지만 순서는 같아요)</b>으로 따라 해도 돼요: <a href="https://youtu.be/5JLZTvS4VPc">https://youtu.be/5JLZTvS4VPc</a></p>
+<ol>
+  <li>아래 견본 링크를 열고 <b>사본 만들기</b>를 누릅니다. 껍데기 코드가 들어 있는 빈 시트가 선생님 드라이브에 생겨요. 왼쪽 위 파일 이름 <code>줄넘기 기록 관리(견본)의 사본</code> 을 눌러 <code>햇살태권도 줄넘기</code>처럼 <b>우리 클럽 이름으로 바꿔</b> 주세요.
+    <br><code style="word-break:break-all">https://docs.google.com/spreadsheets/d/1__vTZLMSWahHYGn47NL134NwAxSESJNJA5wZb6x2q2Y/copy</code>
+    <br><span style="color:#6B7280">프로그램 연결 화면의 "견본 시트 사본 만들기" 링크로도 열 수 있어요.</span></li>
+  <li>사본에서 메뉴 <b>확장 프로그램 → Apps Script</b> → 오른쪽 위 <b>배포 → 새 배포</b> → 톱니바퀴에서 유형 <b>웹 앱</b>
+    <ul><li>다음 사용자로 실행: <b>나</b></li><li>액세스 권한: <b>모든 사용자</b></li></ul></li>
+  <li><b>배포</b> → 권한 허용. "Google에서 확인하지 않은 앱" 경고가 나오면 <b>고급 → (프로젝트 이름)(으)로 이동(안전하지 않음)</b> → 허용.
+    <br><span style="color:#6B7280">선생님 드라이브의 시트에서 선생님 계정으로 실행되는 코드라 나오는 안내입니다.</span></li>
+  <li>나온 <b>웹 앱 주소</b>(<code>…/exec</code> 로 끝남)를 브라우저로 열면 아래 "설치 확인" 화면이 뜹니다. <b>프로그램 열기 →</b> 를 누르세요.</li>
+  <li>열린 프로그램 주소를 <b>즐겨찾기</b>에 넣으면 설치 끝! 관리자 비밀번호는 처음에 <code>1234</code> 입니다.</li>
+</ol>
+<h3>방법 B — 직접 붙여넣기</h3>
+<ol>
+  <li>구글 드라이브에서 <b>새 스프레드시트</b>를 만들고 <b>확장 프로그램 → Apps Script</b> 를 엽니다.</li>
+  <li>왼쪽 <code>Code.gs</code> 의 내용을 <b>전부 지우고</b>, <code>Shell(클럽용 껍데기).txt</code> 내용을 붙여넣은 뒤 저장(Ctrl+S)합니다.</li>
+  <li>방법 A 의 2~5번과 같이 배포합니다.</li>
+</ol>
+<figure class="half"><img src="img/install.png" style="max-width:30%"><figcaption>웹 앱 주소를 열면 나오는 설치 확인 화면</figcaption></figure>
+<div class="warn">액세스 권한이 <b>"모든 사용자"</b>가 아니면 학생 휴대폰에서 "클럽 시트에 연결하지 못했어요"가 뜹니다. 학생들은 구글 로그인 없이 들어옵니다.</div>
+
+<h2 class="pb">3. 첫 설정 — 비밀번호 · 학생 등록 · QR</h2>
+<p>메인 화면 오른쪽 위 <b>관리자 메뉴</b> → 비밀번호 <code>1234</code> 로 들어갑니다.</p>
+<h3>① 관리자 비밀번호 바꾸기</h3>
+<p><b>비밀번호 · 초기화</b> 탭에서 바로 바꿔 주세요.</p>
+<h3>② 학생 등록 — 엑셀에서 붙여넣기</h3>
+<p><b>학생 등록</b> 탭에 엑셀·구글시트의 <b>학년 · 반 · 번호 · 이름</b> 네 칸(다섯째 칸에 학생 비밀번호, 선택)을 복사해 붙여넣고, 아래 미리보기를 확인한 뒤 <b>등록</b>.</p>
+<ul><li>학생 비밀번호를 비워 두면 <code>1234</code> 로 등록됩니다. (학생이 자기 기록 페이지를 볼 때 사용)</li>
+<li>제목 줄이 섞여 있거나 이미 등록된 학생은 자동으로 건너뜁니다.</li></ul>
+<figure><img src="img/admin_register.png"><figcaption>학생 등록 — 붙여넣으면 아래 표에서 확인</figcaption></figure>
+<h3>③ 기본 설정 — 부르는 이름 · QR · 하루 목표 · 줄넘기 종류 · 승인 절차</h3>
+<figure><img src="img/admin_basic.png"><figcaption>기본 설정 탭의 학생 접속 QR</figcaption></figure>
+<ul>
+  <li><b>우리를 부르는 이름</b>: 클럽 / 도장 / 직접 입력(예: 팀, 체육관). 메인 화면 제목이 "우리 도장 줄넘기 기록"처럼 바뀌어요.</li>
+  <li><b>학생 접속 QR</b>: 크게 보여주기 / 주소 복사 / 이미지 저장. 프로그램이 새 판이 되어도 <b>QR은 그대로</b> 쓰면 됩니다.</li>
+  <li><b>즐겨찾기용 주소</b>(끝이 <code>&amp;qr=1</code>): 교실 컴퓨터에 넣어 두면 열자마자 QR이 크게 뜹니다.</li>
+  <li><b>오늘의 목표</b>: "오늘 목표 달성 학생 수" 기준 (기본 100회)</li>
+  <li><b>줄넘기 종류</b>: 한 줄에 하나씩 (모아뛰기, 엇갈아뛰기, 이중뛰기 …). 학기 중에는 이름을 바꾸기보다 추가만 하세요.</li>
+  <li><b>승인 절차</b>: 켜면 학생 입력 → 선생님 승인 후 반영. 새로 설치하면 <b>기본 켜짐</b>이고, 끄면 저장 즉시 반영됩니다. <b>전국 현황판에 참여하려면 켜져 있어야 해요.</b></li>
+</ul>
+
+<h2>4. 수업에서 쓰기</h2>
+<div class="two">
+  <div>
+    <h3>학생</h3>
+    <ol><li>QR을 찍어 들어옵니다.</li><li>학년 → 반 → 이름 → 줄넘기 종류를 고르고 뛴 횟수를 넣고 <b>저장</b>.</li>
+    <li>여러 번 뛰었으면 그때마다 넣으면 그날 횟수가 모두 더해집니다.</li>
+    <li>그래프의 자기 이름 막대를 누르고 비밀번호를 넣으면 날짜별 기록을 볼 수 있어요.</li></ol>
+    <h3>선생님</h3>
+    <ul><li>메인 화면: 이번주·오늘의 줄넘기왕, 연속 기록 1위(공동 1위는 모두 표시), 학생별 누적 그래프(종류별로 쌓아서 / 한 종류만, 학년·반별로 골라 보기, 막대 위에 합계 횟수). 그래프 제목 <b>학생별 누적 줄넘기 기록(표로 보기)</b>을 누르면 이름과 횟수가 표로 떠요.</li>
+    <li>기록 승인: 누르는 즉시 반영, 여러 건은 <b>모두 승인</b> 버튼으로 한 번에</li>
+    <li>학생 관리 탭: 학생별 기록 고치기·삭제, 명단 순서 바꾸기</li>
+    <li>테마 · 색상, AI 한마디(Gemini 키를 넣으면 매일 새 응원 문구)</li></ul>
+  </div>
+  <figure class="phone" style="margin:0"><img src="img/phone.png" style="max-width:78%"><figcaption>학생 휴대폰 입력 화면</figcaption></figure>
+</div>
+<figure><img src="img/main.png"><figcaption>메인 화면 (교실 TV에 띄워 두기 좋아요)</figcaption></figure>
+<h3>📷 카메라 판정기 (선택)</h3>
+<p><b>카메라 판정기</b> 탭에서 켜면 입력 폼에 <b>📷 카메라로 뛰기</b> 버튼이 생깁니다. 태블릿·노트북·휴대폰 카메라가 실제로 뛴 횟수를 세고, "끝내고 기록하기"를 누르면 자동으로 기록됩니다. 카메라 기록은 📷 표시가 붙고, 전국 현황판에서도 "카메라 인증" 횟수로 따로 보여요. 카메라가 센 기록은 <b>승인 없이 바로 반영</b>됩니다(설정에서 승인 대기로 바꿀 수 있음).</p>
+<h3>스마트 줄넘기로 뛰기 (선택)</h3>
+<p>스마트 줄넘기(JUMPITNOW)를 학생 휴대폰에 블루투스로 연결해 뛴 횟수와 시간을 그대로 기록합니다. 카메라 판정기 탭에서 켜면 입력 폼에 <b>스마트 줄넘기로 뛰기</b> 버튼이 생겨요(안드로이드·크롬북·PC 크롬). 이 기록은 선생님 승인을 거칩니다.</p>
+<div class="tip">카메라 판정기나 스마트 줄넘기로 뛰면 걸리지 않고 이어 뛴 가장 많은 수, <b>한 번에 최고 연속</b>도 함께 기록돼요(껍데기 5판부터). 전국 현황판에도 최고 연속 순위가 따로 있어요.</div>
+
+<h2 class="pb">5. Jump Earth! 클럽 리그 · Jumpers! 기록실</h2>
+<p>참여를 켜면 우리 클럽 기록이 전국 현황판에 모여 다른 클럽과 <b>한 달 단위</b>로 순위를 겨룹니다. <b>매달 1일에 새로 시작</b>하고, 지난 달 1~3등은 <b>Jumpers! 기록실</b>에 남습니다(최근 12개월). <b>참여는 기본 꺼짐</b>이에요.</p>
+<h3>켜는 방법</h3>
+<ol><li>관리자 메뉴 → <b>전국 현황판</b> 탭</li>
+<li><b>전국 현황판에 참여하기</b> 체크 → <b>클럽 이름</b>·<b>담당 지도자</b> 입력(필수), <b>연락처</b>는 선택</li>
+<li>현황판에 클럽 이름을 보이게 하려면 <b>현황판에 클럽 이름 공개</b>도 체크 (끄면 "익명 클럽 ABCD")</li>
+<li><b>승인 절차</b>가 꺼져 있으면 참여를 켤 때 함께 켜집니다. 현황판에는 <b>선생님이 승인한 기록</b>과 <b>카메라 기록</b>만 올라가요.</li>
+<li><b>저장</b> → 이번 달·지난 달 기록이 바로 보내지고, 아래에 "현황판에 보이는 모습"이 나옵니다.</li></ol>
+<figure><img src="img/admin_national.png"><figcaption>관리자 메뉴 → 전국 현황판 탭</figcaption></figure>
+<div class="tip">클럽·도장은 보호자께 "전국 클럽 현황판에 가린 이름(예: 김*늘)·학년·횟수가 올라간다"는 것을 미리 안내해 주세요. 참여는 기본으로 꺼져 있어요.</div>
+<h3>무엇이 보내지나요?</h3>
+<table>
+  <tr><th style="width:40%">현황판에 보내는 것</th><th style="width:30%">운영자만 보는 것</th><th>보내지 않는 것</th></tr>
+  <tr><td>가린 이름(예: <b>김*늘</b>) · 학년 · 날짜별 뛴 횟수 · 카메라 인증 횟수 · 등록 학생 수 · (공개를 켰을 때만) 클럽 이름</td>
+      <td>클럽 이름 · 담당 지도자 · 연락처 (문의·장난 보고 확인용, 현황판에는 안 나옴)</td>
+      <td>학생 실명 · 반 · 번호 · 비밀번호 · 그 밖의 클럽 시트 내용</td></tr>
+</table>
+<ul><li><b>같은 클럽의 여러 반</b>이 각자 참여해도 클럽 이름이 같으면 현황판에서 한 클럽으로 합쳐져요. 클럽 이름은 <b>지역 두 글자 + 클럽 이름</b>으로 써 주세요(예: 서울 햇살태권도). 반마다 <b>견본 사본</b>(또는 새 스프레드시트)에 따로 설치하고, 다른 반이 쓰던 시트를 복사하지 마세요. 복사한 시트는 프로그램이 알아채고 "새 참여 번호로 바꾸기"를 안내해요.</li>
+<li>참여 중에 승인 절차를 끄면 전국 현황판 참여도 함께 꺼집니다(현황판의 우리 클럽 기록 삭제).</li>
+<li>승인 화면에서 승인한 기록은 바로 현황판에도 반영됩니다.</li>
+<li>담당 지도자·연락처는 클럽 시트에 남기지 않고 <b>그 관리자 기기</b>에만 기억합니다. 다른 기기에서 관리할 때는 다시 넣어 주세요.</li>
+<li>참여를 <b>끄면</b> 현황판에 올라간 우리 클럽 기록은 <b>지워집니다</b>.</li>
+<li>학생이 기록을 저장할 때마다 오늘 집계가 보내지고, 관리자 메뉴를 열면 이번 달·지난 달 전체를 한 번 더 맞춥니다(늦게 넣은 기록·승인 반영).</li></ul>
+<h3>현황판 보기</h3>
+<p>참여 중이면 메인 화면 위에 <b>🏆 전국 현황판</b> 버튼이 생깁니다. 우리 클럽 줄이 색으로 표시되고, 클럽 줄을 누르면 그 클럽 안 학생 순위가 펼쳐집니다.</p>
+<ul><li><b>합계</b> 순위와 함께 <b>1인당 평균</b>(합계 ÷ 등록 학생 수)·<b>참여율</b>(한 번이라도 뛴 학생 ÷ 등록 학생 수) 순위로 바꿔 볼 수 있어 작은 클럽도 공정하게 겨룹니다. (두 순위는 등록 학생 5명 이상 클럽만)</li>
+<li>전국 학생 순위 TOP 30, 지난 달 현황판도 고를 수 있어요.</li>
+<li><b>학년 고르기</b>로 학년별 순위를 볼 수 있어요. 맨 위의 <b>모두 함께 지구 한 바퀴</b>는 참여한 모든 클럽이 이번 학년도에 뛴 줄넘기를 1회 = 1m로 더한 거리예요. 학년도마다(3월 1일) 새로 시작하고, 지난 학년도에 함께 뛴 거리도 아래에 보여요.</li></ul>
+<figure><img src="img/board.png"><figcaption>전국 현황판</figcaption></figure>
+<h3>Jumpers! 기록실 보기</h3>
+<p>현황판 위 <b>Jumpers! 기록실</b> 버튼을 누르면 지난 달 클럽·학생 1~3등이 나옵니다. 주황 배너의 달 고르기에서 <b>최근 12개월</b> 중 원하는 달을 고를 수 있어요. 클럽별 1~3등도 펼쳐 볼 수 있습니다.</p>
+<figure><img src="img/hall.png"><figcaption>Jumpers! 기록실 — 최근 12개월 중 달을 골라 1~3등 보기</figcaption></figure>
+
+<h2 class="pb">6. 급수 인증 · 인증서 · 국토 대장정</h2>
+<div class="tip">급수 인증은 클럽 껍데기 <b>3판 이상</b>이 필요해요. 지금 껍데기는 <b>6판</b>입니다. 이미 쓰고 계시면 Code.gs 에 통째로 다시 붙여 넣고 <b>배포 → 배포 관리 → 수정(연필) → 새 버전</b>으로 배포하세요(주소·학생·기록 그대로). 인증서의 전국 현황판 상장과 국토 대장정은 껍데기와 상관없이 쓸 수 있어요.</div>
+<h3>급수 인증 (교사 인증)</h3>
+<p>기본은 <b>한국줄넘기협회 급수표</b>예요: 흰 → 노랑 → 초록 → 파랑 → 밤 → 주황 → 빨강 → 검은 → 와이어. 학생이 선생님 앞에서 <b>걸리지 않고</b> 기준 횟수를 성공하면 선생님이 체크합니다.</p>
+<ol><li>관리자 메뉴 → <b>급수 인증</b> 탭 → 반과 급수를 고릅니다. (반에서 가장 많이 도전 중인 급수가 먼저 골라져 있어요)</li>
+<li>통과한 항목을 체크하고 <b>저장</b>. 칸 위의 체크칸을 누르면 그 항목을 반 전체에 한 번에 체크합니다.</li>
+<li>한 급수의 항목을 모두 통과하면 다음 급수로 올라가고, "급수가 오른 학생"이 안내됩니다. 앞 급수를 아직 못 딴 학생은 회색으로 잠겨요.</li></ol>
+<figure><img src="img/admin_levels.png"><figcaption>급수 인증 — 노랑 줄넘기를 딴 학생만 초록 줄넘기 체크 가능</figcaption></figure>
+<ul><li><b>급수표 고치기</b>: 같은 탭 아래 "급수표"에서 클럽에 맞게 항목·기준을 바꿀 수 있어요. 언제든 협회 기준표로 되돌릴 수 있습니다.</li>
+<li><b>학생 화면</b>: 지금 급수와 다음 도전 항목(통과한 항목은 ✔)이 보여요.</li>
+<li><b>메인 화면</b>: "우리 반 급수"에 급수별 명수가 나오고, 누르면 명단이 펼쳐져요. 보이기 싫으면 급수 인증 탭 맨 위 체크를 끄세요.</li></ul>
+<figure><img src="img/levelcard.png" style="max-width:85%"><figcaption>메인 화면의 우리 반 급수 (누르면 명단)</figcaption></figure>
+<h3>인증서 · 상장 출력</h3>
+<p>관리자 메뉴 → <b>인증서 · 상장</b> 탭에서 종류를 고르고 <b>미리 보기</b> → <b>인쇄 · PDF 저장</b>. A4 가로로 한 장씩 나옵니다.</p>
+<ul><li><b>급수 인증서</b>: 반을 고르면 급수를 딴 학생마다 지금 급수 인증서 한 장씩</li>
+<li><b>전국 현황판 순위 상장</b>: 기록실의 달을 고르면 우리 클럽의 전국 순위, 학생 전국 1~3등, 우리 클럽 안 1~3등 상장 (현황판에는 가린 이름만 있지만 상장에는 클럽 안에서 찾은 실명이 들어가요)</li>
+<li>클럽 이름·선생님 이름·주는 날짜를 넣고, 직함은 <b>관장 / 사범 / 직접 입력</b> 중에서 고릅니다.</li></ul>
+<figure><img src="img/cert.png" style="max-width:80%"><figcaption>급수 인증서</figcaption></figure>
+<h3>국토 대장정 (우리 반 줄넘기 여행)</h3>
+<p>관리자 메뉴 → <b>우리 반 여행</b> 탭에서 <b>출발 도시</b>를 고르고 "메인 화면에 보이기"를 켜면, 우리 반이 뛴 줄넘기를 <b>1회 = 1m</b>로 바꿔 우리 클럽에서 출발해 전국을 한 바퀴 도는 국토 대장정이 메인 화면에 나와요(제주는 배로 건너가요). <b>지금부터 새로 출발</b>을 누르면 기록은 그대로 두고 여행만 처음부터 다시 시작해요. 전국 현황판의 <b>모두 함께 지구 한 바퀴</b>로 이어집니다.</p>
+<figure><img src="img/journey.png"><figcaption>메인 화면의 국토 대장정</figcaption></figure>
+
+<h2 class="pb">7. 점프 Live (Lite) · 친구들과 함께 뛰기 <span style="font-size:10pt;color:#F26A3D">2.6 새 기능</span></h2>
+<p>반 전체가 <b>1인 1기기</b>로 카메라 판정기에서 함께 뛰고, 선생님 화면(TV·칠판)에 결과를 모아 보여 주는 수업 방입니다. 바깥 서버 없이 <b>우리 클럽 시트만으로</b> 돌아가요. 대신 학생 기기의 숫자가 몇 초씩 늦게 모이기 때문에, 실시간 중계보다는 <b>끝나고 한 번에 결과를 공개</b>하는 방식으로 만들었어요.</p>
+<div class="tip">학생 설문에서 나온 "횟수는 끝나고 보여 주면 좋겠다"는 아이디어를 그대로 살렸어요. 뛰는 동안 친구들 숫자는 가려지고, 내 화면에는 내 횟수만 보여요.</div>
+<div class="warn">클럽 껍데기 <b>6판</b>이 필요해요. 이미 쓰고 계시면 껍데기를 다시 붙여 넣고 <b>배포 → 배포 관리 → 수정 → 새 버전</b>으로 배포하세요. 학생 방(친구들과 함께 뛰기)은 <b>카메라 판정기 사용</b>도 켜져 있어야 해요.</div>
+<h3>① 수업 방 열기 (선생님)</h3>
+<ol><li>관리자 메뉴 → <b>점프 Live</b> 탭 → <b>점프 Live (Lite) 열기</b>. 새 창이 열립니다(팝업이 막히면 주소창 오른쪽에서 허용).</li>
+<li>함께 수업하는 반(여러 반도 가능)과 줄넘기 종류를 고르고 <b>방 열기</b>. 명단은 이 프로그램에서 가져와요. 명단에서 뺀 번호(전학 등)는 칸을 만들지 않아요.</li>
+<li>화면에 뜬 <b>QR</b>을 학생들이 찍어 들어와 자기 번호를 누르고 카메라를 켭니다. 들어온 학생 칸이 밝아져요.</li></ol>
+<figure><img src="img/live_tab.png" style="max-width:70%"><figcaption>관리자 메뉴 → 점프 Live 탭</figcaption></figure>
+<h3>② 뛰기 · 공개 방식</h3>
+<p><b>목표</b>(30초 · 1분 · 2분 …)와 <b>보이기</b>를 고르고 <b>시작</b>을 누르면 5초 뒤 모두 함께 시작합니다.</p>
+<table><tr><th style="width:32%">보이기</th><th>뛰는 동안 큰 화면</th></tr>
+<tr><td><b>끝나고 한 번에 공개</b> (기본)</td><td>이름과 진행 표시만 보이고, 횟수와 순위는 끝난 뒤 한꺼번에</td></tr>
+<tr><td><b>10 · 15 · 20 · 30초마다 공개</b></td><td>평소엔 가려 두었다가 정해진 간격마다 "중간 점검!"으로 3초 동안 횟수 공개</td></tr>
+<tr><td><b>바로바로 보이기</b></td><td>들어오는 대로 보여 줌 (몇 초 늦게 바뀜)</td></tr></table>
+<div class="two"><figure style="margin:0"><img src="img/lite_hidden.png" style="max-width:100%"><figcaption>끝나고 한 번에 공개 — 뛰는 동안은 가림</figcaption></figure>
+<figure style="margin:0"><img src="img/lite_mid.png" style="max-width:100%"><figcaption>중간 공개 — "중간 점검!" 3초</figcaption></figure></div>
+<h3>③ 끝 · 결과 모으기 · 저장</h3>
+<p>시간이 끝나면 "<b>결과 모으는 중…</b>"이 뜨고 학생 기기의 마지막 횟수를 기다립니다. 모두 들어오거나 더 바뀌는 숫자가 없으면(길어도 20초) 한꺼번에 뒤집히며 결과와 응원 문구가 나와요. 결과는 <b>승인된 카메라 기록</b>으로 클럽 시트에 바로 저장되고, 전국 현황판에도 카메라 인증 기록으로 올라갑니다.</p>
+<figure><img src="img/lite_reveal.png" style="max-width:72%"><figcaption>한 번에 공개 — 응원 문구와 함께 결과가 뒤집혀요</figcaption></figure>
+<ul><li>스마트 줄넘기 <b>허브(USB)</b>가 있으면 선생님 화면 위쪽 <b>줄넘기 허브</b>로 연결해 쓸 수 있어요. 이때 횟수는 클럽 시트를 거치지 않아 거의 바로 들어와요.</li>
+<li>학생이 자기 기기에서 스마트 줄넘기를 블루투스로 이어 뛸 수도 있어요(안드로이드·크롬북·PC 크롬).</li>
+<li>방은 6시간 뒤 저절로 닫히고, 기록 말고는 아무것도 남지 않아요.</li></ul>
+<h3>④ 친구들과 함께 뛰기 (학생 방)</h3>
+<p>선생님 없이도 학생끼리 방을 만들어 함께 뛸 수 있어요. 큰 화면 없이 모두 자기 판정기로 뛰고, 끝나면 각자 화면에 함께 뛴 결과가 떠요.</p>
+<ol><li>학생이 평소처럼 기록 입력에서 <b>카메라로 뛰기</b> → 카메라를 켜면 <b>친구들과 함께 뛰기</b> 버튼이 보여요.</li>
+<li>한 명이 <b>방 만들기</b>를 누르면 <b>4자리 방 번호</b>가 생겨요. 친구들은 자기 기기에서 그 번호를 넣고 <b>들어가기</b>.</li>
+<li>방장(방을 만든 학생)이 30초 · 1분 · 2분 중에서 고르고 <b>시작</b>. 뛰는 중에는 <b>중지</b>로 멈출 수 있어요.</li>
+<li>끝나면 모두의 화면에 순위와 합계가 뜨고, 각자 기록이 <b>승인 대기</b>로 들어가요. 선생님은 기록 승인 화면에서 <b>모두 승인</b>으로 한꺼번에 처리하면 돼요.</li>
+<li><b>나가기</b>를 누르면 혼자 뛰기로 돌아가요. 방장이 나가면 방이 닫혀요.</li></ol>
+<div class="two"><figure class="phone" style="margin:0"><img src="img/stu_room.png" style="max-width:62%"><figcaption>방 번호와 들어온 친구 (방장 화면)</figcaption></figure>
+<figure class="phone" style="margin:0"><img src="img/stu_result.png" style="max-width:62%"><figcaption>끝나면 함께 보는 결과</figcaption></figure></div>
+<div class="tip">학생 방은 앱에서 <b>카메라로 뛰기</b>로 연 학생만 만들고 들어올 수 있어요. 주소만 아는 바깥 사람은 들어올 수 없습니다.</div>
+
+<h2>8. 업데이트</h2>
+<ul><li><b>화면·기능</b>: 자동. 할 일이 없습니다. 바뀐 내용은 관리자 메뉴 → <b>업데이트 내역</b>(NEW 표시)에서 볼 수 있어요.</li>
+<li><b>껍데기(Shell)</b>: 거의 바뀌지 않습니다. 바꿔야 할 때는 업데이트 내역 탭에 안내가 뜹니다. 지금 껍데기는 <b>6판</b>이에요(3판: 급수 인증, 학생 삭제 시 기록도 함께 삭제 · 4판: 전국 현황판 비밀 키를 학생 화면에 내보내지 않음 · 5판: 스마트 줄넘기·카메라 판정기로 잰 <b>한 번에 최고 연속</b> 기록, 전국 현황판 최고 연속 순위 · 6판: <b>점프 Live (Lite)</b>, 친구들과 함께 뛰기). <b>전국 현황판에 참여하거나 점프 Live (Lite)를 쓰려면 6판으로 바꿔 주세요.</b> 껍데기 코드 링크(늘 최신 판)의 오른쪽 위 복사 버튼으로 전체 복사해 붙여 넣으면 돼요.</li>
+</ul>
+
+<h2>9. 자주 묻는 질문 · 문제 해결</h2>
+<table>
+<tr><th style="width:38%">증상</th><th>해결</th></tr>
+<tr><td>배포·권한 허용 때 "오류 401: invalid_client"</td><td>견본 사본을 만든 직후에 생길 수 있어요(구글이 새 사본의 로그인 준비를 마치기 전). <b>몇 분 뒤 다시</b> 배포하거나, Apps Script 편집기 위쪽에서 <code>ping</code> 을 골라 <b>▶ 실행</b> → 권한 허용을 먼저 한 뒤 배포하세요. 그래도 안 되면 시크릿 창(계정 하나만)에서 해 보세요.</td></tr>
+<tr><td>"클럽 시트에 연결하지 못했어요"</td><td>배포의 액세스 권한이 <b>모든 사용자</b>인지 확인 → 아니면 배포 관리에서 수정 후 새 버전으로 배포</td></tr>
+<tr><td>관리자 비밀번호를 잊었어요</td><td>Apps Script 편집기 맨 아래에 <code>function 비번초기화(){ setAdminPassword('1234'); }</code> 를 붙여넣고 저장 → 위쪽 함수 목록에서 <b>비번초기화</b>를 골라 <b>실행</b> → 비밀번호가 1234 로 돌아갑니다. 끝나면 붙여넣은 줄은 지워 주세요.</td></tr>
+<tr><td>학생이 이름을 못 찾아요</td><td>학생 관리 탭에서 학년·반 값이 숫자로 똑같이 들어갔는지 확인 (예: <code>6</code> 과 <code>6학년</code> 이 섞이면 따로 보임)</td></tr>
+<tr><td>학기를 새로 시작하고 싶어요</td><td>비밀번호 · 초기화 탭 → 모든 기록 삭제 (명단은 남음). 미리 "파일 → 버전 기록"으로 백업하세요.</td></tr>
+<tr><td>전국 현황판에 우리 클럽이 안 보여요</td><td>참여 체크 후 저장했는지, 이번 달 기록이 있는지 확인 → 전국 현황판 탭의 <b>지금 보내기</b>. 현황판은 몇 분 단위로 새로 고쳐집니다.</td></tr>
+<tr><td>급수 인증 탭에 "껍데기 3판이 필요해요"가 떠요 / "새 껍데기 6판이 나왔어요" 안내가 떠요</td><td>Shell(클럽용 껍데기).txt 를 Code.gs 에 다시 붙여 넣고 <b>배포 관리 → 수정 → 새 버전</b>으로 배포 (주소·학생·기록 그대로)</td></tr>
+<tr><td>"이 시트에는 <b>학교용 껍데기</b>가 들어 있어요" 경고가 떠요</td><td>학교용 껍데기를 붙였어요. <b>클럽용 껍데기</b>를 Code.gs 에 다시 붙여 넣고 <b>새 버전</b>으로 배포하세요. 그대로 두면 기록이 학교 현황판으로 가요.</td></tr>
+<tr><td>관리자 메뉴에 <b>점프 Live</b> 탭이 없어요</td><td>껍데기가 6판이 아니에요. 껍데기를 다시 붙여 넣고 <b>새 버전</b>으로 배포한 뒤 새로 고침</td></tr>
+<tr><td>학생 판정기에 <b>친구들과 함께 뛰기</b> 버튼이 없어요</td><td>껍데기 6판인지, 카메라 판정기 탭에서 사용이 켜져 있는지 확인. 앱의 <b>카메라로 뛰기</b>로 연 판정기에서만 보여요.</td></tr>
+<tr><td>점프 Live 숫자가 늦게 바뀌어요</td><td>클럽 시트로 주고받는 방식이라 몇 초 늦는 게 정상이에요. 그래서 기본은 "끝나고 한 번에 공개"이고, 끝난 뒤 결과를 다 모은 다음 보여 줘요.</td></tr>
+<tr><td>클럽 이름을 숨기고 싶어요</td><td>전국 현황판 탭에서 "클럽 이름 공개"를 끄고 저장 → "익명 클럽 ABCD" 로 표시</td></tr>
+</table>
+<div class="foot">줄넘기 기록 관리 클럽판 v2.6.0 · Made by 음악적체육인 · 문의는 인디스쿨 글 댓글로 남겨 주세요</div>
+</body></html>

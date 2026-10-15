@@ -55,11 +55,10 @@ function doGet(e) {
     '.h{background:linear-gradient(135deg,#F26A3D,#FF8A65);color:#fff;padding:22px 24px}.h h1{margin:0 0 4px;font-size:22px}.h p{margin:0;opacity:.9}' +
     '.b{padding:22px 24px;line-height:1.6}a.btn{display:block;text-align:center;background:#F26A3D;color:#fff;text-decoration:none;font-weight:800;padding:14px;border-radius:12px;font-size:17px;margin:14px 0}' +
     'code{display:block;background:#F3F4F6;padding:10px;border-radius:8px;word-break:break-all;font-size:12px}small{color:#6B7280}</style></head><body>' +
-    '<div class="c"><div class="h"><h1>🏆 줄넘기 기록 관리</h1><p>껍데기 설치 완료 · 껍데기 판 ' + SHELL_VERSION + '</p></div><div class="b">' +
+    '<div class="c"><div class="h"><h1>🏆 줄넘기 기록 관리 · 클럽</h1><p>껍데기 설치 완료 · 껍데기 판 ' + SHELL_VERSION + '</p></div><div class="b">' +
     '<p>이 주소는 <b>설치 확인용</b>이에요. 프로그램은 아래 버튼으로 엽니다. 열린 주소를 <b>즐겨찾기</b>해 두고, 학생들에게는 관리자 메뉴의 <b>QR</b>로 알려 주세요.</p>' +
     '<a class="btn" href="' + app + '" target="_top">프로그램 열기 →</a>' +
     '<small>프로그램 주소</small><code>' + app + '</code>' +
-    '<p><small>시험판(새 기능 미리 보기): <a href="' + beta + '" target="_top">베타 열기</a></small></p>' +
     '</div></div></body></html>';
   return HtmlService.createHtmlOutput(html).setTitle('줄넘기 기록 관리 — 설치 확인')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
