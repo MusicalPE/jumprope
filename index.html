@@ -673,7 +673,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.5.5', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.5.6', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1318,7 +1318,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <button type="button" data-tab="levels"><span class="ico"></span>급수 인증<span class="new-dot feat-new" data-new="levels">NEW</span></button>
       <button type="button" data-tab="certs"><span class="ico"></span>인증서 · 상장<span class="new-dot feat-new" data-new="certs">NEW</span></button>
       <button type="button" data-tab="journey"><span class="ico"></span>우리 반 여행<span class="new-dot feat-new" data-new="journey">NEW</span></button>
-      <button type="button" data-tab="live"><span class="ico"></span>점프 라이브</button>
+      <button type="button" data-tab="live"><span class="ico"></span>점프 Live</button>
       <button type="button" data-tab="theme"><span class="ico"></span>테마 · 색상</button>
       <button type="button" data-tab="security"><span class="ico"></span>비밀번호 · 초기화</button>
       <button type="button" data-tab="updates"><span class="ico"></span>업데이트 내역<span class="new-dot" id="updatesDot" style="display:none;">NEW</span></button>
@@ -1609,6 +1609,13 @@ document.addEventListener('DOMContentLoaded', function(){
 
     <section class="tab-pane" data-tab="live">
     <div class="card">
+      <h2>점프 Live (Lite) <span style="font-size:13px;font-weight:600;color:var(--coral-dark);">학교 시트만으로</span></h2>
+      <p class="hint">바깥 서버 없이 이 학교 시트만으로 수업 방을 열어요. 학생은 1인 1기기로 카메라 판정기에서 뛰고, 큰 화면에는 <b>끝나고 한 번에</b>(또는 10·15·20·30초마다 잠깐씩, 또는 바로바로) 공개돼요. 끝나면 결과가 <b>승인된 카메라 기록</b>으로 들어가요.</p>
+      <p class="hint">학생 화면의 숫자는 몇 초씩 늦게 모일 수 있어서, 끝난 뒤 결과를 모두 모아 한꺼번에 보여 줘요. 껍데기 <b>6판</b>부터 쓸 수 있어요.</p>
+      <button type="button" id="openLiteBtn">점프 Live (Lite) 열기 →</button>
+      <p id="liteMsg" class="hint"></p>
+    </div>
+    <div class="card" id="liveFbCard">
       <h2>점프 라이브 (한 반이 함께 뛰기)</h2>
       <p class="hint">학생이 1인 1기기로 카메라 판정기에서 뛰면, 선생님 화면에 반 학생들이 바둑판으로 모여 <b>지금 몇 개째인지</b> 실시간으로 보여요. 명단은 이 프로그램에서 가져오고, 끝나면 결과가 <b>승인된 카메라 기록</b>으로 바로 들어가요.</p>
       <p class="hint">선생님 화면은 TV·칠판에 띄우고, 학생은 화면의 QR을 찍어 들어와 자기 번호를 누르면 돼요. 처음 한 번은 구글 계정 로그인이 필요해요.</p>
@@ -2660,8 +2667,14 @@ loadTypes();
 (function(){
   const nav = document.getElementById('adminNav');
   // 점프 라이브: 점프 라이브용 껍데기(ping 이 live 를 알려 줌)를 설치한 학교에만 보임
-  if (!(APP.shell && APP.shell.live)) { Array.prototype.forEach.call(document.querySelectorAll('[data-tab="live"]'), function(el){ el.remove(); }); }
-  else { const lb = document.getElementById('openLiveBtn'); if (lb) lb.addEventListener('click', function(){
+  // 점프 Live (Lite): 6판 껍데기(ping 이 lite 를 알려 줌)면 누구나 — 바깥 서버 없이 학교 시트만으로
+  if (APP.shell && APP.shell.lite) { const xb = document.getElementById('openLiteBtn'); if (xb) xb.addEventListener('click', function(){
+    const w = window.open(location.origin + '/jumpropelive/monitor.html?lite=1&s=' + encodeURIComponent(APP.shellUrl), '_blank');
+    if (!w) document.getElementById('liteMsg').textContent = '새 창이 막혔어요. 주소창 오른쪽에서 팝업을 허용해 주세요.'; }); }
+  else { const xc = document.getElementById('openLiteBtn'); if (xc) xc.closest('.card').remove(); }
+  if (!(APP.shell && APP.shell.live)) { const fc = document.getElementById('liveFbCard'); if (fc) fc.remove(); }
+  if (!(APP.shell && (APP.shell.live || APP.shell.lite))) { Array.prototype.forEach.call(document.querySelectorAll('[data-tab="live"]'), function(el){ el.remove(); }); }
+  if (APP.shell && (APP.shell.live || APP.shell.lite)) { const lb = document.getElementById('openLiveBtn'); if (lb) lb.addEventListener('click', function(){
     const w = window.open(location.origin + '/jumpropelive/monitor.html?s=' + encodeURIComponent(APP.shellUrl), '_blank');
     if (!w) document.getElementById('liveMsg').textContent = '새 창이 막혔어요. 주소창 오른쪽에서 팝업을 허용해 주세요.'; });
     // 점프 라이브가 결과를 시트에 넣으면 알려 줌 → 점퍼스(전국 현황판)에 바로 보냄 (카메라 인증 기록으로 집계)
@@ -3759,7 +3772,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
   }
   document.getElementById('versionInfo').innerHTML = '지금 쓰는 판: <b>v' + APP.version + '</b>' + (APP.channel === 'beta' ? ' (베타)' : '') + ' · 학교 껍데기 판: <b>' + APP.shell.shell + '</b> · 학교 시트: ' + esc(APP.shell.title || '') + (/견본/.test(APP.shell.title || '') ? ' <span style="color:var(--amber)">← 구글 시트 왼쪽 위 파일 이름을 "6학년 1반 줄넘기"처럼 바꿔 두세요</span>' : '');
   NAT.load().then(function(){   // 전국 현황판 참여 여부를 알고 나서 안내
-  if (APP.shell.shell >= APP.requiredShell && APP.shell.shell < 5) document.getElementById('shellNotice').innerHTML = '<div class="warn-box"' + (NAT.cfg && NAT.cfg.on && APP.shell.shell < 4 ? '' : ' style="background:var(--bg);"') + '>새 껍데기 <b>5판</b>이 나왔어요. 스마트 줄넘기나 카메라 판정기로 뛰면 <b>한 번에 최고 연속</b>(걸리지 않고 이어 뛴 가장 많은 수)이 기록되고, 전국 현황판에도 올라가요.' + (NAT.cfg && NAT.cfg.on && APP.shell.shell < 4 ? ' <b>전국 현황판에 참여 중이면 꼭 바꿔 주세요</b> — 4판부터는 전국 현황판 비밀 키를 학생 화면에 내보내지 않아요.' : '') + (APP.shell.shell < 3 ? ' 급수 인증도 3판부터 쓸 수 있어요.' : '') + (APP.shell.live ? ' 점프 라이브를 쓰는 학교는 <b>점프 라이브판 5판</b>으로 바꿔 주세요.' : '') + ' Shell(껍데기)를 다시 붙여 넣고 "새 버전"으로 배포하세요. 기록·학생·설정은 그대로예요.</div>';
+  if (APP.shell.shell >= APP.requiredShell && APP.shell.shell < 6) document.getElementById('shellNotice').innerHTML = '<div class="warn-box"' + (NAT.cfg && NAT.cfg.on && APP.shell.shell < 4 ? '' : ' style="background:var(--bg);"') + '>새 껍데기 <b>6판</b>이 나왔어요. <b>점프 Live (Lite)</b> — 바깥 서버 없이 학교 시트만으로 한 반이 함께 뛰고, 끝나고 한 번에 결과를 공개하는 수업 방을 열 수 있어요.' + (APP.shell.shell < 5 ? ' 5판부터는 스마트 줄넘기나 카메라 판정기로 뛰면 <b>한 번에 최고 연속</b>(걸리지 않고 이어 뛴 가장 많은 수)이 기록되고, 전국 현황판에도 올라가요.' : '') + (NAT.cfg && NAT.cfg.on && APP.shell.shell < 4 ? ' <b>전국 현황판에 참여 중이면 꼭 바꿔 주세요</b> — 4판부터는 전국 현황판 비밀 키를 학생 화면에 내보내지 않아요.' : '') + (APP.shell.shell < 3 ? ' 급수 인증도 3판부터 쓸 수 있어요.' : '') + (APP.shell.live ? ' 점프 라이브를 쓰는 학교는 <b>점프 라이브판 6판</b>으로 바꿔 주세요.' : '') + ' Shell(껍데기)를 다시 붙여 넣고 "새 버전"으로 배포하세요. 기록·학생·설정은 그대로예요.</div>';
   });
   if (APP.shell.shell < APP.requiredShell) document.getElementById('shellNotice').innerHTML = '<div class="warn-box">학교 껍데기(Shell.gs)를 새 판으로 바꿔야 하는 기능이 있어요. 관리자 메뉴 안내에 따라 Shell.gs 를 다시 붙여넣고 "새 버전"으로 배포해 주세요.</div>';
   fetch('changelog.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(list){
