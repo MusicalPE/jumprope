@@ -936,6 +936,8 @@ const LEVELS = {
 /* ===== "우리 반 / 우리 N학년 / 우리 학교" — 등록된 학생으로 정함 =====
    한 반만 → 우리 반, 한 학년의 여러 반 → 우리 N학년, 그 밖(여러 학년) → 우리 학교
    바뀔 글자에는 data-our="{our} 급수" 처럼 표시해 두고, 학생 목록을 불러온 뒤 applyOurLabel() 로 한꺼번에 바꿈 */
+// 클럽판에서 부르는 이름 (관리자 기본 설정에서 클럽 / 도장 / 직접 입력)
+function unitWord(v){ v = String(v == null ? '' : v).replace(/[<>&"']/g, '').trim().slice(0, 8); return v || '클럽'; }
 function ourLabel(list){
   const classes = {}, grades = {};
   (list || []).forEach(function(s){ const g = String(s.grade == null ? '' : s.grade).trim().replace(/학년$/, ''); classes[g + '-' + String(s.cls == null ? '' : s.cls).trim()] = 1; grades[g] = 1; });
@@ -1057,9 +1059,10 @@ document.addEventListener('DOMContentLoaded', function(){
   /* 구글 시트가 늦게 답할 때: 8초 뒤 안내, 25초 뒤 다시 시도 버튼 */
   const slowT = [setTimeout(function(){ const el = document.getElementById('bootSlow'); if (el) { el.style.display = ''; el.textContent = '구글 시트가 평소보다 늦게 답하고 있어요. 조금만 기다려 주세요.'; } }, 8000),
                  setTimeout(function(){ const el = document.getElementById('bootSlow'); if (el) el.innerHTML = '구글 쪽 응답이 많이 늦어요. 잠시 뒤 <button type="button" style="margin-top:8px;" onclick="location.reload()">다시 시도</button>'; }, 25000)];
-  Promise.all([rpc('ping'), rpc('getAppSettingsPublic'), rpc('getTheme').catch(function(){ return null; })]).then(function(r){
+  Promise.all([rpc('ping'), rpc('getAppSettingsPublic'), rpc('getTheme').catch(function(){ return null; }), APP.club ? rpc('getExtraSettings').catch(function(){ return null; }) : null]).then(function(r){
     slowT.forEach(clearTimeout);
     APP.shell = r[0]; APP.settings = r[1] || {};
+    if (APP.club) APP.unit = unitWord(r[3] && r[3].unit);   // 클럽판: "우리 클럽 / 우리 도장 / 우리 ○○"
     if (r[2]) { applyTheme(r[2]); try { localStorage.setItem('jr_theme', JSON.stringify({ accent: r[2].accent, bg: r[2].bg })); } catch (e) {} }
     render(APP.q.page || 'main');
   }).catch(function(err){
@@ -1328,6 +1331,17 @@ document.addEventListener('DOMContentLoaded', function(){
     </nav>
     <div class="admin-content">
     <section class="tab-pane" data-tab="basic">
+    <div class="card" id="unitCard" style="display:none;">
+      <h2>우리를 부르는 이름</h2>
+      <p class="hint" style="margin-top:0;">메인 화면 제목(<b>우리 <span class="unitPrev">클럽</span> 줄넘기 기록</b>), 급수 현황, 국토 대장정에 쓰는 이름이에요.</p>
+      <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+        <label style="display:flex; gap:6px; align-items:center; margin:0;"><input type="radio" name="unitSel" value="클럽" style="width:auto; margin:0;"> 클럽</label>
+        <label style="display:flex; gap:6px; align-items:center; margin:0;"><input type="radio" name="unitSel" value="도장" style="width:auto; margin:0;"> 도장</label>
+        <label style="display:flex; gap:6px; align-items:center; margin:0;"><input type="radio" name="unitSel" value="" style="width:auto; margin:0;"> 직접 입력</label>
+        <input type="text" id="unitCustom" maxlength="8" placeholder="예: 팀, 체육관" style="width:150px; margin:0;" disabled>
+        <button type="button" id="unitSave">저장</button><span id="unitMsg" class="hint"></span>
+      </div>
+    </div>
     <div class="card">
       <h2>학생 접속 주소 · QR</h2>
       <div class="qr-mini">
@@ -2761,6 +2775,25 @@ function loadCameraSettings() {
 }
 loadCameraSettings();
 rpc('getExtraSettings').then(function(x){ document.getElementById('bleEnabled').checked = !!(x && x.bleRope); }).catch(function(){});
+/* 클럽판: 우리를 부르는 이름 (클럽 / 도장 / 직접 입력) */
+(function(){
+  if (!APP.club) return;
+  const card = document.getElementById('unitCard'); if (!card) return; card.style.display = '';
+  const radios = Array.prototype.slice.call(document.querySelectorAll('input[name="unitSel"]')), cu = document.getElementById('unitCustom');
+  const cur = function(){ const r = radios.find(function(x){ return x.checked; }); return r && r.value ? r.value : unitWord(cu.value); };
+  const prev = function(){ Array.prototype.forEach.call(document.querySelectorAll('.unitPrev'), function(el){ el.textContent = cur(); }); };
+  const pick = function(v){ v = unitWord(v); const r = radios.find(function(x){ return x.value === v; }); if (r) { r.checked = true; cu.disabled = true; cu.value = ''; } else { radios[2].checked = true; cu.disabled = false; cu.value = v; } prev(); };
+  radios.forEach(function(r){ r.addEventListener('change', function(){ cu.disabled = !!r.value || !r.checked; if (!r.value) cu.focus(); prev(); }); });
+  cu.addEventListener('input', prev);
+  pick(APP.unit);
+  document.getElementById('unitSave').addEventListener('click', function(){
+    const m = document.getElementById('unitMsg'), r = radios.find(function(x){ return x.checked; });
+    if (r && !r.value && !cu.value.trim()) { m.textContent = '부를 이름을 넣어 주세요'; return; }
+    const v = cur(); m.textContent = '저장 중...';
+    rpc('setExtraSettings', [token, { unit: v === '클럽' ? null : v }]).then(function(){ APP.unit = v; m.textContent = '저장했어요 — 메인 화면에 "우리 ' + v + ' 줄넘기 기록"으로 보여요'; })
+      .catch(function(e){ m.textContent = '저장하지 못했어요: ' + (e.message || e); });
+  });
+})();
 document.getElementById('bleEnabled').addEventListener('change', function(){
   const on = this.checked, m = document.getElementById('bleMsg'); m.textContent = '저장 중...';
   rpc('setExtraSettings', [token, { bleRope: on ? true : null }]).then(function(){ m.textContent = on ? '켰어요. 메인 화면에 "스마트 줄넘기로 뛰기" 버튼이 보입니다' + (APP.settings && APP.settings.approvalOn ? ' (승인 절차 켜짐 — 선생님 확인 뒤 반영).' : '. 승인 절차가 꺼져 있으면 바로 반영되니, 설정 탭에서 승인 절차를 켜 두길 권해요.') : '껐어요.'; })
