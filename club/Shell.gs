@@ -1211,7 +1211,7 @@ function issueCameraToken(studentId, typeStr) {
   CacheService.getScriptCache().put('CAM_' + token, JSON.stringify({ sid: info.id, type: type }), CAMERA_TOKEN_TTL_SEC);
   const url = c.url + (c.url.indexOf('?') === -1 ? '?' : '&') +
     'app=' + encodeURIComponent(ScriptApp.getService().getUrl()) +
-    '&t=' + token + '&kind=' + encodeURIComponent(type) + '&sens=' + c.sens + '&target=rope';
+    '&t=' + token + '&kind=' + encodeURIComponent(type) + '&sens=' + c.sens + '&target=rope&club=1';   // 판정기도 '클럽' 글자로
   return { ok: true, url: url };
 }
 

@@ -106,6 +106,7 @@ s = must(s, "const BETA_URL = 'https://musicalpe.github.io/jumprope/beta/';", "c
 s = re.sub(r"const DEFAULT_COLLECTOR_URL = '[^']*';", "const DEFAULT_COLLECTOR_URL = '" + col + "';   // 클럽 리그 수집기 (학교 현황판과 따로)", s)
 s = must(s, "    const res = UrlFetchApp.fetch(natCollector_(),", "    const colUrl = natCollector_();\n    if (!colUrl) return { skipped: 'nocollector' };   // 클럽 리그 수집기가 아직 없음\n    const res = UrlFetchApp.fetch(colUrl,")
 s = must(s, " * 줄넘기 기록 관리 v2 — 학교 시트용 껍데기 (Shell.gs)\n", " * 줄넘기 기록 관리 v2 — 클럽용 껍데기 (스포츠클럽·태권도장 등)\n * 화면: musicalpe.github.io/jumprope/club · 전국 현황판: Jump Earth! 클럽 리그 (학교 현황판과 따로)\n")
+s = must(s, "'&t=' + token + '&kind=' + encodeURIComponent(type) + '&sens=' + c.sens + '&target=rope';", "'&t=' + token + '&kind=' + encodeURIComponent(type) + '&sens=' + c.sens + '&target=rope&club=1';   // 판정기도 '클럽' 글자로")
 s = words(s)
 write('Shell.gs', s)
 

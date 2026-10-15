@@ -2684,7 +2684,7 @@ loadTypes();
   // 점프 라이브: 점프 라이브용 껍데기(ping 이 live 를 알려 줌)를 설치한 클럽에만 보임
   // 점프 Live (Lite): 6판 껍데기(ping 이 lite 를 알려 줌)면 누구나 — 바깥 서버 없이 클럽 시트만으로
   if (APP.shell && APP.shell.lite) { const xb = document.getElementById('openLiteBtn'); if (xb) xb.addEventListener('click', function(){
-    const w = window.open(location.origin + '/jumpropelive/monitor.html?lite=1&s=' + encodeURIComponent(APP.shellUrl), '_blank');
+    const w = window.open(location.origin + '/jumpropelive/monitor.html?lite=1' + (APP.club ? '&club=1' : '') + '&s=' + encodeURIComponent(APP.shellUrl), '_blank');
     if (!w) document.getElementById('liteMsg').textContent = '새 창이 막혔어요. 주소창 오른쪽에서 팝업을 허용해 주세요.'; }); }
   else { const xc = document.getElementById('openLiteBtn'); if (xc) xc.closest('.card').remove(); }
   if (!(APP.shell && APP.shell.live)) { const fc = document.getElementById('liveFbCard'); if (fc) fc.remove(); }
