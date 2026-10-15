@@ -66,6 +66,7 @@ s = must(s, '<option value="담임">담임</option>', '<option value="관장">�
 s = must(s, '<option value="체육 교사">체육 교사</option>', '<option value="사범">사범</option>')
 s = must(s, "r.sel || '담임'", "r.sel || '관장'")
 s = s.replace('담임 / 체육 교사 / 직접 입력', '관장 / 사범 / 직접 입력')
+s = must(s, 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9yRYjUz81IYXISoq3ul3_ht-4h0/copy', 'https://docs.google.com/spreadsheets/d/1__vTZLMSWahHYGn47NL134NwAxSESJNJA5wZb6x2q2Y/copy')   # 클럽용 견본 시트
 s = must(s, "(APP.channel === 'beta' ? '../' : '') + 'img/journey-kid.webp", "'../img/journey-kid.webp")
 s = must(s, '<b class="jn">Jump Us!</b>줄넘기 기록', '<b class="jn">Jump Us!</b>클럽 줄넘기 기록')
 s = must(s, 'function ourLabel(list){\n', 'function ourLabel(list){\n  return \'우리 \' + unitWord(APP.unit);   // 클럽판: 반·학년이 섞여도 늘 "우리 클럽(도장·직접 입력)"\n')
