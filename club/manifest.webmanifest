@@ -1,0 +1,31 @@
+{
+  "id": "/jumprope/club/",
+  "name": "Jump Us! 점퍼스 클럽 · 줄넘기 기록",
+  "short_name": "점퍼스 클럽",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F3F5F8",
+  "theme_color": "#F26A3D",
+  "lang": "ko",
+  "description": "스포츠클럽·도장 줄넘기 기록 · 급수 인증 · 전국 클럽 리그",
+  "icons": [
+    {
+      "src": "../icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "../icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "../icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

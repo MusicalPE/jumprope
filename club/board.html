@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jump Earth! 클럽 리그 · 전국 줄넘기 현황판</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg viewBox="-6 6 132 88" width="96" height="64" xmlns="http://www.w3.org/2000/svg"%3E%3Cg transform="translate(60,50) rotate(-18)"%3E%3Cpath d="M-48.9,-4.8 A52 14 0 0 1 52,0" stroke="#F26A3D" stroke-width="5" fill="none" stroke-linecap="round"/%3E%3C/g%3E%3Cg transform="translate(60,50) scale(.75)"%3E%3Cdefs%3E%3CradialGradient id="ocf" cx="35%25" cy="30%25" r="80%25"%3E%3Cstop offset="0" stop-color="#6FD0F7"/%3E%3Cstop offset="1" stop-color="#0A78B8"/%3E%3C/radialGradient%3E%3CclipPath id="gcf"%3E%3Ccircle r="40"/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle r="40" fill="url(#ocf)"/%3E%3Cg clip-path="url(#gcf)" fill="#3CCB6A"%3E%3Cpath d="M-30,-22 C-22,-32 -6,-30 -4,-20 C-2,-12 -12,-10 -10,-2 C-8,6 -2,10 -6,18 C-10,26 -18,34 -22,28 C-26,20 -20,12 -26,4 C-32,-4 -38,-14 -30,-22Z"/%3E%3Cpath d="M6,-34 C16,-38 30,-30 36,-20 C40,-12 30,-10 26,-4 C22,2 28,10 22,18 C16,26 10,22 10,14 C10,6 2,4 4,-4 C6,-12 -2,-28 6,-34Z"/%3E%3Cpath d="M14,27 c6,-2 12,2 10,6 c-2,4 -10,4 -12,0 c-1,-3 0,-5 2,-6z"/%3E%3C/g%3E%3Cpath d="M-27,-21 A34 34 0 0 1 -7,-34" stroke="#fff" stroke-opacity=".55" stroke-width="4" fill="none" stroke-linecap="round"/%3E%3C/g%3E%3Cg transform="translate(60,50) rotate(-18)"%3E%3Cpath d="M52,0 A52 14 0 0 1 -48.9,4.8" stroke="#F26A3D" stroke-width="5" fill="none" stroke-linecap="round"/%3E%3Cpath d="M-50,-5.6 L-57,-13 M-50,5.6 L-57,13" stroke="#1F2937" stroke-width="6.5" stroke-linecap="round"/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    --bg: #F3F5F8; --surface: #FFFFFF; --ink: #1F2937; --ink-2: #374151; --muted: #6B7280; --faint: #9CA3AF;
+    --line: #E5E7EB; --line-2: #EEF0F3; --coral: #F26A3D; --coral-dark: #DC5B31; --coral-tint: #FFF1EC;
+    --coral-grad: linear-gradient(135deg, #F26A3D 0%, #FF8A65 100%);
+    --gold: #F59E0B; --silver: #94A3B8; --bronze: #B45309; --green: #16A34A; --green-tint: #DCFCE7;
+    --r-sm: 10px; --r-md: 14px; --r-lg: 18px;
+    --shadow: 0 1px 2px rgba(17,24,39,0.04), 0 4px 16px rgba(17,24,39,0.05);
+  }
+  * { box-sizing: border-box; }
+  /* 제목·숫자 글꼴: 영어는 도현(Do Hyeon), 한글·숫자는 주아(Jua), 나머지는 Pretendard (모두 OFL) */
+  @font-face { font-family: 'JE Latin'; src: url(../fonts/do-hyeon-latin.woff2) format('woff2'); font-display: swap; unicode-range: U+0041-005A, U+0061-007A; }
+  .jn { font-family: 'JE Latin', 'Jua', 'Pretendard', sans-serif; font-weight: 400; color: #F26A3D; font-size: 1.06em; margin-right: 4px; letter-spacing: .01em; }
+  h1, h2, h3, .hero-mid #heroSub, .hero-note, .hero-slogan, .kpi b, .kpi span, .card-head h2, .rank, .more-btn, .month-head h2, .podium h3, .pl .val, .hof span { font-family: 'JE Latin', 'Jua', 'Pretendard', sans-serif; font-weight: 400; }
+  .hero-mid #heroSub b, .hero-note b { font-weight: 400; }
+
+  body { font-family: 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background: var(--bg); margin: 0; color: var(--ink); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  .container { max-width: 980px; margin: 0 auto; padding: 22px 16px 70px; }
+  .mono { font-variant-numeric: tabular-nums; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .brand { font-weight: 800; font-size: 1.05em; color: var(--ink); text-decoration: none; }
+  .btn.btn-ic { display: inline-flex; align-items: center; gap: 6px; }
+  .btn-ic .app-ic { flex: none; }
+  .nb { gap: 9px; } .nb-mark { width: 36px; height: 36px; border-radius: 10px; flex: none; background: linear-gradient(135deg, #F26A3D 0%, #FF8A65 100%); box-shadow: 0 4px 10px rgba(242,106,61,.25); display: flex; align-items: center; justify-content: center; } .nb-word { font-weight: 800; font-size: 1.04em; color: var(--ink); } .nb .jn { font-size: 1.12em; margin-right: 0; }
+  .je-brand { display: inline-flex; align-items: center; gap: 6px; }
+  .je-brand .je-logo { flex: none; }
+  .nav { display: flex; gap: 8px; flex-wrap: wrap; }
+  @media (max-width: 560px) { /* nav-1row: 두 버튼을 한 줄로 */ .nav { width: 100%; flex-wrap: nowrap; gap: 6px; } .nav .btn { flex: 1 1 0; min-width: 0; justify-content: center; white-space: nowrap; padding: 8px 8px; font-size: .84em; } .nav .btn .jn { margin-right: 3px; } .nav .btn svg { flex: none; } }
+  @media (max-width: 380px) { .nav .btn svg { display: none; } }
+  .btn { display: inline-block; text-decoration: none; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 0.88em; cursor: pointer; font-family: inherit; }
+  .btn:hover, .btn.on { border-color: var(--coral); color: var(--coral-dark); background: var(--coral-tint); }
+  .hero { background: var(--coral-grad); color: #fff; border-radius: var(--r-lg); padding: 22px 24px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .hero h1 { margin: 0 0 4px; font-size: 1.55em; }
+  .hero p { margin: 0; opacity: .92; }
+  .hero-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .hero select { font: inherit; font-weight: 700; border: 0; border-radius: 999px; padding: 8px 14px; color: var(--ink); background: #fff; }
+  .hero-grid { display: grid; grid-template-columns: 32% minmax(0,1fr) auto; align-items: center; gap: 18px; }
+  .hero-logo { background: #fff; border-radius: var(--r-md); padding: 6px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.10); }
+  .hero-logo img { display: block; width: 100%; height: auto; }
+  .hero-mid { text-align: center; }
+  .hero-mid #heroSub { font-size: 1.3em; line-height: 1.7; opacity: 1; }
+  .hero-mid #heroSub b { font-size: 1.3em; font-weight: 800; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .hero-grid .hero-sels { flex-direction: column; align-items: flex-end; gap: 10px; }
+  .hero-grid .hero-sels select { width: 220px; max-width: 100%; }
+  @media (max-width: 640px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 12px; }
+    .hero-logo { max-width: 280px; margin: 0 auto; }
+    .hero-mid #heroSub { font-size: 1.15em; }
+    .hero-grid .hero-sels { flex-direction: row; justify-content: center; align-items: center; flex-wrap: wrap; }
+    .hero-grid .hero-sels select { width: auto; }
+  }
+  .hero-grid .hero-logo { grid-row: 1 / span 2; }
+  .hero-slogan { grid-column: 2 / -1; margin: 2px 0 0; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.5); text-align: center; font-size: 1em; font-weight: 800; letter-spacing: .22em; white-space: nowrap; opacity: 1; }
+  .hero-slogan span { opacity: .7; margin: 0 1.1em; font-weight: 500; letter-spacing: 0; }
+  @media (max-width: 640px) {
+    .hero-grid .hero-logo { grid-row: auto; }
+    .hero-slogan { grid-column: auto; font-size: .85em; letter-spacing: .06em; padding-top: 12px; }
+    .hero-slogan span { margin: 0 .45em; }
+  }
+  .hero-brand { display: flex; align-items: center; gap: 14px; }
+  .hero-brand .je-logo { flex: none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.12)); }
+  .hero h1 .ko { font-weight: 700; font-size: .78em; opacity: .92; }
+  .hero .kick { font-weight: 700; margin: 0 0 2px; opacity: 1; }
+  @media (max-width: 560px) { .hero-brand .je-logo { width: 66px; height: 44px; } }
+  .hero-sels { display: flex; gap: 8px; flex-wrap: wrap; }
+  /* 지구 대장정: 국토 대장정과 같은 그림 (무지개 줄넘기 줄 길 · 땅 모양 · 줄넘기 친구) */
+  .ej-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+  .ej-head h2 { margin: 2px 0 0; } .ej-head small { color: var(--muted); font-weight: 600; font-size: 0.7em; }
+  .ej-tag { font-size: 0.8em; color: var(--coral-dark); font-weight: 700; }
+  .ej-num { color: var(--ink-2); } .ej-num b { font-size: 1.3em; color: var(--ink); }
+  .ej-card { overflow: hidden; }
+  .ej-scene { position: relative; margin: 10px -20px 0; height: 232px; }
+  .ej-scene svg { display: block; position: absolute; inset: 0; overflow: hidden; }
+  .ej-kid { animation: ejHop .9s ease-in-out infinite; }
+  .ej-pin b, .ej-lbl { font-family: inherit; }
+  @keyframes ejHop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+  @keyframes ejShadow { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(.7); opacity: .6; } }
+  @media (prefers-reduced-motion: reduce) { .ej-kid { animation: none; } }
+  .run-live { display: inline-block; font-size: .72em; font-weight: 700; color: var(--coral-dark); background: #FFF1EA; border-radius: 999px; padding: 1px 7px; vertical-align: 1px; white-space: nowrap; }
+  .ej-msg { margin: 6px 0 0; font-size: 0.85em; color: #4B5E3A; } .ej-msg b { color: #2F3D22; }
+  .ej-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: .85em; color: #4B5E3A; }
+  .ej-foot a { color: var(--coral-dark); font-weight: 700; text-decoration: none; cursor: pointer; }
+  .ej-map { display: block; width: 100%; height: auto; border-radius: 12px; }
+  @media (max-width: 640px) { .ej-scene { height: 200px; } }
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: var(--surface); border-radius: var(--r-md); padding: 12px 14px; box-shadow: var(--shadow); }
+  .kpi span { color: var(--muted); font-size: 0.82em; font-weight: 700; }
+  .kpi b { display: block; font-size: 1.45em; }
+  .more-btn { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--coral-dark); border-radius: 999px; padding: 7px 14px; font: inherit; font-weight: 700; font-size: .88em; cursor: pointer; }
+  .fold-row, .more-row { text-align: center; }
+  tr.gap td { text-align: center; color: var(--muted); padding: 0 !important; line-height: 1.2; letter-spacing: .2em; border-bottom: 0 !important; }
+  .modal-tabs .pop-search { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; }
+  .modal-tabs .pop-search:focus { outline: none; border-color: var(--coral); }
+  .modal-tabs .pop-search { flex: 1 1 200px; width: auto; }
+  .modal-tabs .pop-mine.on::before { content: '✓ '; }
+  .pop-pages { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+  .rank.wide { width: auto; min-width: 26px; padding: 0 7px; border-radius: 999px; }
+  .pop-note { margin: 8px 0 0; }
+  .pop-pages:empty { display: none; }
+  .pop-empty { text-align: center; color: var(--ink-2); padding: 24px 0 8px; }
+  .more-btn:hover { border-color: var(--coral); background: var(--coral-tint); }
+  .modal-bg { position: fixed; inset: 0; background: rgba(17,24,39,.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .modal { background: var(--surface); border-radius: var(--r-lg); width: 100%; max-width: 680px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+  .modal-head h3 { margin: 0; font-size: 1.1em; }
+  .modal-head .hint { display: block; font-weight: 500; }
+  .modal-x { border: 0; background: var(--line-2); border-radius: 999px; width: 34px; height: 34px; font-size: 18px; line-height: 1; cursor: pointer; flex: none; }
+  .modal-tabs { display: flex; gap: 6px; padding: 10px 18px 0; flex-wrap: wrap; }
+  .modal-tabs button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font: inherit; font-weight: 700; font-size: .86em; cursor: pointer; color: var(--ink-2); }
+  .modal-tabs button.on { background: var(--coral); border-color: var(--coral); color: #fff; }
+  .modal-body { overflow: auto; padding: 8px 18px 18px; }
+  .modal-body table { width: 100%; border-collapse: collapse; font-size: .92em; }
+  .modal-body th, .modal-body td { padding: 8px 6px; border-bottom: 1px solid var(--line-2); text-align: left; }
+  .modal-body th { color: var(--muted); font-weight: 600; font-size: .9em; }
+  .modal-body .num { text-align: right; }
+  .modal-body tr.me td { background: var(--coral-tint); }
+  .card { background: var(--surface); border-radius: var(--r-lg); padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .card h2 { margin: 0 0 4px; font-size: 1.15em; }
+  .card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .seg { display: inline-flex; background: var(--bg); border-radius: 999px; padding: 3px; }
+  .seg button { border: 0; background: transparent; font: inherit; font-weight: 700; font-size: 0.86em; padding: 6px 12px; border-radius: 999px; color: var(--muted); cursor: pointer; }
+  .seg button.on { background: var(--surface); color: var(--coral-dark); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .hint { color: var(--muted); font-size: 0.85em; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; color: var(--muted); font-size: 0.8em; font-weight: 700; padding: 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 10px 8px; border-bottom: 1px solid var(--line-2); font-size: 0.93em; word-break: keep-all; }
+  th.num, td.num { text-align: right; white-space: nowrap; }
+  tr.school { cursor: pointer; }
+  tr.school:hover td { background: #FAFAFB; }
+  tr.me td { background: var(--coral-tint) !important; }
+  tr.detail td { background: #FAFAFB; padding: 4px 8px 14px; }
+  .rank { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 50%; font-weight: 800; background: var(--bg); color: var(--ink-2); font-size: 0.9em; }
+  .rank.r1 { background: var(--gold); color: #fff; } .rank.r2 { background: var(--silver); color: #fff; } .rank.r3 { background: var(--bronze); color: #fff; }
+  .sub { color: var(--faint); font-size: 0.8em; margin-left: 4px; }
+  .tag-me { display: inline-block; background: var(--coral); color: #fff; font-size: 0.72em; font-weight: 800; padding: 1px 7px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+  .anon { color: var(--muted); }
+  .mini { width: 100%; margin-top: 4px; }
+  .mini td, .mini th { padding: 6px 8px; font-size: 0.88em; }
+  .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+  .err { background: #FEF3C7; color: #92400E; border-radius: var(--r-sm); padding: 12px 14px; font-weight: 700; }
+  .loading { text-align: center; color: var(--muted); padding: 40px; }
+  .foot { text-align: center; color: var(--faint); font-size: 0.8em; margin-top: 24px; }
+  .hide-sm { }
+  @media (max-width: 640px) {
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hide-sm { display: none; }
+    .hero h1 { font-size: 1.3em; }
+    td, th { padding-left: 5px; padding-right: 5px; }
+    td { font-size: 0.88em; }
+    .tag-me { display: block; width: fit-content; margin: 2px 0 0; }
+    td.num .sub { display: block; margin-left: 0; }
+  }
+  /* 넓은 화면(PC·노트북·가로 태블릿): 두 칸 — 왼쪽 로고·지구 대장정·숫자, 오른쪽 순위들(클럽·학생·연속) */
+  @media (min-width: 1000px) {
+    .container { max-width: 1560px; }
+    .bw { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-rows: auto 1fr; column-gap: 18px; align-items: start; }
+    .bw > .hero { grid-column: 1; grid-row: 1; }
+    .bw > #body { display: contents; }
+    .bw-l { grid-column: 1; grid-row: 2; position: sticky; top: 16px; }   /* 오른쪽 순위를 내려 봐도 지구 대장정은 따라와요 */
+    .bw-r { grid-column: 2; grid-row: 1 / span 2; }
+    .bw > #body > .hint, .bw > #body > .loading, .bw > #body > .err { grid-column: 1 / -1; }
+    .bw .hero-mid #heroSub { word-break: keep-all; }
+    .bw .hero-grid { grid-template-columns: 34% minmax(0,1fr); row-gap: 12px; }
+    .bw .hero-grid .hero-logo { grid-row: 1 / span 3; }
+    .bw .hero-grid .hero-sels { grid-column: 2; justify-content: center; flex-direction: row; flex-wrap: wrap; gap: 8px; }
+    .bw .hero-grid .hero-sels select { width: auto; margin: 0; }
+    .bw .hero-slogan { grid-column: 2; letter-spacing: .12em; }
+    .bw .hero-slogan span { margin: 0 .6em; }
+  }
+  td.nm { white-space: nowrap; }   /* 이름·학년은 한 줄로 (좁은 화면에서는 클럽 칸이 줄바꿈) */
+  .sch { white-space: nowrap; } .sch-s { display: none; }
+  @media (max-width: 560px) { .sch-f { display: none; } .sch-s { display: inline; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="topbar">
+    <a class="brand je-brand nb" href="" title="새로 불러오기"><span class="nb-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 4 136 92" width="30" height="20" aria-hidden="true"><g transform="translate(60,50) rotate(-18)"><path d="M-48.9,-4.8 A52 14 0 0 1 52,0" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/></g><g transform="translate(60,50) scale(.75)"><defs><radialGradient id="nbOc" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#6FD0F7"/><stop offset="1" stop-color="#0A78B8"/></radialGradient><clipPath id="nbGc"><circle r="40"/></clipPath></defs><circle r="40" fill="url(#nbOc)"/><g clip-path="url(#nbGc)" fill="#3CCB6A"><path d="M-30,-22 C-22,-32 -6,-30 -4,-20 C-2,-12 -12,-10 -10,-2 C-8,6 -2,10 -6,18 C-10,26 -18,34 -22,28 C-26,20 -20,12 -26,4 C-32,-4 -38,-14 -30,-22Z"/><path d="M6,-34 C16,-38 30,-30 36,-20 C40,-12 30,-10 26,-4 C22,2 28,10 22,18 C16,26 10,22 10,14 C10,6 2,4 4,-4 C6,-12 -2,-28 6,-34Z"/><path d="M14,27 c6,-2 12,2 10,6 c-2,4 -10,4 -12,0 c-1,-3 0,-5 2,-6z"/></g><path d="M-27,-21 A34 34 0 0 1 -7,-34" stroke="#fff" stroke-opacity=".55" stroke-width="4" fill="none" stroke-linecap="round"/><circle r="40" fill="none" stroke="#fff" stroke-width="4"/></g><g transform="translate(60,50) rotate(-18)"><path d="M52,0 A52 14 0 0 1 -48.9,4.8" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M-50,-5.6 L-57,-13 M-50,5.6 L-57,13" stroke="#1F2937" stroke-width="6.5" stroke-linecap="round"/></g></svg></span><b class="jn">Jump Earth!</b><span class="nb-word">클럽 리그</span></a>
+    <nav class="nav">
+      <a class="btn btn-ic" id="hallLink" href="hall.html"><svg class="laurel" viewBox="0 -2 200 202" width="20" height="20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L 26.2 94.5 L 31.8 71.3 L 44.5 51.0 L 63.0 35.9" fill="none" stroke="#C9921A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 0 C 8.0 -5.7, 6.4 -15.2, 0 -19.0 C -6.4 -15.2, -8.0 -5.7, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(53.9,157.9) rotate(-98.7)"/><path d="M0 0 C 7.2 -5.1, 5.7 -13.7, 0 -17.1 C -5.7 -13.7, -7.2 -5.1, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(53.9,157.9) rotate(-22.7)"/><path d="M0 0 C 7.6 -5.4, 6.0 -14.4, 0 -18.0 C -6.0 -14.4, -7.6 -5.4, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(37.8,140.1) rotate(-80.1)"/><path d="M0 0 C 6.8 -4.9, 5.4 -13.0, 0 -16.2 C -5.4 -13.0, -6.8 -4.9, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(37.8,140.1) rotate(-4.1)"/><path d="M0 0 C 7.1 -5.1, 5.7 -13.6, 0 -17.0 C -5.7 -13.6, -7.1 -5.1, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(28.3,118.3) rotate(-61.6)"/><path d="M0 0 C 6.4 -4.6, 5.1 -12.2, 0 -15.3 C -5.1 -12.2, -6.4 -4.6, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(28.3,118.3) rotate(14.4)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(26.2,94.5) rotate(-43.0)"/><path d="M0 0 C 6.0 -4.3, 4.8 -11.5, 0 -14.4 C -4.8 -11.5, -6.0 -4.3, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(26.2,94.5) rotate(33.0)"/><path d="M0 0 C 6.3 -4.5, 5.0 -12.0, 0 -15.0 C -5.0 -12.0, -6.3 -4.5, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(31.8,71.3) rotate(-24.4)"/><path d="M0 0 C 5.7 -4.0, 4.5 -10.8, 0 -13.5 C -4.5 -10.8, -5.7 -4.0, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(31.8,71.3) rotate(51.6)"/><path d="M0 0 C 5.9 -4.2, 4.7 -11.2, 0 -14.0 C -4.7 -11.2, -5.9 -4.2, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(44.5,51.0) rotate(-5.9)"/><path d="M0 0 C 5.3 -3.8, 4.2 -10.1, 0 -12.6 C -4.2 -10.1, -5.3 -3.8, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(44.5,51.0) rotate(70.1)"/><path d="M0 0 C 5.5 -3.9, 4.4 -10.4, 0 -13.0 C -4.4 -10.4, -5.5 -3.9, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(12.7)"/><path d="M0 0 C 4.9 -3.5, 3.9 -9.4, 0 -11.7 C -3.9 -9.4, -4.9 -3.5, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(88.7)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(50.7)"/><path d="M 125.3 169.5 L 146.1 157.9 L 162.2 140.1 L 171.7 118.3 L 173.8 94.5 L 168.2 71.3 L 155.5 51.0 L 137.0 35.9" fill="none" stroke="#C9921A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 0 C 8.0 -5.7, 6.4 -15.2, 0 -19.0 C -6.4 -15.2, -8.0 -5.7, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(146.1,157.9) rotate(22.7)"/><path d="M0 0 C 7.2 -5.1, 5.7 -13.7, 0 -17.1 C -5.7 -13.7, -7.2 -5.1, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(146.1,157.9) rotate(98.7)"/><path d="M0 0 C 7.6 -5.4, 6.0 -14.4, 0 -18.0 C -6.0 -14.4, -7.6 -5.4, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(162.2,140.1) rotate(4.1)"/><path d="M0 0 C 6.8 -4.9, 5.4 -13.0, 0 -16.2 C -5.4 -13.0, -6.8 -4.9, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(162.2,140.1) rotate(80.1)"/><path d="M0 0 C 7.1 -5.1, 5.7 -13.6, 0 -17.0 C -5.7 -13.6, -7.1 -5.1, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(171.7,118.3) rotate(-14.4)"/><path d="M0 0 C 6.4 -4.6, 5.1 -12.2, 0 -15.3 C -5.1 -12.2, -6.4 -4.6, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(171.7,118.3) rotate(61.6)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(173.8,94.5) rotate(-33.0)"/><path d="M0 0 C 6.0 -4.3, 4.8 -11.5, 0 -14.4 C -4.8 -11.5, -6.0 -4.3, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(173.8,94.5) rotate(43.0)"/><path d="M0 0 C 6.3 -4.5, 5.0 -12.0, 0 -15.0 C -5.0 -12.0, -6.3 -4.5, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(168.2,71.3) rotate(-51.6)"/><path d="M0 0 C 5.7 -4.0, 4.5 -10.8, 0 -13.5 C -4.5 -10.8, -5.7 -4.0, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(168.2,71.3) rotate(24.4)"/><path d="M0 0 C 5.9 -4.2, 4.7 -11.2, 0 -14.0 C -4.7 -11.2, -5.9 -4.2, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(155.5,51.0) rotate(-70.1)"/><path d="M0 0 C 5.3 -3.8, 4.2 -10.1, 0 -12.6 C -4.2 -10.1, -5.3 -3.8, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(155.5,51.0) rotate(5.9)"/><path d="M0 0 C 5.5 -3.9, 4.4 -10.4, 0 -13.0 C -4.4 -10.4, -5.5 -3.9, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-88.7)"/><path d="M0 0 C 4.9 -3.5, 3.9 -9.4, 0 -11.7 C -3.9 -9.4, -4.9 -3.5, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-12.7)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="#FFE9A8" stroke="#C9921A" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-50.7)"/><polygon points="100.0,54.0 111.6,82.0 141.8,84.4 118.8,104.1 125.9,133.6 100.0,117.8 74.1,133.6 81.2,104.1 58.2,84.4 88.4,82.0 " fill="#F6C445"/><path d="M60 176 C 80 160, 120 160, 140 176" fill="none" stroke="#F26A3D" stroke-width="5" stroke-linecap="round"/><g stroke="#C9921A" stroke-width="8" stroke-linecap="round"><path d="M60 176 L48 186"/><path d="M140 176 L152 186"/></g></svg><b class="jn">Jumpers!</b>기록실</a>
+      <a class="btn btn-ic" id="homeLink" href="./"><svg class="app-ic" viewBox="0 0 100 100" width="18" height="18" aria-hidden="true"><rect width="100" height="100" rx="26" fill="#F26A3D"/><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" transform="translate(5,4) scale(.9)"><path d="M33 60 C 22 6, 78 6, 67 60" stroke-width="6"/><circle cx="50" cy="31" r="6.5" stroke-width="6"/><path d="M50 38 L50 59" stroke-width="6.5"/><path d="M50 45 L39 55 L33 60 M50 45 L61 55 L67 60" stroke-width="6"/><path d="M50 59 L44 66 L46 75 M50 59 L56 66 L54 75" stroke-width="6"/><path d="M34 84 L66 84" stroke-width="5.5"/></g></svg><b class="jn">Jump Us!</b>우리 클럽</a>
+    </nav>
+  </header>
+
+  <div class="bw">
+  <div class="hero">
+    <div class="hero-grid">
+      <div class="hero-logo"><img src="../img/jump-earth-logo.webp" width="1100" height="824" alt="Jump Earth 점퍼스 · 전국 줄넘기 현황판"></div>
+      <div class="hero-mid">
+        <h1 class="sr-only">Jump Earth! 클럽 리그 · 전국 줄넘기 현황판</h1>
+        <p id="heroSub">매달 1일에 새로 시작해요</p>
+      </div>
+      <div class="hero-sels"><select id="gradeSel" aria-label="학년 고르기"><option value="">전체 학년</option></select><select id="monthSel" aria-label="달 고르기"></select></div>
+      <p class="hero-slogan">Jump Earth!<span>·</span>Jump Us!<span>·</span>Jumpers!</p>
+    </div>
+  </div>
+
+  <div id="body"><div class="loading">현황판을 불러오는 중…</div></div>
+  </div>
+  <p class="foot">학생 이름은 가려서 보여 줍니다 (예: 김*늘) · 클럽 이름은 클럽이 공개를 켠 경우에만 보여요<br>Made by <b>음악적체육인</b></p>
+</div>
+
+<script>
+// 학생 순위표의 클럽 이름은 짧게 (전주송원초등학교 → 전주송원초) — 클럽 순위표는 정식 이름 그대로
+// 지역 두 글자와 클럽 이름 사이는 띄어 씀 (전주송원초등학교 → 전주 송원초등학교). 지역이 안 붙은 이름(송원초등학교)은 그대로
+function schName(v){ const t = String(v == null ? '' : v).trim(); const m = /^([가-힣]{2})([가-힣]+?)(초등학교|초|중학교|중)$/.exec(t); return m && t.indexOf(' ') < 0 ? m[1] + ' ' + m[2] + m[3] : t; }
+function shortSch(v){ return schName(v).replace(/초등학교$/, '초'); }
+// 클럽 순위표: 넓은 화면은 정식 이름, 휴대폰은 짧은 이름 — 둘 다 한 줄로
+function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }; const f = schName(v), sh = shortSch(v); return f === sh ? '<span class="sch">' + esc(f) + '</span>' : '<span class="sch sch-f">' + esc(f) + '</span><span class="sch sch-s">' + esc(sh) + '</span>'; }
+
+(function(){
+  const q = {}; new URLSearchParams(location.search).forEach(function(v, k){ q[k] = v; });
+  let me = q.me || '';   // 같은 클럽 여러 반 시트를 한 클럽으로 합치면 수집기가 알려 주는 대표 번호로 바꿈
+  let collector = '', data = null, sortBy = 'total', openPid = me, grade = q.grade || '';
+  const folds = {};   // 클럽 순위를 10등까지 펼쳤는지 (sch)
+  const FOLD = 5;     // 클럽 순위·클럽 안 순위는 5등까지 먼저
+  const EARTH_M = 40075000;   // 지구 둘레 40,075km, 줄넘기 1회 = 1m
+  const $ = function(id){ return document.getElementById(id); };
+  const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  const n = function(v){ return (Number(v) || 0).toLocaleString('ko-KR'); };
+  // ===== 지구 대장정: 인천항에서 배 타고 출발해 서쪽으로 지구를 돌아 부산항으로 (1회 = 1m) =====
+  // [도시, 위도, 경도, 앞 도시에서 배로 오는가, 앞 구간 땅 모양(s 바다·p 들판·g 초원·d 사막·m 설산·h 언덕·j 밀림·v 사바나), 늘 이름 보이기, 표지(pyr 피라미드·isle 섬)]
+  const EJ = [['인천항', 37.45, 126.6, 0, '', 1], ['칭다오', 36.07, 120.38, 1, 's'], ['베이징', 39.9, 116.4, 0, 'p'], ['울란바토르', 47.92, 106.92, 0, 'g'],
+    ['우루무치', 43.83, 87.62, 0, 'd'], ['알마티', 43.24, 76.89, 0, 'm'], ['타슈켄트', 41.3, 69.24, 0, 'g'], ['테헤란', 35.69, 51.39, 0, 'd'],
+    ['카이로', 30.04, 31.24, 0, 'd', 1, 'pyr'], ['이스탄불', 41.01, 28.98, 1, 's'], ['로마', 41.9, 12.5, 0, 'h'], ['파리', 48.86, 2.35, 0, 'h', 1], ['마드리드', 40.42, -3.7, 0, 'h'],
+    ['탕헤르', 35.77, -5.8, 1, 's'], ['다카르', 14.69, -17.44, 0, 'd'], ['라고스', 6.52, 3.38, 0, 'j'], ['킨샤사', -4.44, 15.27, 0, 'j'], ['케이프타운', -33.92, 18.42, 0, 'v', 1],
+    ['부에노스아이레스', -34.6, -58.38, 1, 's'], ['산티아고', -33.45, -70.67, 0, 'm'], ['리마', -12.05, -77.04, 0, 'd'], ['보고타', 4.71, -74.07, 0, 'm'],
+    ['멕시코시티', 19.43, -99.13, 0, 'j', 1], ['로스앤젤레스', 34.05, -118.24, 0, 'd'], ['호놀룰루', 21.31, -157.86, 1, 's', 1, 'isle'], ['도쿄', 35.68, 139.69, 1, 's'], ['부산항', 35.1, 129.04, 1, 's', 1]];
+  const EJ_KM = (function(){ let km = 0; const r = Math.PI / 180; return EJ.map(function(c, i){ if (i) { const a = EJ[i - 1], dLa = (c[1] - a[1]) * r, dLo = (c[2] - a[2]) * r;
+    const h = Math.sin(dLa / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(c[1] * r) * Math.sin(dLo / 2) ** 2; km += Math.round(2 * 6371 * Math.asin(Math.sqrt(h))); } return km; }); })();
+  const EJ_GOAL = EJ_KM[EJ_KM.length - 1] * 1000;   // 한 바퀴 = 이만큼 회
+  const EJ_IMG = '../img/';
+  function earthHTML(t, title, prev){
+    const laps = Math.floor(t / EJ_GOAL), cur = t - laps * EJ_GOAL, goalKm = EJ_KM[EJ_KM.length - 1];
+    let ai = 0; EJ.forEach(function(c, i){ if (cur >= EJ_KM[i] * 1000) ai = i; });
+    const ni = Math.min(EJ.length - 1, ai + 1), onSea = !!(EJ[ni][3] && cur < EJ_KM[ni] * 1000);
+    ejState = { cur: cur, ai: ai, onSea: onSea };
+    const km = function(v){ return (v / 1000).toLocaleString('ko-KR', { maximumFractionDigits: v >= 10000000 ? 0 : 1 }); };
+    return '<div class="card ej-card"><div class="ej-head"><div><span class="ej-tag">' + esc(title) + '</span><h2>지구 대장정 <small>인천항 출발 · 부산항 도착 · 약 ' + goalKm.toLocaleString('ko-KR') + 'km</small></h2></div>' +
+      '<div class="ej-num"><b class="mono">' + km(cur) + 'km</b> 왔어요' + (laps ? ' · <b>' + laps + '번</b> 완주!' : '') + '</div></div>' +
+      '<div class="ej-scene" id="ejScene"></div>' +
+      '<p class="ej-msg">지금 <b>' + EJ[ai][0] + '</b> ' + (onSea ? '앞바다에서 배를 타고 가는 중' : '지나는 중') + ' · 다음 <b>' + EJ[ni][0] + '</b>까지 <b class="mono">' + n(Math.max(0, EJ_KM[ni] * 1000 - cur)) + '회</b> 남았어요</p>' +
+      '<div class="ej-foot"><span>참여한 모든 클럽이 뛴 줄넘기 <b class="mono">' + n(t) + '회</b> · 1회 = 1m</span><a id="ejMapBtn">🗺️ 코스 지도 보기</a></div>' +
+      (prev ? '<div class="ej-foot" style="margin-top:4px">' + prev + '</div>' : '') + '</div>';
+  }
+  // 지구 대장정 그림: 지구본 윗부분을 낮고 길게 잘라 낸 모양, 길은 지평선을 따라 (코스는 '코스 지도 보기'에서 실제 지도로)
+  let ejState = null;
+  const EJ_C = {
+    asia: [[-110,0],[-60,-8],[0,-12],[60,-10],[100,-4],[112,10],[100,18],[92,30],[98,34],[88,40],[76,36],[70,48],[62,62],[54,58],[52,46],[40,44],[30,56],[22,66],[16,60],[10,44],[0,40],[-12,40],[-20,56],[-28,68],[-36,54],[-40,40],[-56,34],[-70,40],[-80,30],[-96,24],[-110,14]],
+    euro: [[-55,10],[-50,-6],[-40,-14],[-30,-30],[-20,-36],[-10,-28],[-14,-14],[0,-10],[20,-14],[40,-10],[58,-4],[60,10],[50,20],[56,34],[44,40],[30,28],[20,22],[14,30],[6,18],[-2,22],[-10,14],[-22,16],[-30,22],[-44,24],[-52,20]],
+    afr: [[-40,0],[-10,-4],[20,-2],[36,4],[44,20],[56,30],[50,40],[40,52],[36,70],[26,88],[14,104],[4,108],[-2,96],[-8,76],[-12,58],[-18,48],[-34,44],[-50,38],[-56,24],[-52,10]],
+    sam: [[-30,0],[-10,-4],[10,2],[30,12],[46,24],[40,40],[28,54],[16,70],[4,88],[-4,104],[-8,112],[-12,100],[-14,80],[-18,60],[-26,42],[-36,28],[-40,12]],
+    nam: [[-90,0],[-70,-14],[-40,-20],[-10,-18],[10,-24],[40,-22],[70,-12],[84,0],[76,12],[62,16],[58,30],[46,44],[32,52],[20,60],[28,70],[40,80],[46,90],[38,90],[24,82],[10,72],[0,62],[-10,56],[-22,46],[-34,34],[-50,26],[-66,20],[-80,18],[-92,10]],
+    grn: [[-14,-6],[0,-14],[16,-10],[18,4],[6,14],[-8,10]],
+    aus: [[-40,0],[-20,-10],[0,-6],[10,-16],[24,-6],[40,4],[42,24],[30,36],[10,38],[-10,32],[-28,34],[-42,20]],
+    jpn: [[-10,12],[-2,6],[6,-2],[12,-12],[18,-16],[16,-8],[10,2],[2,10],[-6,18]],
+    mad: [[-3,-8],[3,-8],[4,6],[-2,10],[-4,2]]
+  };
+  // [모양, 1200 폭 기준 x, 가장자리에서 아래로, 가로·세로 크기]
+  const EJ_PLACE = [['asia',150,28,.85,.9],['euro',300,26,.85,.85],['afr',462,22,1.55,1],['mad',548,98,1,1],['sam',745,24,1.15,1],['nam',875,30,.72,.85],['grn',958,22,.9,.9],['aus',1030,92,.9,.9],['jpn',1100,26,1.2,1.2]];
+  function ejSmooth(p){ const L = p.length, m = function(i){ const A = p[i % L], B = p[(i + 1) % L]; return [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2]; };
+    let d = 'M' + m(0).join(' '); for (let i = 1; i <= L; i++) { const q = p[i % L], e = m(i); d += 'Q' + q[0] + ' ' + q[1] + ' ' + e[0] + ' ' + e[1]; } return d + 'Z'; }
+  function ejDraw(){
+    const el = $('ejScene'); if (!el || !ejState) return;
+    const W = el.clientWidth, H = el.clientHeight, narrow = W < 640, k = H / 232, kx = W / 1200;
+    const cx = W / 2, rx = W * (narrow ? 0.95 : 0.6833), cy = 473 * k, ry = 403 * k, tr = 24 * k;
+    const X0 = narrow ? 30 : 70 * Math.max(kx, .6), X1 = W - X0, goalKm = EJ_KM[EJ_KM.length - 1];
+    const yAt = function(x, o){ return cy - (ry - o) * Math.sqrt(Math.max(0, 1 - Math.pow((x - cx) / (rx - o), 2))); };
+    const xOf = function(km){ return X0 + (X1 - X0) * km / goalKm; };
+    const xMap = function(x){ return X0 + (X1 - X0) * (x - 70) / 1060; };
+    const arc = function(xa, xb, o){ let d = ''; for (let x = xa; x < xb; x += 6) d += (d ? 'L' : 'M') + x.toFixed(1) + ' ' + yAt(x, o).toFixed(1); return d + (d ? 'L' : 'M') + xb.toFixed(1) + ' ' + yAt(xb, o).toFixed(1); };
+    const cur = ejState.cur, ai = ejState.ai, curKm = cur / 1000, xc = xOf(curKm);
+    let land = '';
+    EJ_PLACE.forEach(function(p){ const x = xMap(p[1]), y = yAt(x, 0) + p[2] * k, ang = Math.atan2(yAt(x + 1, 0) - yAt(x - 1, 0), 2) * 180 / Math.PI, sx = p[3] * (narrow ? kx * 1.3 : kx), sy = p[4] * k * (narrow ? .8 : 1);
+      land += '<path d="' + ejSmooth(EJ_C[p[0]]) + '" transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + ang.toFixed(1) + ') scale(' + sx.toFixed(3) + ' ' + sy.toFixed(3) + ')" fill="#62B86A" stroke="#4E9F5A" stroke-width="1.5" vector-effect="non-scaling-stroke" opacity=".88"/>'; });
+    const hx = xOf(EJ_KM[24]) - 14 * kx; [[0, 0, 4], [9, 4, 3], [16, 9, 2.5]].forEach(function(h){ const x = hx + h[0] * kx; land += '<circle cx="' + x.toFixed(1) + '" cy="' + (yAt(x, 0) + (52 + h[1]) * k).toFixed(1) + '" r="' + h[2] + '" fill="#62B86A"/>'; });
+    let grid = ''; [-.75, -.5, -.25, 0, .25, .5, .75].forEach(function(f){ grid += '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + (Math.abs(f) * rx || 1) + '" ry="' + ry + '" fill="none" stroke="#fff" stroke-opacity=".13" stroke-width="1.2"/>'; });
+    [60, 130, 210].forEach(function(o){ grid += '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + (rx - o * .6 * kx) + '" ry="' + (ry - o * k) + '" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="1.2"/>'; });
+    const fs = narrow ? 12 : 14;
+    let pins = '', lbls = '';
+    EJ.forEach(function(c, i){ const x = xOf(EJ_KM[i]), y = yAt(x, tr), on = cur >= EJ_KM[i] * 1000, big = c[5];
+      const show = narrow ? (i === 0 || i === EJ.length - 1 || i === ai) : (big || (i === ai && EJ.every(function(d, j){ return !d[5] || j === i || Math.abs(EJ_KM[j] - EJ_KM[i]) > goalKm * 0.05; })));
+      if (narrow && !big && i !== ai) return;   // 휴대폰: 큰 도시와 지금 도시만
+      pins += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (narrow ? (big ? 5 : 4) : (big ? 6 : 4)) + '" fill="' + (on ? '#F26A3D' : '#fff') + '" stroke="' + (on ? '#fff' : '#1F6FB5') + '" stroke-width="2"><title>' + c[0] + ' · ' + EJ_KM[i].toLocaleString('ko-KR') + 'km</title></circle>';
+      if (show) lbls += '<text class="ej-lbl" x="' + Math.min(W - 26, Math.max(26, x)).toFixed(1) + '" y="' + (y + 24).toFixed(1) + '" text-anchor="middle" font-size="' + fs + '" font-weight="800" fill="#fff" stroke="#14507F" stroke-width="3" paint-order="stroke">' + c[0] + '</text>'; });
+    const ky = yAt(xc, tr), kw = narrow ? 46 : 56, kh = kw * 72 / 56;
+    const boat = ejState.onSea ? '<path d="M' + (xc - kw * .45) + ' ' + (ky - 4) + ' H' + (xc + kw * .45) + ' L' + (xc + kw * .32) + ' ' + (ky + 4) + ' H' + (xc - kw * .32) + ' Z" fill="#B45309" stroke="#7C2D12" stroke-width="1.2"/>' : '';
+    el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><defs>' +
+      '<linearGradient id="ejSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EAF4FF"/></linearGradient>' +
+      '<linearGradient id="ejSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4FB4F0"/><stop offset=".45" stop-color="#2E86D1"/><stop offset="1" stop-color="#1D5FA3"/></linearGradient>' +
+      '<radialGradient id="ejShine" cx=".5" cy=".18" r=".45"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
+      '<filter id="ejGlow" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>' +
+      '<clipPath id="ejEarth"><ellipse cx="' + cx + '" cy="' + cy + '" rx="' + rx + '" ry="' + ry + '"/></clipPath></defs>' +
+      '<rect width="' + W + '" height="' + H + '" fill="url(#ejSky)"/>' +
+      '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + (rx + 6) + '" ry="' + (ry + 6) + '" fill="none" stroke="#9ED6FF" stroke-width="18" filter="url(#ejGlow)" opacity=".9"/>' +
+      '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + rx + '" ry="' + ry + '" fill="url(#ejSea)"/>' +
+      '<g clip-path="url(#ejEarth)">' + grid + land + '<rect width="' + W + '" height="' + H + '" fill="url(#ejShine)"/></g>' +
+      '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + rx + '" ry="' + ry + '" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2"/>' +
+      '<path d="' + arc(X0, X1, tr) + '" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="5" stroke-dasharray="2 9" stroke-linecap="round"/>' +
+      (xc > X0 + .5 ? '<path d="' + arc(X0, xc, tr) + '" fill="none" stroke="#F26A3D" stroke-width="6" stroke-linecap="round"/>' : '') +
+      pins + lbls + boat +
+      '<g class="ej-kid"><image href="' + EJ_IMG + 'journey-kid.webp" x="' + (xc - kw / 2).toFixed(1) + '" y="' + (ky - kh - (ejState.onSea ? 4 : 2)).toFixed(1) + '" width="' + kw + '" height="' + kh.toFixed(1) + '"/></g></svg>';
+  }
+  let ejRT = 0; window.addEventListener('resize', function(){ clearTimeout(ejRT); ejRT = setTimeout(ejDraw, 120); });
+  function showEarthMap(){
+    const bg = document.createElement('div'); bg.className = 'modal-bg';
+    bg.innerHTML = '<div class="modal" style="max-width:1000px"><div class="modal-head"><h3>지구 대장정 코스</h3><button class="modal-x" type="button" aria-label="닫기">×</button></div><div class="modal-body"><img class="ej-map" src="' + EJ_IMG + 'earth-route.webp" alt="지구 대장정 코스 지도"></div></div>';
+    document.body.appendChild(bg);
+    const close = function(){ bg.remove(); };
+    bg.addEventListener('click', function(e){ if (e.target === bg || e.target.classList.contains('modal-x')) close(); });
+  }
+  const mLabel = function(m){ return Number(m.slice(0, 4)) + '년 ' + Number(m.slice(5, 7)) + '월'; };
+  const rankHtml = function(r){ return r ? '<span class="rank r' + r + '">' + r + '</span>' : '<span class="rank">–</span>'; };
+  /* 50등까지 보기 팝업 */
+  function openModal(title, sub, bodyHtml, tabs){
+    closeModal();
+    const bg = document.createElement('div'); bg.className = 'modal-bg'; bg.id = 'rankModal';
+    bg.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h3>' + title + (sub ? '<span class="hint">' + sub + '</span>' : '') + '</h3><button type="button" class="modal-x" aria-label="닫기">×</button></div>' +
+      (tabs ? '<div class="modal-tabs">' + tabs + '</div>' : '') + '<div class="modal-body">' + bodyHtml + '</div></div>';
+    bg.addEventListener('click', function(e){ if (e.target === bg || e.target.closest('.modal-x')) closeModal(); });
+    document.addEventListener('keydown', escClose);
+    document.body.appendChild(bg); document.body.style.overflow = 'hidden';
+    return bg;
+  }
+  function escClose(e){ if (e.key === 'Escape') closeModal(); }
+  function closeModal(){ const m = document.getElementById('rankModal'); if (m) m.remove(); document.body.style.overflow = ''; document.removeEventListener('keydown', escClose); }
+  const kst = function(){ return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }); };
+
+  // 우리 클럽 프로그램으로 돌아가는 링크 (이 기기에서 쓰던 클럽)
+  try { const s = localStorage.getItem('jrc_shell'); if (s) $('homeLink').href = './?s=' + encodeURIComponent(s); } catch (e) {}
+  if (me) $('hallLink').href = 'hall.html?me=' + encodeURIComponent(me);
+
+  function load(month){
+    $('body').innerHTML = '<div class="loading">현황판을 불러오는 중…</div>';
+    fetch(collector + '?api=board' + (month ? '&month=' + encodeURIComponent(month) : '') + (grade ? '&grade=' + encodeURIComponent(grade) : ''), { cache: 'no-store' })
+      .then(function(r){ if (!r.ok) throw new Error('응답 오류 ' + r.status); return r.json(); })
+      .then(function(j){ if (!j.ok) throw new Error(j.error || '불러오기 실패'); data = j.result; if (data.alias && data.alias[me]) me = data.alias[me]; draw(); })
+      .catch(function(err){ $('body').innerHTML = '<div class="err">현황판을 불러오지 못했어요: ' + esc(err.message || err) + '</div>'; });
+  }
+
+  function heroSub(){
+    if (data.month === data.current) {
+      const t = kst(), y = Number(t.slice(0, 4)), m = Number(t.slice(5, 7)), d = Number(t.slice(8, 10));
+      const last = new Date(y, m, 0).getDate();
+      return '이번 달 ' + d + '일째 · ' + (last - d === 0 ? '오늘이 마지막 날!' : '마감까지 ' + (last - d) + '일') + ' | 다음 달 1일에 새로 시작해요';
+    }
+    return mLabel(data.month) + ' 최종 기록 | 1~3등은 Jumpers! 기록실에 남아 있어요';
+  }
+
+  const SHOW_STU = 10;   // 현황판에 바로 보이는 학생 수 (나머지는 팝업으로 10명씩 50등까지)
+  const SCH_MAX = 10;    // 클럽 순위는 5등까지 먼저, 더보기로 10등까지 (우리 클럽은 그 아래 늘 따로)
+  const PER = 10;        // 팝업 한 쪽에 보이는 수
+  // 같은 값이면 같은 등수
+  function ranked(list, field){
+    let r = 0;
+    return list.map(function(x, i){ r = (i > 0 && list[i - 1][field] === x[field]) ? r : i + 1; return Object.assign({ _r: x.rank && typeof x.rank === 'number' ? x.rank : r }, x); });
+  }
+  const gradeSub = function(x){ return x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : ''; };
+  const STU_HEAD = '<tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">횟수</th><th class="num hide-sm">📷</th></tr>';
+  const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
+  const RUN_HEAD = '<tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">연속</th><th class="num hide-sm">횟수</th></tr>';
+  const runRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>'; };
+  const IN_HEAD = '<tr><th>클럽 안 순위</th><th>이름</th><th class="num">횟수</th><th class="num">전국</th><th class="num hide-sm">뛴 날</th><th class="num hide-sm">📷</th></tr>';
+  const inRow = function(x){ return '<tr><td>' + rankHtml(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + (x.nr ? n(x.nr) + '등' : '–') + '</td><td class="num mono hide-sm">' + x.days + '일</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
+  // 등수 칸: 50등 밖(전국 1,030등 등)도 숫자로
+  const rankCell = function(r){ return r > 99 ? '<span class="rank wide">' + n(r) + '</span>' : rankHtml(r); };
+  const SHOW_BEST = 5;   // 왼쪽 칸이라 5등까지만 바로 보이고 나머지는 팝업
+  const BEST_HEAD = '<tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">최고 연속</th></tr>';
+  const bestRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + n(x.best) + '회</b></td></tr>'; };
+  const table = function(head, rows, row, cls){ return '<table' + (cls ? ' class="' + cls + '"' : '') + '><thead>' + head + '</thead><tbody>' + rows.map(row).join('') + '</tbody></table>'; };
+
+  // 이름 찾기: 이름은 가운데가 * 로 가려져 있어서, 찾는 이름도 똑같이 가려서 맞춰 봐요 (김하늘 → 김*늘)
+  function matcher(qv){
+    const q = String(qv || '').replace(/\s+/g, '');
+    if (!q) return null;
+    if (q.indexOf('*') >= 0) { const re = new RegExp('^' + q.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.') + '$'); return function(x){ return re.test(x.n) || String(x.school || '').indexOf(q.replace(/\*/g, '')) >= 0 && q.replace(/\*/g, '').length > 1; }; }
+    // 앞에서부터 한 글자씩: 가려진 * 자리는 어떤 글자든 맞는 걸로 (강 → 강민 → 강민호 모두 '강*호'를 찾아요)
+    const qc = Array.from(q);
+    const nameOk = function(nm){ const c = Array.from(String(nm)); return qc.length <= c.length && qc.every(function(ch, i){ return c[i] === '*' || c[i] === ch; }); };
+    return function(x){ return nameOk(x.n) || String(x.n).indexOf(q) >= 0 || (q.length > 1 && String(x.school || '').replace(/\s+/g, '').indexOf(q) >= 0); };
+  }
+  // 순위 팝업: 10명씩 쪽 나누기 + 이름(클럽) 찾기
+  function rankPopup(o){
+    const bg = openModal(o.title, o.sub, '<div class="pop-list"></div>', '<input type="search" class="pop-search" placeholder="' + (o.school ? '이름 찾기 (예: 김하늘)' : '이름이나 클럽 찾기 (예: 김하늘)') + '" aria-label="찾기">' + (o.mine ? '<button type="button" class="pop-mine">우리 클럽만</button>' : '') + '<div class="pop-pages"></div>');
+    const list = bg.querySelector('.pop-list'), inp = bg.querySelector('.pop-search'), pg = bg.querySelector('.pop-pages'), mineBtn = bg.querySelector('.pop-mine');
+    let mineOnly = false, page = 0;
+    const render = function(){
+      const m = matcher(inp.value);
+      let base = o.rows, note = '';
+      if (mineOnly) {
+        const mr = o.mine();   // 우리 클럽 학생 전체 + 전국 등수 (수집기 12판), 예전 수집기면 50등 안에서만
+        if (!mr) { pg.innerHTML = ''; list.innerHTML = '<p class="pop-empty">우리 클럽 순위를 불러오는 중이에요. 잠시 뒤 다시 눌러 주세요.</p>'; return; }
+        base = mr.rows; note = mr.note || '';
+      }
+      const pages = Math.ceil(base.length / PER);
+      if (page >= pages) page = 0;
+      let show;
+      if (m) { show = base.filter(m); pg.innerHTML = ''; }
+      else {
+        show = base.slice(page * PER, (page + 1) * PER);
+        pg.innerHTML = pages > 1 ? Array.from({ length: pages }, function(_, p){
+          const a = base[p * PER], b = base[Math.min(base.length, (p + 1) * PER) - 1];
+          const lab = mineOnly ? (p * PER + 1) + '~' + Math.min(base.length, (p + 1) * PER) + '번째' : (p * PER + 1) + '~' + Math.min(base.length, (p + 1) * PER) + '등';
+          return '<button type="button" data-pg="' + p + '"' + (p === page ? ' class="on"' : '') + ' title="' + (a && b ? n(a._r) + '~' + n(b._r) + '등' : '') + '">' + lab + '</button>';
+        }).join('') : '';
+      }
+      list.innerHTML = (note ? '<p class="hint pop-note">' + note + '</p>' : '') + (show.length ? table(o.head, show, o.row) : '<p class="pop-empty">' + (mineOnly && !m ? '우리 클럽 학생이 아직 없어요.' : '찾는 이름이 ' + (o.school ? '이 클럽 순위에' : (mineOnly ? '우리 클럽에' : o.rows.length + '등 안에')) + ' 없어요.') + '<br><span class="hint">이름은 가운데를 가려서 보여 줘요 (김하늘 → 김*늘)</span></p>');
+    };
+    inp.addEventListener('input', render);
+    if (mineBtn) mineBtn.addEventListener('click', function(){ mineOnly = !mineOnly; page = 0; mineBtn.classList.toggle('on', mineOnly); render(); });
+    pg.addEventListener('click', function(e){ const b = e.target.closest('[data-pg]'); if (b) { page = Number(b.dataset.pg); render(); } });
+    render();
+  }
+  // '우리 클럽만': 수집기 12판이면 우리 클럽 학생 전부를 전국 등수와 함께, 아니면 받아 온 50등 안에서만
+  function mineRows(kind, nat){
+    const d = schoolData(me);
+    if (!d) return null;
+    const sc = d.school || {}, st = d.students || [];
+    if (!st.length || st[0].nr == null) return { rows: nat.filter(function(x){ return x.pid === me; }), note: '전국 ' + nat.length + '등 안에 든 우리 클럽 학생이에요' };
+    const base = { school: sc.label, pid: me };
+    if (kind === 'best') {
+      if (st[0].nb == null) return { rows: nat.filter(function(x){ return x.pid === me; }), note: '전국 ' + nat.length + '등 안에 든 우리 클럽 학생이에요' };
+      return { rows: st.filter(function(x){ return x.best > 0; }).sort(function(a, b){ return b.best - a.best || b.c - a.c; })
+        .map(function(x){ return Object.assign({}, x, base, { _r: x.nb }); }), note: '우리 클럽 학생의 전국 등수예요 (최고 연속 기록이 있는 ' + n(d.bestTotal) + '명 중)' };
+    }
+    if (kind === 'run') {
+      const live = {}; nat.forEach(function(x){ if (x.pid === me && x.live) live[x.n + '|' + x.g + '|' + x.run] = 1; });
+      return { rows: st.filter(function(x){ return x.run >= 2; }).sort(function(a, b){ return b.run - a.run || b.c - a.c; })
+        .map(function(x){ return Object.assign({}, x, base, { _r: x.rr, live: !!live[x.n + '|' + x.g + '|' + x.run] }); }), note: '우리 클럽 학생의 전국 등수예요 (이틀 이상 이어서 뛴 ' + n(d.runTotal) + '명 중)' };
+    }
+    return { rows: st.map(function(x){ return Object.assign({}, x, base, { _r: x.nr }); }), note: '우리 클럽 학생의 전국 등수예요 (전국 ' + n(d.studentsTotal) + '명 중)' };
+  }
+
+  // 클럽 하나의 자료 (우리 클럽 줄 + 클럽 안 학생 전체). 새 수집기(10판)는 그 클럽만 따로 받아 와요
+  const scd = {};
+  const scKey = function(pid){ return pid + '|' + data.month + '|' + (data.grade || ''); };
+  function schoolData(pid){
+    if (!data.v) {   // 예전 수집기: 클럽마다 학생 30명까지 함께 옴
+      const sc = (data.schools || []).filter(function(x){ return x.pid === pid; })[0];
+      return sc ? { school: sc, students: sc.students || [], partial: true } : { school: null, students: [] };
+    }
+    const k = scKey(pid), hit = scd[k];
+    if (hit) return hit.loading ? null : hit;
+    scd[k] = { loading: true };
+    const mo = data.month, gr = data.grade || '';
+    fetch(collector + '?api=school&pid=' + encodeURIComponent(pid) + '&month=' + encodeURIComponent(mo) + (gr ? '&grade=' + encodeURIComponent(gr) : ''), { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if (!j.ok) throw new Error(j.error || ''); scd[k] = j.result; })
+      .catch(function(){ scd[k] = { err: true, students: [] }; })
+      .then(function(){ if (data && data.month === mo && (data.grade || '') === gr) draw(); });
+    return null;
+  }
+
+  function draw(){
+    const sel = $('monthSel'), months = (data.months || []).slice();
+    if (months.indexOf(data.current) === -1) months.unshift(data.current);
+    sel.innerHTML = months.map(function(m){ return '<option value="' + m + '"' + (m === data.month ? ' selected' : '') + '>' + mLabel(m) + (m === data.current ? ' (이번 달)' : '') + '</option>'; }).join('');
+    $('heroSub').innerHTML = heroSub().split(' | ').concat(data.grade ? [data.grade + '학년만'] : []).map(function(t){ return String(t).replace(/[&<>]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }).replace(/\d+/g, '<b>$&</b>'); }).join('<br>');
+    const gs = data.grades;
+    if (Array.isArray(gs)) {
+      const gsel = $('gradeSel'), list = gs.slice();
+      if (grade && list.indexOf(grade) === -1) list.push(grade);
+      gsel.innerHTML = '<option value="">전체 학년</option>' + list.map(function(g){ return '<option value="' + esc(g) + '"' + (g === grade ? ' selected' : '') + '>' + esc(g) + '학년</option>'; }).join('');
+      gsel.style.display = '';
+    } else $('gradeSel').style.display = 'none';   // 예전 수집기
+    const s = data.summary || {};
+    let html = '<div class="bw-l">';
+    // 모두 함께 지구 대장정: 학년도마다(3월 1일) 새로 출발. 예전 수집기(학년도 정보 없음)면 지금까지 합계
+    if (data.allTime) {
+      const at = data.allTime, byYear = at.years && at.year;
+      const t = byYear ? (Number(at.years[at.year]) || 0) : (Number(at.total) || 0);
+      const prevY = byYear ? String(Number(at.year) - 1) : '', prevT = byYear ? Number(at.years[prevY]) || 0 : 0;
+      html += earthHTML(t, (byYear ? at.year + '학년도 ' : '') + '모두 함께 · 3월 1일에 새로 출발',
+        prevT ? '<span>지난 ' + esc(prevY) + '학년도에는 모두 함께 <b class="mono">' + (prevT / 1000).toLocaleString('ko-KR', { maximumFractionDigits: 1 }) + 'km</b> 뛰었어요' + (prevT >= EJ_GOAL ? ' (지구 대장정 ' + Math.floor(prevT / EJ_GOAL) + '번 완주!)' : ' (지구 대장정의 ' + (prevT / EJ_GOAL * 100).toFixed(1) + '%)') + '</span>' : '');
+    }
+    html += '<div class="kpis">' +
+      '<div class="kpi"><span>참여 클럽</span><b class="mono">' + n(s.schools) + '</b></div>' +
+      '<div class="kpi"><span>전체 횟수</span><b class="mono">' + n(s.total) + '</b></div>' +
+      '<div class="kpi"><span>참여 학생</span><b class="mono">' + n(s.participants) + '</b></div>' +
+      '<div class="kpi"><span>📷 카메라 인증</span><b class="mono">' + n(s.camera) + '</b></div></div>';
+    // 한 번에 최고 연속 (수집기 13판 이상): 스마트 줄넘기·카메라 판정기로 잰 기록만 — 줄이 걸리지 않고 이어 뛴 가장 많은 수
+    if (Array.isArray(data.ropeBest)) {
+      const rb = ranked(data.ropeBest, 'best');
+      html += '<div class="card"><div class="card-head"><div><h2>⚡ 한 번에 최고 연속</h2><span class="hint">걸리지 않고 이어 뛴 가장 많은 수 · 스마트 줄넘기나 카메라 판정기로 뛴 기록만</span></div></div>';
+      if (!rb.length) html += '<div class="empty"><span style="display:inline-block">스마트 줄넘기나 카메라 판정기로 뛰면 여기에 올라와요.</span><br><span style="display:inline-block">클럽 껍데기 5판부터 기록돼요.</span></div>';
+      else {
+        html += '<div class="table-wrap">' + table(BEST_HEAD, rb.slice(0, SHOW_BEST), bestRow) + '</div>';
+        html += '<div class="more-row"><button type="button" class="more-btn" id="bestMore">' + (rb.length > SHOW_BEST ? rb.length + '등까지 보기 · 이름 찾기 →' : '이름 찾기 →') + '</button></div>';
+      }
+      html += '<p class="hint" style="margin:8px 4px 0">스마트 줄넘기나 카메라 판정기가 있어야 참여할 수 있어요</p></div>';
+    }
+
+    // 넓은 화면: 지구 대장정·숫자는 왼쪽, 순위들(클럽·학생·연속)은 오른쪽
+    html += '</div><div class="bw-r">';
+    // 클럽 순위
+    const schools = (data.schools || []).slice();
+    const key = { total: 'total', avg: 'avg', rate: 'rate' }[sortBy];
+    schools.sort(function(a, b){
+      const ra = a.rank[key], rb = b.rank[key];
+      if (ra && rb) return ra - rb; if (ra) return -1; if (rb) return 1; return b.total - a.total;
+    });
+    const top = schools.filter(function(sc){ return sc.rank[key]; }).slice(0, SCH_MAX);
+    const shown = top.slice(0, folds.sch ? SCH_MAX : FOLD);
+    // 우리 클럽: 보이는 순위 밖이어도 그 아래 늘 따로 한 줄
+    let mine = null;
+    if (me && !shown.some(function(sc){ return sc.pid === me; })) {
+      mine = schools.filter(function(sc){ return sc.pid === me; })[0] || null;
+      if (!mine && data.v) { const d = schoolData(me); mine = d && d.school; }
+    }
+    const nSchools = data.schoolsTotal || (data.summary && data.summary.schools) || schools.length;
+    html += '<div class="card"><div class="card-head"><div><h2>클럽 순위</h2><span class="hint">클럽 줄을 누르면 그 클럽 안 학생 순위가 보여요</span></div>' +
+      '<div class="seg" id="sortSeg"><button data-k="total"' + (sortBy === 'total' ? ' class="on"' : '') + '>합계</button><button data-k="avg"' + (sortBy === 'avg' ? ' class="on"' : '') + '>1인당 평균</button><button data-k="rate"' + (sortBy === 'rate' ? ' class="on"' : '') + '>참여율</button></div></div>';
+    if (!schools.length) html += '<div class="empty"><span style="display:inline-block">' + mLabel(data.month) + ' 기록이 아직 없어요.</span><br><span style="display:inline-block">첫 기록의 주인공이 되어 보세요!</span></div>';
+    else {
+      const row = function(sc, tail){
+        const isMe = sc.pid === me;
+        let h = '<tr class="school' + (isMe ? ' me' : '') + (tail ? ' tail' : '') + '" data-pid="' + esc(sc.pid) + '">' +
+          '<td>' + rankHtml(sc.rank[key]) + '</td>' +
+          '<td><span class="' + (sc.named ? '' : 'anon') + '">' + schHtml(sc.label) + '</span>' + (isMe ? '<span class="tag-me">우리 클럽</span>' : '') + '</td>' +
+          '<td class="num mono">' + n(sc.total) + '</td>' +
+          (sc.noReg ? '<td class="num mono">–</td><td class="num mono">–</td>' :
+          '<td class="num mono">' + n(sc.avg) + '</td>' +
+          '<td class="num mono" title="' + sc.participants + '명 / ' + sc.registered + '명">' + sc.rate + '%</td>') +
+          '<td class="num mono hide-sm">' + n(sc.camera) + '</td></tr>';
+        if (openPid === sc.pid) h += '<tr class="detail"><td colspan="6">' + schoolDetail(sc) + '</td></tr>';
+        return h;
+      };
+      html += '<div class="table-wrap"><table><thead><tr><th>순위</th><th>클럽</th><th class="num">합계</th><th class="num">1인당 평균</th><th class="num">참여율</th><th class="num hide-sm">📷 카메라</th></tr></thead><tbody>';
+      if (!shown.length) html += '<tr><td colspan="6" class="hint" style="text-align:center;">이 기준으로 순위를 매길 클럽이 아직 없어요</td></tr>';
+      shown.forEach(function(sc){ html += row(sc); });
+      if (mine) html += '<tr class="gap"><td colspan="6">⋯</td></tr>' + row(mine, true);
+      html += '</tbody></table></div>';
+      if (top.length > FOLD) html += '<div class="fold-row"><button type="button" class="more-btn" data-fold="sch">' + (folds.sch ? '접기 ▴' : (FOLD + 1) + '~' + top.length + '등 더보기 ▾') + '</button></div>';
+      html += '<p class="hint" style="margin-bottom:0;">참여 ' + nSchools + '개 클럽 중 ' + SCH_MAX + '등까지 보여요' + (me ? ' (우리 클럽은 늘 보여요)' : '') + '. 1인당 평균 = 합계 ÷ 등록 학생 수 · 참여율 = 이번 달 한 번이라도 뛴 학생 ÷ 등록 학생 수. 두 순위는 등록 학생 ' + (data.minRegistered || 5) + '명 이상인 클럽만 매겨요.' + (data.grade ? ' 학년별로 볼 때는 학년별 학생 수를 보낸 클럽(2.2 이상)만 1인당 평균·참여율 순위에 들어가요.' : '') + ' 📷 카메라는 줄넘기 판정기로 인증된 횟수예요.</p>';
+    }
+    html += '</div>';
+
+    // 전국 학생 순위: 10등까지, 나머지는 팝업(10명씩, 50등까지)
+    const st = ranked(data.students || [], 'c');
+    html += '<div class="card"><div class="card-head"><div><h2>전국 학생 순위</h2><span class="hint">' + mLabel(data.month) + ' 동안 뛴 횟수 합계</span></div></div>';
+    if (!st.length) html += '<div class="empty">아직 기록이 없어요.</div>';
+    else {
+      html += '<div class="table-wrap">' + table(STU_HEAD, st.slice(0, SHOW_STU), stuRow) + '</div>';
+      html += '<div class="more-row"><button type="button" class="more-btn" id="stuMore">' + (st.length > SHOW_STU ? '전국 ' + st.length + '등까지 보기 · 이름 찾기 →' : '이름 찾기 →') + '</button></div>';
+    }
+    html += '</div>';
+    // 며칠 연속 뛰었나 (수집기 9판 이상)
+    if (Array.isArray(data.streaks)) {
+      const sk = ranked(data.streaks, 'run');
+      html += '<div class="card"><div class="card-head"><div><h2>🔥 며칠 연속 뛰었나</h2><span class="hint">이어서 뛴 날 수 - 이틀 이상부터</span></div></div>';
+      if (!sk.length) html += '<div class="empty"><span style="display:inline-block">아직 이틀 연속 뛴 친구가 없어요.</span><br><span style="display:inline-block">첫 주인공이 되어 보세요!</span></div>';
+      else {
+        html += '<div class="table-wrap">' + table(RUN_HEAD, sk.slice(0, SHOW_STU), runRow) + '</div>';
+        html += '<div class="more-row"><button type="button" class="more-btn" id="runMore">' + (sk.length > SHOW_STU ? sk.length + '등까지 보기 · 이름 찾기 →' : '이름 찾기 →') + '</button></div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<p class="hint" style="text-align:center;">집계는 몇 분마다 새로 고쳐져요 · 마지막 갱신 ' + new Date(data.updated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + '</p>';
+    $('body').innerHTML = html;
+    if ($('ejMapBtn')) $('ejMapBtn').onclick = showEarthMap;
+    ejDraw();
+
+    const subOf = function(t){ return mLabel(data.month) + (data.grade ? ' · ' + esc(data.grade) + '학년' : '') + t; };
+    $('bestMore') && $('bestMore').addEventListener('click', function(){ const rb = ranked(data.ropeBest || [], 'best'); rankPopup({ title: '한 번에 최고 연속 · ' + rb.length + '등까지', sub: subOf(' · 걸리지 않고 이어 뛴 가장 많은 수'), rows: rb, head: BEST_HEAD, row: bestRow, mine: me ? function(){ return mineRows('best', rb); } : null }); });
+    $('runMore') && $('runMore').addEventListener('click', function(){ const sk = ranked(data.streaks || [], 'run'); rankPopup({ title: '며칠 연속 뛰었나 · ' + sk.length + '등까지', sub: subOf(' · 이어서 뛴 날 수'), rows: sk, head: RUN_HEAD, row: runRow, mine: me ? function(){ return mineRows('run', sk); } : null }); });
+    $('stuMore') && $('stuMore').addEventListener('click', function(){ const st = ranked(data.students || [], 'c'); rankPopup({ title: '전국 학생 순위 · ' + st.length + '등까지', sub: subOf(' 동안 뛴 횟수 합계'), rows: st, head: STU_HEAD, row: stuRow, mine: me ? function(){ return mineRows('c', st); } : null }); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-insch]'), function(b){
+      b.addEventListener('click', function(e){
+        e.stopPropagation();
+        const d = schoolData(b.dataset.insch); if (!d) return;
+        const sc = d.school || {}, rows = ranked(d.students || [], 'c');
+        rankPopup({ title: esc(schName(sc.label || '')) + ' · 클럽 안 순위', sub: subOf(' · ' + rows.length + '명' + (d.partial ? ' (상위 30명까지)' : '')), rows: rows, head: IN_HEAD, row: inRow, school: true });
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-fold]'), function(b){
+      b.addEventListener('click', function(){ folds[b.dataset.fold] = !folds[b.dataset.fold]; draw(); });
+    });
+    $('sortSeg') && $('sortSeg').addEventListener('click', function(e){ const b = e.target.closest('button'); if (b) { sortBy = b.dataset.k; draw(); } });
+    Array.prototype.forEach.call(document.querySelectorAll('tr.school'), function(tr){
+      tr.addEventListener('click', function(){ openPid = openPid === tr.dataset.pid ? '' : tr.dataset.pid; draw(); });
+    });
+  }
+
+  // 클럽 줄을 누르면: 클럽 안 5등까지 + 전체 순위 팝업
+  function schoolDetail(sc){
+    const d = schoolData(sc.pid);
+    if (!d) return '<p class="hint" style="margin:6px 0;">클럽 안 순위를 불러오는 중…</p>';
+    if (d.err) return '<p class="hint" style="margin:6px 0;">클럽 안 순위를 불러오지 못했어요. 잠시 뒤 다시 눌러 보세요.</p>';
+    const st = ranked(d.students || [], 'c');
+    if (!st.length) return '<p class="hint">학생 기록이 없어요.</p>';
+    return table(IN_HEAD, st.slice(0, FOLD), inRow, 'mini') +
+      '<div class="more-row"><button type="button" class="more-btn" data-insch="' + esc(sc.pid) + '">클럽 안 전체 순위 보기 · ' + (d.partial && sc.participants > st.length ? '상위 ' + st.length + '명' : st.length + '명') + ' →</button></div>';
+  }
+
+  $('monthSel').addEventListener('change', function(){ openPid = me; load(this.value); });
+  $('gradeSel').addEventListener('change', function(){ grade = this.value; openPid = me; load($('monthSel').value); });
+
+  fetch('national.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return {}; }).then(function(cfg){
+    collector = q.c || (cfg && cfg.collector) || '';
+    if (!collector) { $('body').innerHTML = '<div class="err">전국 현황판이 아직 준비 중이에요. 곧 열립니다!</div>'; return; }
+    load(q.month || '');
+  });
+})();
+</script>
+</body>
+</html>

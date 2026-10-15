@@ -673,7 +673,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.6.0', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', q: {}, settings: {}, shell: {} };
+const APP = { version: '2.6.0', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -3772,7 +3772,9 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
   }
   document.getElementById('versionInfo').innerHTML = '지금 쓰는 판: <b>v' + APP.version + '</b>' + (APP.channel === 'beta' ? ' (베타)' : '') + ' · 학교 껍데기 판: <b>' + APP.shell.shell + '</b> · 학교 시트: ' + esc(APP.shell.title || '') + (/견본/.test(APP.shell.title || '') ? ' <span style="color:var(--amber)">← 구글 시트 왼쪽 위 파일 이름을 "6학년 1반 줄넘기"처럼 바꿔 두세요</span>' : '');
   NAT.load().then(function(){   // 전국 현황판 참여 여부를 알고 나서 안내
-  if (APP.shell.shell >= APP.requiredShell && APP.shell.shell < 6) document.getElementById('shellNotice').innerHTML = '<div class="warn-box"' + (NAT.cfg && NAT.cfg.on && APP.shell.shell < 4 ? '' : ' style="background:var(--bg);"') + '>새 껍데기 <b>6판</b>이 나왔어요. <b>점프 Live (Lite)</b> — 바깥 서버 없이 학교 시트만으로 한 반이 함께 뛰고, 끝나고 한 번에 결과를 공개하는 수업 방을 열 수 있어요.' + (APP.shell.shell < 5 ? ' 5판부터는 스마트 줄넘기나 카메라 판정기로 뛰면 <b>한 번에 최고 연속</b>(걸리지 않고 이어 뛴 가장 많은 수)이 기록되고, 전국 현황판에도 올라가요.' : '') + (NAT.cfg && NAT.cfg.on && APP.shell.shell < 4 ? ' <b>전국 현황판에 참여 중이면 꼭 바꿔 주세요</b> — 4판부터는 전국 현황판 비밀 키를 학생 화면에 내보내지 않아요.' : '') + (APP.shell.shell < 3 ? ' 급수 인증도 3판부터 쓸 수 있어요.' : '') + (APP.shell.live ? ' 점프 라이브를 쓰는 학교는 <b>점프 라이브판 6판</b>으로 바꿔 주세요.' : '') + ' Shell(껍데기)를 다시 붙여 넣고 "새 버전"으로 배포하세요. 기록·학생·설정은 그대로예요.</div>';
+  // 학교판·클럽판(스포츠클럽·도장) 껍데기가 바뀌어 붙어 있으면 알림 — 전국 현황판이 다른 리그로 가지 않게
+  if (APP.shell.appUrl && /\/club\//.test(APP.shell.appUrl) !== APP.club) document.getElementById('shellNotice').innerHTML = (function(h){ const np = document.querySelector('.tab-pane[data-tab="national"] .card'); if (np) np.insertAdjacentHTML('afterbegin', h); return h; })('<div class="warn-box">' + (APP.club ? '이 시트에는 <b>학교용 껍데기</b>가 들어 있어요. 스포츠클럽·도장은 <b>클럽용 껍데기</b>를 붙여 넣고 새 버전으로 배포해 주세요. 그대로 두면 전국 현황판 기록이 학교 현황판으로 가요.' : '이 시트에는 <b>클럽용 껍데기</b>가 들어 있어요. 학교는 학교용 껍데기를 붙여 넣고 새 버전으로 배포해 주세요.') + '</div>');
+  else if (APP.shell.shell >= APP.requiredShell && APP.shell.shell < 6) document.getElementById('shellNotice').innerHTML = '<div class="warn-box"' + (NAT.cfg && NAT.cfg.on && APP.shell.shell < 4 ? '' : ' style="background:var(--bg);"') + '>새 껍데기 <b>6판</b>이 나왔어요. <b>점프 Live (Lite)</b> — 바깥 서버 없이 학교 시트만으로 한 반이 함께 뛰고, 끝나고 한 번에 결과를 공개하는 수업 방을 열 수 있어요.' + (APP.shell.shell < 5 ? ' 5판부터는 스마트 줄넘기나 카메라 판정기로 뛰면 <b>한 번에 최고 연속</b>(걸리지 않고 이어 뛴 가장 많은 수)이 기록되고, 전국 현황판에도 올라가요.' : '') + (NAT.cfg && NAT.cfg.on && APP.shell.shell < 4 ? ' <b>전국 현황판에 참여 중이면 꼭 바꿔 주세요</b> — 4판부터는 전국 현황판 비밀 키를 학생 화면에 내보내지 않아요.' : '') + (APP.shell.shell < 3 ? ' 급수 인증도 3판부터 쓸 수 있어요.' : '') + (APP.shell.live ? ' 점프 라이브를 쓰는 학교는 <b>점프 라이브판 6판</b>으로 바꿔 주세요.' : '') + ' Shell(껍데기)를 다시 붙여 넣고 "새 버전"으로 배포하세요. 기록·학생·설정은 그대로예요.</div>';
   });
   if (APP.shell.shell < APP.requiredShell) document.getElementById('shellNotice').innerHTML = '<div class="warn-box">학교 껍데기(Shell.gs)를 새 판으로 바꿔야 하는 기능이 있어요. 관리자 메뉴 안내에 따라 Shell.gs 를 다시 붙여넣고 "새 버전"으로 배포해 주세요.</div>';
   fetch('changelog.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(list){

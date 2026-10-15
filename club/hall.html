@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jumpers! 클럽 리그 · 기록실</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg viewBox="-6 6 132 88" width="96" height="64" xmlns="http://www.w3.org/2000/svg"%3E%3Cg transform="translate(60,50) rotate(-18)"%3E%3Cpath d="M-48.9,-4.8 A52 14 0 0 1 52,0" stroke="#F26A3D" stroke-width="5" fill="none" stroke-linecap="round"/%3E%3C/g%3E%3Cg transform="translate(60,50) scale(.75)"%3E%3Cdefs%3E%3CradialGradient id="ocf" cx="35%25" cy="30%25" r="80%25"%3E%3Cstop offset="0" stop-color="#6FD0F7"/%3E%3Cstop offset="1" stop-color="#0A78B8"/%3E%3C/radialGradient%3E%3CclipPath id="gcf"%3E%3Ccircle r="40"/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle r="40" fill="url(#ocf)"/%3E%3Cg clip-path="url(#gcf)" fill="#3CCB6A"%3E%3Cpath d="M-30,-22 C-22,-32 -6,-30 -4,-20 C-2,-12 -12,-10 -10,-2 C-8,6 -2,10 -6,18 C-10,26 -18,34 -22,28 C-26,20 -20,12 -26,4 C-32,-4 -38,-14 -30,-22Z"/%3E%3Cpath d="M6,-34 C16,-38 30,-30 36,-20 C40,-12 30,-10 26,-4 C22,2 28,10 22,18 C16,26 10,22 10,14 C10,6 2,4 4,-4 C6,-12 -2,-28 6,-34Z"/%3E%3Cpath d="M14,27 c6,-2 12,2 10,6 c-2,4 -10,4 -12,0 c-1,-3 0,-5 2,-6z"/%3E%3C/g%3E%3Cpath d="M-27,-21 A34 34 0 0 1 -7,-34" stroke="#fff" stroke-opacity=".55" stroke-width="4" fill="none" stroke-linecap="round"/%3E%3C/g%3E%3Cg transform="translate(60,50) rotate(-18)"%3E%3Cpath d="M52,0 A52 14 0 0 1 -48.9,4.8" stroke="#F26A3D" stroke-width="5" fill="none" stroke-linecap="round"/%3E%3Cpath d="M-50,-5.6 L-57,-13 M-50,5.6 L-57,13" stroke="#1F2937" stroke-width="6.5" stroke-linecap="round"/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    --bg: #F3F5F8; --surface: #FFFFFF; --ink: #1F2937; --ink-2: #374151; --muted: #6B7280; --faint: #9CA3AF;
+    --line: #E5E7EB; --line-2: #EEF0F3; --coral: #F26A3D; --coral-dark: #DC5B31; --coral-tint: #FFF1EC;
+    --coral-grad: linear-gradient(135deg, #F26A3D 0%, #FF8A65 100%);
+    --gold: #F59E0B; --silver: #94A3B8; --bronze: #B45309; --green: #16A34A; --green-tint: #DCFCE7;
+    --r-sm: 10px; --r-md: 14px; --r-lg: 18px;
+    --shadow: 0 1px 2px rgba(17,24,39,0.04), 0 4px 16px rgba(17,24,39,0.05);
+  }
+  * { box-sizing: border-box; }
+  /* 제목·숫자 글꼴: 영어는 도현(Do Hyeon), 한글·숫자는 주아(Jua), 나머지는 Pretendard (모두 OFL) */
+  @font-face { font-family: 'JE Latin'; src: url(../fonts/do-hyeon-latin.woff2) format('woff2'); font-display: swap; unicode-range: U+0041-005A, U+0061-007A; }
+  .jn { font-family: 'JE Latin', 'Jua', 'Pretendard', sans-serif; font-weight: 400; color: #F26A3D; font-size: 1.06em; margin-right: 4px; letter-spacing: .01em; }
+  h1, h2, h3, .hero-mid #heroSub, .hero-note, .hero-slogan, .kpi b, .kpi span, .card-head h2, .rank, .more-btn, .month-head h2, .podium h3, .pl .val, .hof span { font-family: 'JE Latin', 'Jua', 'Pretendard', sans-serif; font-weight: 400; }
+  .hero-mid #heroSub b, .hero-note b { font-weight: 400; }
+
+  body { font-family: 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background: var(--bg); margin: 0; color: var(--ink); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  .container { max-width: 980px; margin: 0 auto; padding: 22px 16px 70px; }
+  .mono { font-variant-numeric: tabular-nums; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .brand { font-weight: 800; font-size: 1.05em; color: var(--ink); text-decoration: none; }
+  .btn.btn-ic { display: inline-flex; align-items: center; gap: 6px; }
+  .btn-ic .app-ic { flex: none; }
+  .nb { gap: 9px; } .nb-mark { width: 36px; height: 36px; border-radius: 10px; flex: none; background: linear-gradient(135deg, #F26A3D 0%, #FF8A65 100%); box-shadow: 0 4px 10px rgba(242,106,61,.25); display: flex; align-items: center; justify-content: center; } .nb-word { font-weight: 800; font-size: 1.04em; color: var(--ink); } .nb .jn { font-size: 1.12em; margin-right: 0; }
+  .je-brand { display: inline-flex; align-items: center; gap: 6px; }
+  .je-brand .je-logo { flex: none; }
+  .nav { display: flex; gap: 8px; flex-wrap: wrap; }
+  @media (max-width: 560px) { /* nav-1row: 두 버튼을 한 줄로 */ .nav { width: 100%; flex-wrap: nowrap; gap: 6px; } .nav .btn { flex: 1 1 0; min-width: 0; justify-content: center; white-space: nowrap; padding: 8px 8px; font-size: .84em; } .nav .btn .jn { margin-right: 3px; } .nav .btn svg { flex: none; } }
+  @media (max-width: 380px) { .nav .btn svg { display: none; } }
+  .btn { display: inline-block; text-decoration: none; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 0.88em; cursor: pointer; font-family: inherit; }
+  .btn:hover, .btn.on { border-color: var(--coral); color: var(--coral-dark); background: var(--coral-tint); }
+  .hero { background: var(--coral-grad); color: #fff; border-radius: var(--r-lg); padding: 22px 24px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .hero h1 { margin: 0 0 4px; font-size: 1.55em; }
+  .hero p { margin: 0; opacity: .92; }
+  .hero-grid { display: grid; grid-template-columns: 32% minmax(0,1fr) auto; align-items: center; gap: 18px; }
+  .hero-logo { background: #fff; border-radius: var(--r-md); padding: 6px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.10); }
+  .hero-logo img { display: block; width: 100%; height: auto; }
+  .hero-mid { text-align: center; }
+  .hero-mid h1 { font-size: 1.6em; margin-bottom: 8px; }
+  .hero-mid .hero-note { font-size: 1.12em; line-height: 1.75; opacity: 1; word-break: keep-all; }
+  .hero-mid .hero-note b { font-size: 1.2em; font-weight: 800; }
+  .hero-grid .hero-sels { display: flex; justify-content: flex-end; }
+  .hero-grid .hero-sels select { width: 220px; max-width: 100%; }
+  @media (max-width: 640px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 12px; }
+    .hero-logo { max-width: 280px; margin: 0 auto; }
+    .hero-mid .hero-note { font-size: 1em; }
+    .hero-grid .hero-sels { justify-content: center; }
+    .hero-grid .hero-sels select { width: auto; }
+  }
+  .hero-grid .hero-logo { grid-row: 1 / span 2; }
+  .hof { display: inline-flex; align-items: center; gap: 10px; }
+  .hof .laurel { flex: none; filter: drop-shadow(0 2px 4px rgba(120,40,10,.15)); }
+  .hero-slogan { grid-column: 2 / -1; margin: 2px 0 0; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.5); text-align: center; font-size: 1em; font-weight: 800; letter-spacing: .22em; white-space: nowrap; opacity: 1; }
+  .hero-slogan span { opacity: .7; margin: 0 1.1em; font-weight: 500; letter-spacing: 0; }
+  @media (max-width: 640px) {
+    .hero-grid .hero-logo { grid-row: auto; }
+    .hero-slogan { grid-column: auto; font-size: .85em; letter-spacing: .06em; padding-top: 12px; }
+    .hero-slogan span { margin: 0 .45em; }
+  }
+  .hero-brand { display: flex; align-items: center; gap: 14px; }
+  .hero-brand .je-logo { flex: none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.12)); }
+  .hero h1 .ko { font-weight: 700; font-size: .78em; opacity: .92; }
+  .hero .kick { font-weight: 700; margin: 0 0 2px; opacity: 1; }
+  @media (max-width: 560px) { .hero-brand .je-logo { width: 66px; height: 44px; } }
+  .hero-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .hero select { font: inherit; font-weight: 700; border: 0; border-radius: 999px; padding: 8px 14px; color: var(--ink); background: #fff; }
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: var(--surface); border-radius: var(--r-md); padding: 12px 14px; box-shadow: var(--shadow); }
+  .kpi span { color: var(--muted); font-size: 0.82em; font-weight: 700; }
+  .kpi b { display: block; font-size: 1.45em; }
+  .more-btn { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--coral-dark); border-radius: 999px; padding: 7px 14px; font: inherit; font-weight: 700; font-size: .88em; cursor: pointer; }
+  .more-btn:hover { border-color: var(--coral); background: var(--coral-tint); }
+  .modal-bg { position: fixed; inset: 0; background: rgba(17,24,39,.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .modal { background: var(--surface); border-radius: var(--r-lg); width: 100%; max-width: 680px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+  .modal-head h3 { margin: 0; font-size: 1.1em; }
+  .modal-head .hint { display: block; font-weight: 500; }
+  .modal-x { border: 0; background: var(--line-2); border-radius: 999px; width: 34px; height: 34px; font-size: 18px; line-height: 1; cursor: pointer; flex: none; }
+  .modal-tabs { display: flex; gap: 6px; padding: 10px 18px 0; flex-wrap: wrap; }
+  .modal-tabs button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font: inherit; font-weight: 700; font-size: .86em; cursor: pointer; color: var(--ink-2); }
+  .modal-tabs button.on { background: var(--coral); border-color: var(--coral); color: #fff; }
+  .modal-body { overflow: auto; padding: 8px 18px 18px; }
+  .modal-body table { width: 100%; border-collapse: collapse; font-size: .92em; }
+  .modal-body th, .modal-body td { padding: 8px 6px; border-bottom: 1px solid var(--line-2); text-align: left; }
+  .modal-body th { color: var(--muted); font-weight: 600; font-size: .9em; }
+  .modal-body .num { text-align: right; }
+  .modal-body tr.me td { background: var(--coral-tint); }
+  .card { background: var(--surface); border-radius: var(--r-lg); padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .card h2 { margin: 0 0 4px; font-size: 1.15em; }
+  .card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .seg { display: inline-flex; background: var(--bg); border-radius: 999px; padding: 3px; }
+  .seg button { border: 0; background: transparent; font: inherit; font-weight: 700; font-size: 0.86em; padding: 6px 12px; border-radius: 999px; color: var(--muted); cursor: pointer; }
+  .seg button.on { background: var(--surface); color: var(--coral-dark); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .hint { color: var(--muted); font-size: 0.85em; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; color: var(--muted); font-size: 0.8em; font-weight: 700; padding: 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 10px 8px; border-bottom: 1px solid var(--line-2); font-size: 0.93em; }
+  th.num, td.num { text-align: right; white-space: nowrap; }
+  tr.school { cursor: pointer; }
+  tr.school:hover td { background: #FAFAFB; }
+  tr.me td { background: var(--coral-tint) !important; }
+  tr.detail td { background: #FAFAFB; padding: 4px 8px 14px; }
+  .rank { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 50%; font-weight: 800; background: var(--bg); color: var(--ink-2); font-size: 0.9em; }
+  .rank.r1 { background: var(--gold); color: #fff; } .rank.r2 { background: var(--silver); color: #fff; } .rank.r3 { background: var(--bronze); color: #fff; }
+  .sub { color: var(--faint); font-size: 0.8em; margin-left: 4px; }
+  .tag-me { display: inline-block; background: var(--coral); color: #fff; font-size: 0.72em; font-weight: 800; padding: 1px 7px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+  .anon { color: var(--muted); }
+  .mini { width: 100%; margin-top: 4px; }
+  .mini td, .mini th { padding: 6px 8px; font-size: 0.88em; }
+  .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+  .err { background: #FEF3C7; color: #92400E; border-radius: var(--r-sm); padding: 12px 14px; font-weight: 700; }
+  .loading { text-align: center; color: var(--muted); padding: 40px; }
+  .foot { text-align: center; color: var(--faint); font-size: 0.8em; margin-top: 24px; }
+  .hide-sm { }
+  @media (max-width: 640px) {
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hide-sm { display: none; }
+    .hero h1 { font-size: 1.3em; }
+  }
+  td.nm { white-space: nowrap; }   /* 이름·학년은 한 줄로 (좁은 화면에서는 클럽 칸이 줄바꿈) */
+  .sch { white-space: nowrap; } .sch-s { display: none; }
+  @media (max-width: 560px) { .sch-f { display: none; } .sch-s { display: inline; } }
+</style>
+<style>
+  .month { margin-bottom: 18px; }
+  .hero-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .hero select { font: inherit; font-weight: 700; border: 0; border-radius: 999px; padding: 8px 14px; color: var(--ink); background: #fff; }
+  .month-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .month-head h2 { margin: 0; font-size: 1.3em; }
+  .podiums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .podium { background: var(--bg); border-radius: var(--r-md); padding: 12px 14px; }
+  .podium h3 { margin: 0 0 8px; font-size: 0.9em; color: var(--muted); }
+  .pl { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+  .pl .who { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+  .pl .val { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 0.9em; white-space: nowrap; }
+  .pl.me .who { color: var(--coral-dark); }
+  .stars { background: linear-gradient(135deg, #FFF7E6, #FFF1EC); }
+  details.ins { margin-top: 6px; }
+  details.ins summary { cursor: pointer; font-weight: 700; color: var(--ink-2); padding: 6px 0; }
+  .ins-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 8px; }
+  .ins-card { border: 1px solid var(--line-2); border-radius: var(--r-md); padding: 10px 12px; }
+  .ins-card.me { border-color: var(--coral); background: var(--coral-tint); }
+  .ins-card b.t { display: block; margin-bottom: 4px; }
+  @media (max-width: 760px) { .podiums { grid-template-columns: 1fr; } }
+  /* 한 달 칸은 클럽(m-l)와 학생(m-r) 두 조각 — 좁은 화면에서는 한 칸처럼 이어 붙여요 */
+  .card.m-l, .card.m-r { display: flow-root; }
+  .card.m-l { margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding-bottom: 0; box-shadow: none; }
+  .card.m-r { border-top-left-radius: 0; border-top-right-radius: 0; padding-top: 0; box-shadow: none; }
+  .bw-l, .bw-r { filter: drop-shadow(0 2px 6px rgba(0,0,0,.05)); }
+  /* 넓은 화면(PC·노트북·가로 태블릿): 두 칸 — 왼쪽 로고·클럽 1~3등, 오른쪽 학생·연속·클럽별 */
+  @media (min-width: 1000px) {
+    .container { max-width: 1560px; }
+    .bw { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-rows: auto 1fr; column-gap: 18px; align-items: start; }
+    .bw > .hero { grid-column: 1; grid-row: 1; }
+    .bw > #body { display: contents; }
+    .bw-l { grid-column: 1; grid-row: 2; }
+    .bw-r { grid-column: 2; grid-row: 1 / span 2; }
+    .bw > #body > .hint, .bw > #body > .loading, .bw > #body > .err, .bw > #body > .card.empty { grid-column: 1 / -1; }
+    .bw .hero-mid { word-break: keep-all; }
+    .bw .hero-grid { grid-template-columns: 34% minmax(0,1fr); row-gap: 12px; }
+    .bw .hero-grid .hero-logo { grid-row: 1 / span 3; }
+    .bw .hero-grid .hero-sels { grid-column: 2; justify-content: center; flex-direction: row; flex-wrap: wrap; gap: 8px; }
+    .bw .hero-grid .hero-sels select { width: auto; margin: 0; }
+    .bw .hero-slogan { grid-column: 2; letter-spacing: .12em; }
+    .bw .hero-slogan span { margin: 0 .6em; }
+    .card.m-l, .card.m-r { border-radius: var(--r-lg); padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow); }
+    .bw-l, .bw-r { filter: none; }
+    .m-l .podiums { margin-bottom: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="topbar">
+    <a class="brand je-brand nb" href="" title="새로 불러오기"><span class="nb-mark"><svg class="laurel" viewBox="0 -2 200 202" width="24" height="24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L 26.2 94.5 L 31.8 71.3 L 44.5 51.0 L 63.0 35.9" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 0 C 8.0 -5.7, 6.4 -15.2, 0 -19.0 C -6.4 -15.2, -8.0 -5.7, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(53.9,157.9) rotate(-98.7)"/><path d="M0 0 C 7.2 -5.1, 5.7 -13.7, 0 -17.1 C -5.7 -13.7, -7.2 -5.1, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(53.9,157.9) rotate(-22.7)"/><path d="M0 0 C 7.6 -5.4, 6.0 -14.4, 0 -18.0 C -6.0 -14.4, -7.6 -5.4, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(37.8,140.1) rotate(-80.1)"/><path d="M0 0 C 6.8 -4.9, 5.4 -13.0, 0 -16.2 C -5.4 -13.0, -6.8 -4.9, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(37.8,140.1) rotate(-4.1)"/><path d="M0 0 C 7.1 -5.1, 5.7 -13.6, 0 -17.0 C -5.7 -13.6, -7.1 -5.1, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(28.3,118.3) rotate(-61.6)"/><path d="M0 0 C 6.4 -4.6, 5.1 -12.2, 0 -15.3 C -5.1 -12.2, -6.4 -4.6, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(28.3,118.3) rotate(14.4)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(26.2,94.5) rotate(-43.0)"/><path d="M0 0 C 6.0 -4.3, 4.8 -11.5, 0 -14.4 C -4.8 -11.5, -6.0 -4.3, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(26.2,94.5) rotate(33.0)"/><path d="M0 0 C 6.3 -4.5, 5.0 -12.0, 0 -15.0 C -5.0 -12.0, -6.3 -4.5, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(31.8,71.3) rotate(-24.4)"/><path d="M0 0 C 5.7 -4.0, 4.5 -10.8, 0 -13.5 C -4.5 -10.8, -5.7 -4.0, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(31.8,71.3) rotate(51.6)"/><path d="M0 0 C 5.9 -4.2, 4.7 -11.2, 0 -14.0 C -4.7 -11.2, -5.9 -4.2, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(44.5,51.0) rotate(-5.9)"/><path d="M0 0 C 5.3 -3.8, 4.2 -10.1, 0 -12.6 C -4.2 -10.1, -5.3 -3.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(44.5,51.0) rotate(70.1)"/><path d="M0 0 C 5.5 -3.9, 4.4 -10.4, 0 -13.0 C -4.4 -10.4, -5.5 -3.9, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(12.7)"/><path d="M0 0 C 4.9 -3.5, 3.9 -9.4, 0 -11.7 C -3.9 -9.4, -4.9 -3.5, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(88.7)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(50.7)"/><path d="M 125.3 169.5 L 146.1 157.9 L 162.2 140.1 L 171.7 118.3 L 173.8 94.5 L 168.2 71.3 L 155.5 51.0 L 137.0 35.9" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 0 C 8.0 -5.7, 6.4 -15.2, 0 -19.0 C -6.4 -15.2, -8.0 -5.7, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(146.1,157.9) rotate(22.7)"/><path d="M0 0 C 7.2 -5.1, 5.7 -13.7, 0 -17.1 C -5.7 -13.7, -7.2 -5.1, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(146.1,157.9) rotate(98.7)"/><path d="M0 0 C 7.6 -5.4, 6.0 -14.4, 0 -18.0 C -6.0 -14.4, -7.6 -5.4, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(162.2,140.1) rotate(4.1)"/><path d="M0 0 C 6.8 -4.9, 5.4 -13.0, 0 -16.2 C -5.4 -13.0, -6.8 -4.9, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(162.2,140.1) rotate(80.1)"/><path d="M0 0 C 7.1 -5.1, 5.7 -13.6, 0 -17.0 C -5.7 -13.6, -7.1 -5.1, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(171.7,118.3) rotate(-14.4)"/><path d="M0 0 C 6.4 -4.6, 5.1 -12.2, 0 -15.3 C -5.1 -12.2, -6.4 -4.6, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(171.7,118.3) rotate(61.6)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(173.8,94.5) rotate(-33.0)"/><path d="M0 0 C 6.0 -4.3, 4.8 -11.5, 0 -14.4 C -4.8 -11.5, -6.0 -4.3, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(173.8,94.5) rotate(43.0)"/><path d="M0 0 C 6.3 -4.5, 5.0 -12.0, 0 -15.0 C -5.0 -12.0, -6.3 -4.5, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(168.2,71.3) rotate(-51.6)"/><path d="M0 0 C 5.7 -4.0, 4.5 -10.8, 0 -13.5 C -4.5 -10.8, -5.7 -4.0, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(168.2,71.3) rotate(24.4)"/><path d="M0 0 C 5.9 -4.2, 4.7 -11.2, 0 -14.0 C -4.7 -11.2, -5.9 -4.2, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(155.5,51.0) rotate(-70.1)"/><path d="M0 0 C 5.3 -3.8, 4.2 -10.1, 0 -12.6 C -4.2 -10.1, -5.3 -3.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(155.5,51.0) rotate(5.9)"/><path d="M0 0 C 5.5 -3.9, 4.4 -10.4, 0 -13.0 C -4.4 -10.4, -5.5 -3.9, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-88.7)"/><path d="M0 0 C 4.9 -3.5, 3.9 -9.4, 0 -11.7 C -3.9 -9.4, -4.9 -3.5, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-12.7)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-50.7)"/><polygon points="100.0,54.0 111.6,82.0 141.8,84.4 118.8,104.1 125.9,133.6 100.0,117.8 74.1,133.6 81.2,104.1 58.2,84.4 88.4,82.0 " fill="#fff"/><path d="M60 176 C 80 160, 120 160, 140 176" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><g stroke="#fff" stroke-width="8" stroke-linecap="round"><path d="M60 176 L48 186"/><path d="M140 176 L152 186"/></g></svg></span><b class="jn">Jumpers!</b><span class="nb-word">기록실</span></a>
+    <nav class="nav">
+      <a class="btn btn-ic" id="boardLink" href="board.html"><svg class="je-logo" viewBox="-6 6 132 88" width="27" height="18" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Jump Earth! 클럽 리그"><g transform="translate(60,50) rotate(-18)"><path d="M-48.9,-4.8 A52 14 0 0 1 52,0" stroke="#F26A3D" stroke-width="5" fill="none" stroke-linecap="round"/></g><g transform="translate(60,50) scale(.75)"><defs><radialGradient id="octhall" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#6FD0F7"/><stop offset="1" stop-color="#0A78B8"/></radialGradient><clipPath id="gcthall"><circle r="40"/></clipPath></defs><circle r="40" fill="url(#octhall)"/><g clip-path="url(#gcthall)" fill="#3CCB6A"><path d="M-30,-22 C-22,-32 -6,-30 -4,-20 C-2,-12 -12,-10 -10,-2 C-8,6 -2,10 -6,18 C-10,26 -18,34 -22,28 C-26,20 -20,12 -26,4 C-32,-4 -38,-14 -30,-22Z"/><path d="M6,-34 C16,-38 30,-30 36,-20 C40,-12 30,-10 26,-4 C22,2 28,10 22,18 C16,26 10,22 10,14 C10,6 2,4 4,-4 C6,-12 -2,-28 6,-34Z"/><path d="M14,27 c6,-2 12,2 10,6 c-2,4 -10,4 -12,0 c-1,-3 0,-5 2,-6z"/></g><path d="M-27,-21 A34 34 0 0 1 -7,-34" stroke="#fff" stroke-opacity=".55" stroke-width="4" fill="none" stroke-linecap="round"/></g><g transform="translate(60,50) rotate(-18)"><path d="M52,0 A52 14 0 0 1 -48.9,4.8" stroke="#F26A3D" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M-50,-5.6 L-57,-13 M-50,5.6 L-57,13" stroke="#1F2937" stroke-width="6.5" stroke-linecap="round"/></g></svg><b class="jn">Jump Earth!</b>현황판</a>
+      <a class="btn btn-ic" id="homeLink" href="./"><svg class="app-ic" viewBox="0 0 100 100" width="18" height="18" aria-hidden="true"><rect width="100" height="100" rx="26" fill="#F26A3D"/><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" transform="translate(5,4) scale(.9)"><path d="M33 60 C 22 6, 78 6, 67 60" stroke-width="6"/><circle cx="50" cy="31" r="6.5" stroke-width="6"/><path d="M50 38 L50 59" stroke-width="6.5"/><path d="M50 45 L39 55 L33 60 M50 45 L61 55 L67 60" stroke-width="6"/><path d="M50 59 L44 66 L46 75 M50 59 L56 66 L54 75" stroke-width="6"/><path d="M34 84 L66 84" stroke-width="5.5"/></g></svg><b class="jn">Jump Us!</b>우리 클럽</a>
+    </nav>
+  </header>
+
+  <div class="bw">
+  <div class="hero">
+    <div class="hero-grid">
+      <div class="hero-logo"><img src="../img/jump-earth-logo.webp" width="1100" height="824" alt="Jump Earth 점퍼스 · 전국 줄넘기 현황판"></div>
+      <div class="hero-mid">
+        <h1 class="hof"><svg class="laurel" viewBox="0 -2 200 202" width="48" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L 26.2 94.5 L 31.8 71.3 L 44.5 51.0 L 63.0 35.9" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 0 C 8.0 -5.7, 6.4 -15.2, 0 -19.0 C -6.4 -15.2, -8.0 -5.7, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(53.9,157.9) rotate(-98.7)"/><path d="M0 0 C 7.2 -5.1, 5.7 -13.7, 0 -17.1 C -5.7 -13.7, -7.2 -5.1, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(53.9,157.9) rotate(-22.7)"/><path d="M0 0 C 7.6 -5.4, 6.0 -14.4, 0 -18.0 C -6.0 -14.4, -7.6 -5.4, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(37.8,140.1) rotate(-80.1)"/><path d="M0 0 C 6.8 -4.9, 5.4 -13.0, 0 -16.2 C -5.4 -13.0, -6.8 -4.9, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(37.8,140.1) rotate(-4.1)"/><path d="M0 0 C 7.1 -5.1, 5.7 -13.6, 0 -17.0 C -5.7 -13.6, -7.1 -5.1, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(28.3,118.3) rotate(-61.6)"/><path d="M0 0 C 6.4 -4.6, 5.1 -12.2, 0 -15.3 C -5.1 -12.2, -6.4 -4.6, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(28.3,118.3) rotate(14.4)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(26.2,94.5) rotate(-43.0)"/><path d="M0 0 C 6.0 -4.3, 4.8 -11.5, 0 -14.4 C -4.8 -11.5, -6.0 -4.3, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(26.2,94.5) rotate(33.0)"/><path d="M0 0 C 6.3 -4.5, 5.0 -12.0, 0 -15.0 C -5.0 -12.0, -6.3 -4.5, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(31.8,71.3) rotate(-24.4)"/><path d="M0 0 C 5.7 -4.0, 4.5 -10.8, 0 -13.5 C -4.5 -10.8, -5.7 -4.0, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(31.8,71.3) rotate(51.6)"/><path d="M0 0 C 5.9 -4.2, 4.7 -11.2, 0 -14.0 C -4.7 -11.2, -5.9 -4.2, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(44.5,51.0) rotate(-5.9)"/><path d="M0 0 C 5.3 -3.8, 4.2 -10.1, 0 -12.6 C -4.2 -10.1, -5.3 -3.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(44.5,51.0) rotate(70.1)"/><path d="M0 0 C 5.5 -3.9, 4.4 -10.4, 0 -13.0 C -4.4 -10.4, -5.5 -3.9, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(12.7)"/><path d="M0 0 C 4.9 -3.5, 3.9 -9.4, 0 -11.7 C -3.9 -9.4, -4.9 -3.5, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(88.7)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(50.7)"/><path d="M 125.3 169.5 L 146.1 157.9 L 162.2 140.1 L 171.7 118.3 L 173.8 94.5 L 168.2 71.3 L 155.5 51.0 L 137.0 35.9" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 0 C 8.0 -5.7, 6.4 -15.2, 0 -19.0 C -6.4 -15.2, -8.0 -5.7, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(146.1,157.9) rotate(22.7)"/><path d="M0 0 C 7.2 -5.1, 5.7 -13.7, 0 -17.1 C -5.7 -13.7, -7.2 -5.1, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(146.1,157.9) rotate(98.7)"/><path d="M0 0 C 7.6 -5.4, 6.0 -14.4, 0 -18.0 C -6.0 -14.4, -7.6 -5.4, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(162.2,140.1) rotate(4.1)"/><path d="M0 0 C 6.8 -4.9, 5.4 -13.0, 0 -16.2 C -5.4 -13.0, -6.8 -4.9, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(162.2,140.1) rotate(80.1)"/><path d="M0 0 C 7.1 -5.1, 5.7 -13.6, 0 -17.0 C -5.7 -13.6, -7.1 -5.1, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(171.7,118.3) rotate(-14.4)"/><path d="M0 0 C 6.4 -4.6, 5.1 -12.2, 0 -15.3 C -5.1 -12.2, -6.4 -4.6, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(171.7,118.3) rotate(61.6)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(173.8,94.5) rotate(-33.0)"/><path d="M0 0 C 6.0 -4.3, 4.8 -11.5, 0 -14.4 C -4.8 -11.5, -6.0 -4.3, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(173.8,94.5) rotate(43.0)"/><path d="M0 0 C 6.3 -4.5, 5.0 -12.0, 0 -15.0 C -5.0 -12.0, -6.3 -4.5, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(168.2,71.3) rotate(-51.6)"/><path d="M0 0 C 5.7 -4.0, 4.5 -10.8, 0 -13.5 C -4.5 -10.8, -5.7 -4.0, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(168.2,71.3) rotate(24.4)"/><path d="M0 0 C 5.9 -4.2, 4.7 -11.2, 0 -14.0 C -4.7 -11.2, -5.9 -4.2, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(155.5,51.0) rotate(-70.1)"/><path d="M0 0 C 5.3 -3.8, 4.2 -10.1, 0 -12.6 C -4.2 -10.1, -5.3 -3.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(155.5,51.0) rotate(5.9)"/><path d="M0 0 C 5.5 -3.9, 4.4 -10.4, 0 -13.0 C -4.4 -10.4, -5.5 -3.9, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-88.7)"/><path d="M0 0 C 4.9 -3.5, 3.9 -9.4, 0 -11.7 C -3.9 -9.4, -4.9 -3.5, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-12.7)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-50.7)"/><polygon points="100.0,54.0 111.6,82.0 141.8,84.4 118.8,104.1 125.9,133.6 100.0,117.8 74.1,133.6 81.2,104.1 58.2,84.4 88.4,82.0 " fill="#FFFFFF"/><path d="M60 176 C 80 160, 120 160, 140 176" fill="none" stroke="#FFE58A" stroke-width="5" stroke-linecap="round"/><g stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"><path d="M60 176 L48 186"/><path d="M140 176 L152 186"/></g></svg><span>Jumpers! 기록실</span><svg class="laurel" viewBox="0 -2 200 202" width="48" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L 26.2 94.5 L 31.8 71.3 L 44.5 51.0 L 63.0 35.9" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 0 C 8.0 -5.7, 6.4 -15.2, 0 -19.0 C -6.4 -15.2, -8.0 -5.7, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(53.9,157.9) rotate(-98.7)"/><path d="M0 0 C 7.2 -5.1, 5.7 -13.7, 0 -17.1 C -5.7 -13.7, -7.2 -5.1, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(53.9,157.9) rotate(-22.7)"/><path d="M0 0 C 7.6 -5.4, 6.0 -14.4, 0 -18.0 C -6.0 -14.4, -7.6 -5.4, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(37.8,140.1) rotate(-80.1)"/><path d="M0 0 C 6.8 -4.9, 5.4 -13.0, 0 -16.2 C -5.4 -13.0, -6.8 -4.9, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(37.8,140.1) rotate(-4.1)"/><path d="M0 0 C 7.1 -5.1, 5.7 -13.6, 0 -17.0 C -5.7 -13.6, -7.1 -5.1, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(28.3,118.3) rotate(-61.6)"/><path d="M0 0 C 6.4 -4.6, 5.1 -12.2, 0 -15.3 C -5.1 -12.2, -6.4 -4.6, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(28.3,118.3) rotate(14.4)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(26.2,94.5) rotate(-43.0)"/><path d="M0 0 C 6.0 -4.3, 4.8 -11.5, 0 -14.4 C -4.8 -11.5, -6.0 -4.3, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(26.2,94.5) rotate(33.0)"/><path d="M0 0 C 6.3 -4.5, 5.0 -12.0, 0 -15.0 C -5.0 -12.0, -6.3 -4.5, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(31.8,71.3) rotate(-24.4)"/><path d="M0 0 C 5.7 -4.0, 4.5 -10.8, 0 -13.5 C -4.5 -10.8, -5.7 -4.0, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(31.8,71.3) rotate(51.6)"/><path d="M0 0 C 5.9 -4.2, 4.7 -11.2, 0 -14.0 C -4.7 -11.2, -5.9 -4.2, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(44.5,51.0) rotate(-5.9)"/><path d="M0 0 C 5.3 -3.8, 4.2 -10.1, 0 -12.6 C -4.2 -10.1, -5.3 -3.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(44.5,51.0) rotate(70.1)"/><path d="M0 0 C 5.5 -3.9, 4.4 -10.4, 0 -13.0 C -4.4 -10.4, -5.5 -3.9, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(12.7)"/><path d="M0 0 C 4.9 -3.5, 3.9 -9.4, 0 -11.7 C -3.9 -9.4, -4.9 -3.5, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(88.7)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(50.7)"/><path d="M 125.3 169.5 L 146.1 157.9 L 162.2 140.1 L 171.7 118.3 L 173.8 94.5 L 168.2 71.3 L 155.5 51.0 L 137.0 35.9" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 0 C 8.0 -5.7, 6.4 -15.2, 0 -19.0 C -6.4 -15.2, -8.0 -5.7, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(146.1,157.9) rotate(22.7)"/><path d="M0 0 C 7.2 -5.1, 5.7 -13.7, 0 -17.1 C -5.7 -13.7, -7.2 -5.1, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(146.1,157.9) rotate(98.7)"/><path d="M0 0 C 7.6 -5.4, 6.0 -14.4, 0 -18.0 C -6.0 -14.4, -7.6 -5.4, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(162.2,140.1) rotate(4.1)"/><path d="M0 0 C 6.8 -4.9, 5.4 -13.0, 0 -16.2 C -5.4 -13.0, -6.8 -4.9, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(162.2,140.1) rotate(80.1)"/><path d="M0 0 C 7.1 -5.1, 5.7 -13.6, 0 -17.0 C -5.7 -13.6, -7.1 -5.1, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(171.7,118.3) rotate(-14.4)"/><path d="M0 0 C 6.4 -4.6, 5.1 -12.2, 0 -15.3 C -5.1 -12.2, -6.4 -4.6, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(171.7,118.3) rotate(61.6)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(173.8,94.5) rotate(-33.0)"/><path d="M0 0 C 6.0 -4.3, 4.8 -11.5, 0 -14.4 C -4.8 -11.5, -6.0 -4.3, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(173.8,94.5) rotate(43.0)"/><path d="M0 0 C 6.3 -4.5, 5.0 -12.0, 0 -15.0 C -5.0 -12.0, -6.3 -4.5, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(168.2,71.3) rotate(-51.6)"/><path d="M0 0 C 5.7 -4.0, 4.5 -10.8, 0 -13.5 C -4.5 -10.8, -5.7 -4.0, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(168.2,71.3) rotate(24.4)"/><path d="M0 0 C 5.9 -4.2, 4.7 -11.2, 0 -14.0 C -4.7 -11.2, -5.9 -4.2, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(155.5,51.0) rotate(-70.1)"/><path d="M0 0 C 5.3 -3.8, 4.2 -10.1, 0 -12.6 C -4.2 -10.1, -5.3 -3.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(155.5,51.0) rotate(5.9)"/><path d="M0 0 C 5.5 -3.9, 4.4 -10.4, 0 -13.0 C -4.4 -10.4, -5.5 -3.9, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-88.7)"/><path d="M0 0 C 4.9 -3.5, 3.9 -9.4, 0 -11.7 C -3.9 -9.4, -4.9 -3.5, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-12.7)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="rgba(255,255,255,.18)" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-50.7)"/><polygon points="100.0,54.0 111.6,82.0 141.8,84.4 118.8,104.1 125.9,133.6 100.0,117.8 74.1,133.6 81.2,104.1 58.2,84.4 88.4,82.0 " fill="#FFFFFF"/><path d="M60 176 C 80 160, 120 160, 140 176" fill="none" stroke="#FFE58A" stroke-width="5" stroke-linecap="round"/><g stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"><path d="M60 176 L48 186"/><path d="M140 176 L152 186"/></g></svg></h1>
+        <p class="hero-note">최근 <b>12</b>개월 <b>1~3</b>등을 모았어요<br>이번 달 순위는<br>다음 달 <b>1</b>일에 올라와요</p>
+      </div>
+      <div class="hero-sels"><select id="monthSel" aria-label="달 고르기" style="display:none;"></select></div>
+      <p class="hero-slogan">Jump Earth!<span>·</span>Jump Us!<span>·</span>Jumpers!</p>
+    </div>
+  </div>
+
+  <div id="body"><div class="loading">기록실을 불러오는 중…</div></div>
+  </div>
+  <p class="foot">학생 이름은 가려서 보여 줍니다 (예: 김*늘) · 클럽 이름은 클럽이 공개를 켠 경우에만 보여요<br>Made by <b>음악적체육인</b></p>
+</div>
+
+<script>
+// 학생 순위표의 클럽 이름은 짧게 (전주송원초등학교 → 전주송원초) — 클럽 순위표는 정식 이름 그대로
+// 지역 두 글자와 클럽 이름 사이는 띄어 씀 (전주송원초등학교 → 전주 송원초등학교). 지역이 안 붙은 이름(송원초등학교)은 그대로
+function schName(v){ const t = String(v == null ? '' : v).trim(); const m = /^([가-힣]{2})([가-힣]+?)(초등학교|초|중학교|중)$/.exec(t); return m && t.indexOf(' ') < 0 ? m[1] + ' ' + m[2] + m[3] : t; }
+function shortSch(v){ return schName(v).replace(/초등학교$/, '초'); }
+// 클럽 순위표: 넓은 화면은 정식 이름, 휴대폰은 짧은 이름 — 둘 다 한 줄로
+function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }; const f = schName(v), sh = shortSch(v); return f === sh ? '<span class="sch">' + esc(f) + '</span>' : '<span class="sch sch-f">' + esc(f) + '</span><span class="sch sch-s">' + esc(sh) + '</span>'; }
+
+(function(){
+  const q = {}; new URLSearchParams(location.search).forEach(function(v, k){ q[k] = v; });
+  let me = q.me || '';
+  const $ = function(id){ return document.getElementById(id); };
+  const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  const n = function(v){ return (Number(v) || 0).toLocaleString('ko-KR'); };
+  const mLabel = function(m){ return Number(m.slice(0, 4)) + '년 ' + Number(m.slice(5, 7)) + '월'; };
+  const rankHtml = function(r){ return '<span class="rank r' + r + '">' + r + '</span>'; };
+  /* 50등까지 보기 팝업 */
+  function openModal(title, sub, bodyHtml, tabs){
+    closeModal();
+    const bg = document.createElement('div'); bg.className = 'modal-bg'; bg.id = 'rankModal';
+    bg.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h3>' + title + (sub ? '<span class="hint">' + sub + '</span>' : '') + '</h3><button type="button" class="modal-x" aria-label="닫기">×</button></div>' +
+      (tabs ? '<div class="modal-tabs">' + tabs + '</div>' : '') + '<div class="modal-body">' + bodyHtml + '</div></div>';
+    bg.addEventListener('click', function(e){ if (e.target === bg || e.target.closest('.modal-x')) closeModal(); });
+    document.addEventListener('keydown', escClose);
+    document.body.appendChild(bg); document.body.style.overflow = 'hidden';
+    return bg;
+  }
+  function escClose(e){ if (e.key === 'Escape') closeModal(); }
+  function closeModal(){ const m = document.getElementById('rankModal'); if (m) m.remove(); document.body.style.overflow = ''; document.removeEventListener('keydown', escClose); }
+  try { const s = localStorage.getItem('jrc_shell'); if (s) $('homeLink').href = './?s=' + encodeURIComponent(s); } catch (e) {}
+  if (me) $('boardLink').href = 'board.html?me=' + encodeURIComponent(me);
+
+  function stuTable50(list){
+    return '<table><thead><tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">횟수</th></tr></thead><tbody>' + list.map(function(x){
+      return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + schHtml(x.school) + '</td><td class="num">' + n(x.c) + '회' + (x.cam ? ' <span class="sub">📷' + n(x.cam) + '</span>' : '') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  }
+  function bestTable50(list){
+    return '<table><thead><tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">최고 연속</th></tr></thead><tbody>' + list.map(function(x){
+      return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + schHtml(x.school) + '</td><td class="num">' + n(x.best) + '회</td></tr>';
+    }).join('') + '</tbody></table>';
+  }
+  function runTable50(list){
+    return '<table><thead><tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">연속</th></tr></thead><tbody>' + list.map(function(x){
+      return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(x.rank) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + (x.g ? ' <span class="sub">' + esc(x.g) + '학년</span>' : '') + '</td><td>' + schHtml(x.school) + '</td><td class="num">' + x.run + '일 <span class="sub">' + n(x.c) + '회</span></td></tr>';
+    }).join('') + '</tbody></table>';
+  }
+  const SCH_KINDS = { total: ['🏫 클럽 합계', function(s){ return n(s.total) + '회'; }], avg: ['⚖️ 1인당 평균', function(s){ return n(s.avg) + '회'; }], rate: ['🙋 참여율', function(s){ return s.rate + '%'; }] };
+  function schModal(m, k){
+    const list = (m.schools50 || {})[k] || [];
+    const tabs = Object.keys(SCH_KINDS).map(function(key){ return '<button type="button" data-k="' + key + '"' + (key === k ? ' class="on"' : '') + '>' + SCH_KINDS[key][0] + '</button>'; }).join('');
+    const body = list.length ? '<table><thead><tr><th>순위</th><th>클럽</th><th class="num">' + SCH_KINDS[k][0].replace(/^\S+ /, '') + '</th></tr></thead><tbody>' + list.map(function(s){
+      return '<tr' + (s.pid === me ? ' class="me"' : '') + '><td>' + rankHtml(s.rank) + '</td><td' + (s.named ? '' : ' class="anon"') + '><b>' + schHtml(s.label) + '</b></td><td class="num">' + SCH_KINDS[k][1](s) + '</td></tr>';
+    }).join('') + '</tbody></table>' : '<p class="hint">이 순위에 든 클럽이 없어요. (등록 학생 ' + minReg + '명 이상인 클럽만)</p>';
+    const bg = openModal('클럽 순위 · ' + Math.min(50, m.schoolCount) + '등까지', mLabel(m.month), body, tabs);
+    Array.prototype.forEach.call(bg.querySelectorAll('.modal-tabs button'), function(t){ t.addEventListener('click', function(){ schModal(m, t.dataset.k); }); });
+  }
+
+  function podium(title, list, val){
+    return '<div class="podium"><h3>' + title + '</h3>' + (list.length ? list.map(function(s){
+      return '<div class="pl' + (s.pid && s.pid === me ? ' me' : '') + '">' + rankHtml(s.rank) + '<span class="who' + (s.named === false ? ' anon' : '') + '">' + schHtml(s.label) + '</span><span class="val">' + val(s) + '</span></div>';
+    }).join('') : '<p class="hint" style="margin:0;">해당 클럽 없음</p>') + '</div>';
+  }
+
+  let collector = '', minReg = 5;
+  function draw(data){
+    minReg = data.minRegistered || 5;
+    // 새 수집기(판 3 이상): list + month(고른 달 하나). 예전 수집기: months(모든 달 상세)
+    let list = data.list, months;
+    if (Array.isArray(list)) months = data.month ? [data.month] : [];
+    else {
+      const all = data.months || [];
+      list = all.map(function(m){ return m.month; });
+      const pick = all.filter(function(m){ return m.month === q.month; })[0] || all[0];
+      months = pick ? [pick] : [];
+    }
+    if (!list.length) { $('monthSel').style.display = 'none'; $('body').innerHTML = '<div class="card empty">아직 기록실에 오른 달이 없어요.<br>' + mLabel(data.current) + ' 순위는 다음 달 1일에 이곳에 올라와요!</div>'; return; }
+    const sel = $('monthSel');
+    sel.innerHTML = list.map(function(m, i){ return '<option value="' + m + '">' + mLabel(m) + (i === 0 ? ' (지난 달)' : '') + '</option>'; }).join('');
+    if (months[0]) sel.value = months[0].month;
+    sel.style.display = '';
+    $('body').innerHTML = months.map(function(m){
+      const st = m.students || [];
+      return '<div class="bw-l"><div class="card month m-l"><div class="month-head"><h2>' + mLabel(m.month) + '</h2><span class="hint">참여 ' + m.schoolCount + '개 클럽 · 전체 ' + n(m.total) + '회 · <a href="board.html?month=' + m.month + (me ? '&me=' + encodeURIComponent(me) : '') + '">그 달 현황판 →</a></span></div>' +
+        '<div class="podiums">' +
+          podium('🏫 클럽 합계', m.schools.total || [], function(s){ return n(s.total) + '회'; }) +
+          podium('⚖️ 1인당 평균', m.schools.avg || [], function(s){ return n(s.avg) + '회'; }) +
+          podium('🙋 참여율', m.schools.rate || [], function(s){ return s.rate + '%'; }) +
+        '</div>' +
+        ((m.schools50 && (m.schools50.total || []).length > 3) ? '<div style="text-align:center;margin:-4px 0 12px;"><button type="button" class="more-btn" data-more="sch" data-m="' + m.month + '">클럽 순위 ' + Math.min(50, m.schoolCount) + '등까지 보기 →</button></div>' : '') +
+        (Array.isArray(m.best50) ? '<div class="podium stars" style="margin-top:12px"><h3>⚡ 한 번에 최고 연속 1~3등</h3>' + (m.best50.length ? m.best50.filter(function(x){ return x.rank <= 3; }).map(function(x){
+          return '<div class="pl' + (x.pid === me ? ' me' : '') + '">' + rankHtml(x.rank) + '<span class="who">' + esc(x.n) + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + ' <span class="sub">' + schHtml(x.school) + '</span></span><span class="val">' + n(x.best) + '회</span></div>';
+        }).join('') : '<p class="hint" style="margin:0;">스마트 줄넘기나 카메라 판정기로 잰 기록이 없어요</p>') +
+        '<p class="hint" style="margin:6px 0 0;">걸리지 않고 이어 뛴 가장 많은 수 · 스마트 줄넘기나 카메라 판정기로 뛴 기록만</p>' +
+        (m.best50.length > 3 ? '<div style="text-align:center;"><button type="button" class="more-btn" data-more="best" data-m="' + m.month + '">' + m.best50.length + '등까지 보기 →</button></div>' : '') + '</div>' : '') +
+        '</div></div><div class="bw-r"><div class="card month m-r">' +
+        '<div class="podium stars"><h3>⭐ 전국 학생 1~3등</h3>' + (st.length ? st.map(function(x){
+          return '<div class="pl">' + rankHtml(x.rank) + '<span class="who">' + esc(x.n) + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + ' <span class="sub">' + schHtml(x.school) + '</span></span><span class="val">' + n(x.c) + '회' + (x.cam ? ' · 📷' + n(x.cam) : '') + '</span></div>';
+        }).join('') : '<p class="hint" style="margin:0;">기록 없음</p>') +
+        ((m.students50 || []).length > 3 ? '<div style="text-align:center;"><button type="button" class="more-btn" data-more="stu" data-m="' + m.month + '">전국 학생 ' + m.students50.length + '등까지 보기 →</button></div>' : '') + '</div>' +
+        (Array.isArray(m.streaks50) ? '<div class="podium stars"><h3>🔥 며칠 연속 뛰었나 1~3등</h3>' + (m.streaks50.some(function(x){ return x.rank <= 3; }) ? m.streaks50.filter(function(x){ return x.rank <= 3; }).map(function(x){
+          return '<div class="pl' + (x.pid === me ? ' me' : '') + '">' + rankHtml(x.rank) + '<span class="who">' + esc(x.n) + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + ' <span class="sub">' + schHtml(x.school) + '</span></span><span class="val">' + x.run + '일 연속</span></div>';
+        }).join('') : '<p class="hint" style="margin:0;">이틀 이상 이어서 뛴 친구가 없어요</p>') +
+        (m.streaks50.length > 3 ? '<div style="text-align:center;"><button type="button" class="more-btn" data-more="run" data-m="' + m.month + '">' + m.streaks50.length + '등까지 보기 →</button></div>' : '') + '</div>' : '') +
+        ((m.inSchool || []).length ? '<details class="ins"' + (me && m.inSchool.some(function(s){ return s.pid === me; }) ? ' open' : '') + '><summary>클럽별 1~3등 보기 (' + m.inSchool.length + '개 클럽)</summary><div class="ins-grid">' +
+          m.inSchool.map(function(s){
+            let r = 0;
+            return '<div class="ins-card' + (s.pid === me ? ' me' : '') + '"><b class="t' + (s.named ? '' : ' anon') + '">' + schHtml(s.label) + '</b>' + s.top.map(function(x, i){
+              r = (i > 0 && s.top[i - 1].c === x.c) ? r : i + 1;
+              return '<div class="pl">' + rankHtml(r) + '<span class="who">' + esc(x.n) + (x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : '') + '</span><span class="val">' + n(x.c) + '회</span></div>';
+            }).join('') + '</div>';
+          }).join('') + '</div></details>' : '') +
+        '</div></div>';
+    }).join('') + '<p class="hint" style="text-align:center;">1인당 평균·참여율은 등록 학생 ' + (data.minRegistered || 5) + '명 이상인 클럽만 순위를 매겨요.</p>';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-more]'), function(b){
+      b.addEventListener('click', function(){
+        const m = months.filter(function(x){ return x.month === b.dataset.m; })[0]; if (!m) return;
+        if (b.dataset.more === 'stu') openModal('전국 학생 순위 · ' + m.students50.length + '등까지', mLabel(m.month) + ' 동안 뛴 횟수 합계', stuTable50(m.students50));
+        else if (b.dataset.more === 'best') openModal('한 번에 최고 연속 · ' + m.best50.length + '등까지', mLabel(m.month) + ' · 걸리지 않고 이어 뛴 가장 많은 수', bestTable50(m.best50));
+        else if (b.dataset.more === 'run') openModal('며칠 연속 뛰었나 · ' + m.streaks50.length + '등까지', mLabel(m.month) + ' · 이어서 뛴 날 수', runTable50(m.streaks50));
+        else schModal(m, 'total');
+      });
+    });
+  }
+
+  function load(month){
+    $('body').innerHTML = '<div class="loading">기록실을 불러오는 중…</div>';
+    return fetch(collector + '?api=hall' + (month ? '&month=' + encodeURIComponent(month) : ''), { cache: 'no-store' })
+      .then(function(r){ if (!r.ok) throw new Error('응답 오류 ' + r.status); return r.json(); })
+      .then(function(j){ if (!j.ok) throw new Error(j.error || '불러오기 실패'); if (j.result.alias && j.result.alias[me]) me = j.result.alias[me]; draw(j.result); })
+      .catch(function(err){ $('body').innerHTML = '<div class="err">기록실을 불러오지 못했어요: ' + esc(err.message || err) + '</div>'; });
+  }
+  $('monthSel').addEventListener('change', function(){
+    q.month = this.value;
+    try { const u = new URL(location.href); u.searchParams.set('month', this.value); history.replaceState(null, '', u); } catch (e) {}
+    load(this.value);
+  });
+
+  fetch('national.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return {}; }).then(function(cfg){
+    collector = q.c || (cfg && cfg.collector) || '';
+    if (!collector) { $('body').innerHTML = '<div class="err">기록실이 아직 준비 중이에요. 곧 열립니다!</div>'; return; }
+    return load(q.month || '');
+  });
+})();
+</script>
+</body>
+</html>
