@@ -191,7 +191,7 @@ function setExtraSettings(token, patch) {
 /************ 전국 현황판: 오늘 기록 보내기 (4판) ************
  * 학생 기기는 비밀 키를 모르니까, 기록을 저장한 뒤 이 함수를 부르면 껍데기가 오늘 승인된 기록을 모아 수집기로 보냄.
  * 클럽 밖으로 나가는 것: 가린 이름(김*늘)·학년·횟수·카메라 횟수·한 번에 최고 연속(5판)·등록 학생 수 (반·번호·실명·비밀번호는 안 나감) */
-const DEFAULT_COLLECTOR_URL = '';   // 클럽 리그 수집기 (클럽 현황판과 따로)
+const DEFAULT_COLLECTOR_URL = 'https://script.google.com/macros/s/AKfycbzkkdCxYArIDczxtX2vePcoDqk7rqQM01IxwqARRhL2N5evhXDR7Sp8GRh1p31c3qhMew/exec';   // 클럽 리그 수집기 (클럽 현황판과 따로)
 function natPid_(key) { return hashPw_('jr-school|' + key).slice(0, 10); }
 function natMask_(n) {
   const c = Array.from(String(n == null ? '' : n).trim());
