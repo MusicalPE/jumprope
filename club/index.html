@@ -673,7 +673,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1__vTZLMSWahHYGn47N
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.6.1', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.6.2', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -2299,6 +2299,15 @@ function renderChart() {
       c.save();
       c.font = '700 ' + size + "px 'Pretendard', 'Noto Sans KR', sans-serif";
       c.fillStyle = '#374151'; c.textAlign = 'center'; c.textBaseline = 'bottom';
+      // 막대 칸(한 학생 자리)보다 숫자가 넓으면 옆 숫자와 겹치니 모두 생략 (휴대폰처럼 좁을 때 — 막대를 누르거나 표로 보기)
+      const slot = chart.chartArea ? chart.chartArea.width / Math.max(1, n) : 0;
+      let widest = 0;
+      for (let j = 0; j < n; j++) { let v = 0; metas.forEach(function(m){ v += chart.data.datasets[m.index].data[j] || 0; }); if (v) widest = Math.max(widest, c.measureText(v.toLocaleString()).width); }
+      if (slot && widest > slot - 2) {   // 먼저 글자를 줄여 보고(9px까지), 그래도 넘치면 생략
+        const fit = Math.floor(size * (slot - 2) / widest);
+        if (fit < 9) { c.restore(); return; }
+        c.font = '700 ' + fit + "px 'Pretendard', 'Noto Sans KR', sans-serif";
+      }
       for (let j = 0; j < n; j++) {
         let sum = 0, top = Infinity, x = null;
         metas.forEach(function(m){ const el = m.data[j]; const v = chart.data.datasets[m.index].data[j] || 0; if (!el || !v) return; sum += v; top = Math.min(top, el.y); x = el.x; });
@@ -2317,6 +2326,7 @@ function renderChart() {
     options: {
       responsive: true,
       maintainAspectRatio: !WIDE_MQ.matches,   // 넓은 PC 화면에서는 칸 높이에 맞춤
+      aspectRatio: window.innerWidth < 600 ? 1.15 : 2,   // 휴대폰 세로 화면: 막대가 납작해지지 않게 높게
       layout: { padding: { top: 18 } },
       onClick: function(evt, elements) {
         if (elements.length > 0) {
