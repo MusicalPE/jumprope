@@ -55,6 +55,14 @@ def page(s):
     s = s.replace('url(fonts/', 'url(../fonts/').replace('src="img/', 'src="../img/').replace('href="icons/', 'href="../icons/')
     s = s.replace("'jr_shell'", "'jrc_shell'")
     s = s.replace('Jump Earth (점퍼스)', 'Jump Earth! 클럽 리그').replace('Jump Earth(점퍼스)', 'Jump Earth! 클럽 리그')
+    # 링크 미리보기(썸네일): 클럽판 그림·이름·주소
+    for x, y in [('img/og-app.jpg', 'img/og-club-app.jpg'), ('img/og-board.jpg', 'img/og-club-board.jpg'), ('img/og-hall.jpg', 'img/og-club-hall.jpg'),
+                 ('content="Jump Us! 점퍼스 · 줄넘기 기록"', 'content="Jump Us! 점퍼스 클럽 · 스포츠클럽·도장 줄넘기 기록"'),
+                 ('content="Jump Earth! 점퍼스 · 전국 줄넘기 현황판"', 'content="Jump Earth! 클럽 리그 · 전국 클럽 줄넘기 현황판"'),
+                 ('content="Jumpers! 점퍼스 · 기록실"', 'content="Jumpers! 클럽 리그 · 기록실"'),
+                 ('<meta property="og:url" content="https://musicalpe.github.io/jumprope/', '<meta property="og:url" content="https://musicalpe.github.io/jumprope/club/'),
+                 ('<meta property="og:site_name" content="점퍼스">', '<meta property="og:site_name" content="점퍼스 클럽 리그">')]:
+        s = s.replace(x, y)
     return s
 
 
