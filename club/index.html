@@ -683,7 +683,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1__vTZLMSWahHYGn47N
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.6.2', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.6.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1317,6 +1317,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <template id="v-admin">
 <div class="container">
   <a class="back-link" href="{{BASE}}">← 메인으로</a>
+  <a class="back-link" href="{{BASE}}" style="float:right" onclick="try{localStorage.removeItem('jumpropeAdminSession')}catch(e){}" title="로그인은 하루 동안 이어져요. 학생도 쓰는 기기라면 끝날 때 눌러 주세요">로그아웃</a>
   <h1>관리자 메뉴</h1>
   <div id="deniedMsg" style="display:none;">접근 권한이 없거나 로그인이 만료되었습니다. <a href="{{BASE}}&page=adminLogin">다시 로그인</a></div>
 
@@ -1717,7 +1718,7 @@ let summaryCache = { types: [], list: [] };
 const NO_TYPE_COLOR = '#B7BDC3'; // 종류 없이 입력된 옛 기록은 항상 회색
 const TYPE_COLORS = ['#F26A3D', '#6C5CE7', '#0EA5E9', '#16A34A', '#F59E0B', '#EC4899', '#14B8A6', '#8B5CF6', '#A16207', '#64748B'];
 const ADMIN_SESSION_KEY = 'jumpropeAdminSession';
-const ADMIN_SESSION_MS = 10 * 60 * 1000; // 10분
+const ADMIN_SESSION_MS = 24 * 60 * 60 * 1000; // 하루 (점프 Live 와 이어진 채로 수업) — 다른 사람이 쓰는 기기면 관리자 메뉴의 로그아웃
 
 function getAdminSession() {
   try {
@@ -1730,7 +1731,7 @@ function getAdminSession() {
   } catch (e) { return null; }
 }
 
-/* ---- 최근 10분 내 관리자 로그인 기록이 있으면 로그인 화면을 건너뛰기 ---- */
+/* ---- 하루 안에 관리자 로그인 기록이 있으면 로그인 화면을 건너뛰기 ---- */
 (function(){
   const session = getAdminSession();
   if (!session) return;
@@ -2513,7 +2514,7 @@ function renderDailyTable(daily) {
 const baseUrl = APP.base;
 const nextPage = APP.q.next || "admin";
 const ADMIN_SESSION_KEY = 'jumpropeAdminSession';
-const ADMIN_SESSION_MS = 10 * 60 * 1000; // 10분
+const ADMIN_SESSION_MS = 24 * 60 * 60 * 1000; // 하루 (점프 Live 와 이어진 채로 수업) — 다른 사람이 쓰는 기기면 관리자 메뉴의 로그아웃
 
 function getAdminSession() {
   try {
@@ -2526,7 +2527,7 @@ function getAdminSession() {
   } catch (e) { return null; }
 }
 
-/* 10분 이내에 로그인한 기록이 남아있으면 비밀번호 입력 없이 바로 통과 */
+/* 하루 안에 로그인한 기록이 남아있으면 비밀번호 입력 없이 바로 통과 */
 (function(){
   const session = getAdminSession();
   if (session) {
