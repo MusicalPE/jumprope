@@ -683,7 +683,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.6.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.6.4', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1183,6 +1183,8 @@ document.addEventListener('DOMContentLoaded', function(){
         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
           <button type="submit" data-tip="여러 번 뛰었으면 그때마다 넣어요. 그날 뛴 횟수가 모두 더해집니다.">저장</button>
           <button type="button" id="cameraBtn" class="btn-outline" data-tip="직접 세어 입력하는 대신 학년·반·이름·종류를 고른 뒤 누르면 판정기가 열려요. 뛰고 나서 &quot;끝내고 기록하기&quot;를 누르면 횟수가 자동으로 들어옵니다." style="display:none; padding:10px 16px;">📷 카메라로 뛰기</button>
+          <button type="button" id="camera2Btn" class="btn-outline" data-tip="태블릿 한 대로 두 사람이 나란히 뛰어요. 같이 뛸 친구를 고르면 판정기가 왼쪽(나)·오른쪽(친구)을 따로 세고, 두 사람 기록을 각자 저장해요." style="display:none; padding:10px 16px;">👥 친구와 둘이</button>
+          <label id="mateWrap" style="display:none; margin:0;">같이 뛸 친구 <select id="mateSelect"><option value="">선택</option></select></label>
           <button type="button" id="bleBtn" class="btn-outline" data-tip="스마트 줄넘기(JUMPITNOW)를 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬)" style="display:none; padding:10px 16px;">스마트 줄넘기로 뛰기</button>
         </div>
         <p id="bleHint" class="hint form-hint" style="display:none; margin:8px 0 0;">JUMPITNOW 줄넘기가 있으면 <b>스마트 줄넘기로 뛰기</b>를 눌러 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬에서 돼요)</p>
@@ -1887,8 +1889,46 @@ google.script.run.withSuccessHandler(function(c){
   if (c && c.enabled) {
     document.getElementById('cameraBtn').style.display = '';
     document.getElementById('cameraHint').style.display = '';
+    if (Math.min(screen.width, screen.height) >= 600) document.getElementById('camera2Btn').style.display = '';   // 2인은 태블릿·노트북처럼 화면이 넓은 기기에서만
   }
 }).getCameraSettings();
+
+/* ---- 친구와 둘이 (판정기 2인 모드): 표를 두 장 받아 판정기에 함께 넘김 ---- */
+function fillMates() {
+  const g = document.getElementById('gradeSelect').value, c = document.getElementById('classSelect').value, me = document.getElementById('nameSelect').value;
+  const sel = document.getElementById('mateSelect'), keep = sel.value;
+  sel.innerHTML = '<option value="">선택</option>';
+  (allStudents || []).filter(s => String(s.grade) === g && String(s.cls) === c && String(s.id) !== String(me))
+    .sort((a, b) => (Number(a.number) || 999) - (Number(b.number) || 999))
+    .forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = (s.number ? s.number + '번 ' : '') + s.name; sel.appendChild(o); });
+  if (keep && keep !== me) sel.value = keep;
+}
+['classSelect', 'nameSelect'].forEach(function(id){ document.getElementById(id).addEventListener('change', function(){ if (document.getElementById('mateWrap').style.display !== 'none') fillMates(); }); });
+document.getElementById('camera2Btn').addEventListener('click', function(){
+  const id = document.getElementById('nameSelect').value;
+  const type = document.getElementById('typeSelect').value;
+  const msg = document.getElementById('formMsg');
+  const wrap = document.getElementById('mateWrap'), mate = document.getElementById('mateSelect');
+  if (!id) { msg.textContent = '학년/반/이름(왼쪽에 설 친구)을 먼저 선택해주세요.'; return; }
+  if (!type) { msg.textContent = '줄넘기 종류를 먼저 선택해주세요.'; return; }
+  if (wrap.style.display === 'none' || !mate.value) {
+    if (wrap.style.display === 'none') { wrap.style.display = ''; fillMates(); }
+    msg.textContent = '같이 뛸 친구(오른쪽에 설 친구)를 고르고 👥 친구와 둘이를 다시 눌러요.'; mate.focus(); return;
+  }
+  const win = window.open('', '_blank');
+  msg.textContent = '판정기 준비 중...';
+  const fail = function(t){ if (win) win.close(); msg.textContent = t; };
+  google.script.run.withSuccessHandler(function(r1){
+    if (!r1.ok) return fail(r1.message);
+    google.script.run.withSuccessHandler(function(r2){
+      if (!r2.ok) return fail(r2.message);
+      const t2 = new URL(r2.url).searchParams.get('t');
+      const url = r1.url + '&t2=' + encodeURIComponent(t2);
+      if (win) win.location.href = url;
+      msg.innerHTML = '판정기 창이 열렸어요. 화면 왼쪽에 나, 오른쪽에 친구가 서요. 뛰고 나서 <b>"끝내고 기록하기"</b>를 누르면 두 사람 기록이 각자 들어갑니다. 창이 안 열렸다면 <a href="' + url + '" target="_blank">여기</a>를 눌러 주세요.';
+    }).withFailureHandler(function(e){ fail('오류: ' + String(e)); }).issueCameraToken(mate.value, type);
+  }).withFailureHandler(function(e){ fail('오류: ' + String(e)); }).issueCameraToken(id, type);
+});
 
 document.getElementById('cameraBtn').addEventListener('click', function(){
   const id = document.getElementById('nameSelect').value;
