@@ -1184,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', function(){
           <button type="submit" data-tip="여러 번 뛰었으면 그때마다 넣어요. 그날 뛴 횟수가 모두 더해집니다.">저장</button>
           <button type="button" id="cameraBtn" class="btn-outline" data-tip="직접 세어 입력하는 대신 학년·반·이름·종류를 고른 뒤 누르면 판정기가 열려요. 뛰고 나서 &quot;끝내고 기록하기&quot;를 누르면 횟수가 자동으로 들어옵니다." style="display:none; padding:10px 16px;">📷 카메라로 뛰기</button>
           <button type="button" id="camera2Btn" class="btn-outline" data-tip="태블릿 한 대로 두 사람이 나란히 뛰어요. 같이 뛸 친구를 고르면 판정기가 왼쪽(나)·오른쪽(친구)을 따로 세고, 두 사람 기록을 각자 저장해요." style="display:none; padding:10px 16px;">👥 친구와 둘이</button>
-          <label id="mateWrap" style="display:none; margin:0;">같이 뛸 친구 <select id="mateSelect"><option value="">선택</option></select></label>
+          <label id="mateWrap" style="display:none; flex-direction:row; align-items:center; gap:8px; margin:0; white-space:nowrap;">같이 뛸 친구 <select id="mateSelect" style="margin:0; width:auto; padding:10px 12px;"><option value="">선택</option></select></label>
           <button type="button" id="bleBtn" class="btn-outline" data-tip="스마트 줄넘기(JUMPITNOW)를 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬)" style="display:none; padding:10px 16px;">스마트 줄넘기로 뛰기</button>
         </div>
         <p id="bleHint" class="hint form-hint" style="display:none; margin:8px 0 0;">JUMPITNOW 줄넘기가 있으면 <b>스마트 줄넘기로 뛰기</b>를 눌러 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬에서 돼요)</p>
@@ -1912,7 +1912,7 @@ document.getElementById('camera2Btn').addEventListener('click', function(){
   if (!id) { msg.textContent = '학년/반/이름(왼쪽에 설 친구)을 먼저 선택해주세요.'; return; }
   if (!type) { msg.textContent = '줄넘기 종류를 먼저 선택해주세요.'; return; }
   if (wrap.style.display === 'none' || !mate.value) {
-    if (wrap.style.display === 'none') { wrap.style.display = ''; fillMates(); }
+    if (wrap.style.display === 'none') { wrap.style.display = 'flex'; fillMates(); }
     msg.textContent = '같이 뛸 친구(오른쪽에 설 친구)를 고르고 👥 친구와 둘이를 다시 눌러요.'; mate.focus(); return;
   }
   const win = window.open('', '_blank');
