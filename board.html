@@ -403,13 +403,17 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
     if (chP) return chP;
     const out = { stu: {}, run: {}, best: {}, total: {}, avg: {}, rate: {} };
     const put = function(cat, id, m, r){ if (!id || !(r >= 1 && r <= 3)) return; (out[cat][id] = out[cat][id] || []).push({ m: m, r: r }); };
+    // 반마다 따로 설치해 한 학교로 합친 경우: 지난 달 기록의 학교 번호를 지금 쓰는 번호로 맞춤
+    let al = (data && data.alias) || {};
+    const cn = function(p){ let q = p, i = 0; while (al[q] && al[q] !== q && i++ < 5) q = al[q]; return q; };
+    const ck = function(x){ return pkey(Object.assign({}, x, { pid: cn(x.pid) })); };
     const add = function(mm){ if (!mm || !mm.month) return; const m = mm.month;
-      (mm.students || []).forEach(function(x){ put('stu', pkey(x), m, x.rank); });
-      (mm.streaks50 || []).forEach(function(x){ put('run', pkey(x), m, x.rank); });
-      (mm.best50 || []).forEach(function(x){ put('best', pkey(x), m, x.rank); });
-      ['total', 'avg', 'rate'].forEach(function(k){ ((mm.schools || {})[k] || []).forEach(function(x){ put(k, x.pid, m, x.rank); }); }); };
+      (mm.students || []).forEach(function(x){ put('stu', ck(x), m, x.rank); });
+      (mm.streaks50 || []).forEach(function(x){ put('run', ck(x), m, x.rank); });
+      (mm.best50 || []).forEach(function(x){ put('best', ck(x), m, x.rank); });
+      ['total', 'avg', 'rate'].forEach(function(k){ ((mm.schools || {})[k] || []).forEach(function(x){ put(k, cn(x.pid), m, x.rank); }); }); };
     chP = fetch(collector + '?api=hall', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(j){
-      if (!j.ok) return out; const res = j.result; add(res.month);
+      if (!j.ok) return out; const res = j.result; al = Object.assign({}, res.alias || {}, al); add(res.month);
       const rest = (res.list || []).filter(function(m){ return !(res.month && res.month.month === m); });
       return Promise.all(rest.map(function(m){ return fetch(collector + '?api=hall&month=' + encodeURIComponent(m), { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(j){ if (j.ok) add(j.result.month); }).catch(function(){}); })).then(function(){ return out; });
     }).catch(function(){ return out; });
