@@ -189,7 +189,7 @@
     .bw .hero-slogan span { margin: 0 .6em; }
   }
   td.nm { white-space: nowrap; }
-  .champ { display: inline-flex; vertical-align: -9px; margin-right: 4px; cursor: pointer; border-radius: 50%; filter: drop-shadow(0 1px 2px rgba(120,40,10,.18)); }
+  .champ { display: inline-flex; vertical-align: -9px; margin-left: 6px; cursor: pointer; border-radius: 50%; filter: drop-shadow(0 1px 2px rgba(120,40,10,.18)); }
   .champ:hover, .champ:focus-visible { outline: 2px solid #F6C445; outline-offset: 1px; }
   .champ-pop { position: fixed; z-index: 1000; background: var(--surface, #fff); border: 1px solid var(--line, #E5E7EB); border-radius: 14px; box-shadow: 0 10px 30px rgba(31,36,48,.18); padding: 12px 16px; min-width: 200px; max-width: 280px; }
   .champ-pop .cp-head { display: flex; gap: 10px; align-items: center; }
@@ -439,16 +439,16 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
   document.addEventListener('keydown', function(e){ const c = e.target.closest && e.target.closest('.champ'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); champPop(c); } });
   window.addEventListener('scroll', function(){ const p = document.getElementById('champPop'); if (p) p.remove(); }, true);
   const STU_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">횟수</th><th class="num hide-sm">📷</th></tr>';
-  const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + champS(x) + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
+  const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champS(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   const RUN_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">연속</th><th class="num hide-sm">횟수</th></tr>';
-  const runRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + champ('run', x) + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>'; };
+  const runRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champ('run', x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>'; };
   const IN_HEAD = '<tr><th>학교 안 순위</th><th>이름</th><th class="num">횟수</th><th class="num">전국</th><th class="num hide-sm">뛴 날</th><th class="num hide-sm">📷</th></tr>';
-  const inRow = function(x){ return '<tr><td>' + rankHtml(x._r) + '</td><td class="nm">' + champS(x) + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + (x.nr ? n(x.nr) + '등' : '–') + '</td><td class="num mono hide-sm">' + x.days + '일</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
+  const inRow = function(x){ return '<tr><td>' + rankHtml(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champS(x) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + (x.nr ? n(x.nr) + '등' : '–') + '</td><td class="num mono hide-sm">' + x.days + '일</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   // 등수 칸: 50등 밖(전국 1,030등 등)도 숫자로
   const rankCell = function(r){ return r > 99 ? '<span class="rank wide">' + n(r) + '</span>' : rankHtml(r); };
   const SHOW_BEST = 5;   // 왼쪽 칸이라 5등까지만 바로 보이고 나머지는 팝업
   const BEST_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">최고 연속</th></tr>';
-  const bestRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + champ('best', x) + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + n(x.best) + '회</b></td></tr>'; };
+  const bestRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champ('best', x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + n(x.best) + '회</b></td></tr>'; };
   const table = function(head, rows, row, cls){ return '<table' + (cls ? ' class="' + cls + '"' : '') + '><thead>' + head + '</thead><tbody>' + rows.map(row).join('') + '</tbody></table>'; };
 
   // 이름 찾기: 이름은 가운데가 * 로 가려져 있어서, 찾는 이름도 똑같이 가려서 맞춰 봐요 (김하늘 → 김*늘)
@@ -598,7 +598,7 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
         const isMe = sc.pid === me;
         let h = '<tr class="school' + (isMe ? ' me' : '') + (tail ? ' tail' : '') + '" data-pid="' + esc(sc.pid) + '">' +
           '<td>' + rankHtml(sc.rank[key]) + '</td>' +
-          '<td>' + champ(key, sc, true) + '<span class="' + (sc.named ? '' : 'anon') + '">' + schHtml(sc.label) + '</span>' + (isMe ? '<span class="tag-me">우리 학교</span>' : '') + '</td>' +
+          '<td><span class="' + (sc.named ? '' : 'anon') + '">' + schHtml(sc.label) + '</span>' + champ(key, sc, true) + (isMe ? '<span class="tag-me">우리 학교</span>' : '') + '</td>' +
           '<td class="num mono">' + n(sc.total) + '</td>' +
           (sc.noReg ? '<td class="num mono">–</td><td class="num mono">–</td>' :
           '<td class="num mono">' + n(sc.avg) + '</td>' +
