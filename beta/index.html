@@ -683,7 +683,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.6.8', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.6.9', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -2833,7 +2833,7 @@ loadTypes();
     if (mineSide && (d.status === 'playing' || (d.status === 'waiting' && mineSide === 'host')) && me && !me.res) {
       if (d.status === 'waiting') h += '<p class="hint" style="margin:10px 0 0;">상대가 받기 전에 <b>우리 학교가 먼저 뛰어 기록을 걸어 둘 수 있어요.</b> 걸어 둔 기록은 초대 글에도 들어가요.</p>';
       if (d.kind === 'day') h += '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><input type="date" data-ddate="' + esc(d.code) + '" value="' + today() + '" min="' + d.created + '" max="' + (d.deadline < today() ? d.deadline : today()) + '" style="max-width:180px;"><button type="button" data-dday="' + esc(d.code) + '">이 날 기록으로 결과 보내기</button></div>';
-      else h += '<p class="hint" style="margin:10px 0 0;">점프 Live에서 <b>' + (d.dur / 60) + '분</b>으로 한 판을 뛰고, 결과 창의 <b>대결 결과로 보내기</b>를 눌러요.</p>';
+      else h += '<div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;"><button type="button" data-drun="' + esc(d.code) + '" data-ddur="' + d.dur + '">우리 학교 뛰기 →</button><span class="hint">점프 Live가 ' + (d.dur / 60) + '분으로 맞춰져 열려요. 한 판 뛰고 결과 창에서 <b>대결 결과로 보내기</b>를 눌러요.</span></div>';
     }
     return h + '</div>';
   }
@@ -2876,6 +2876,14 @@ loadTypes();
   $d('duelList').addEventListener('click', function(e){
     const t = e.target;
     if (t.dataset.dcopy) { const box = t.closest('div[style]').parentNode; ctx().then(function(){ return fetch(NAT.collector + '?api=duel&code=' + t.dataset.dcopy).then(function(r){ return r.json(); }); }).then(function(j){ return navigator.clipboard.writeText(invite(j.result)); }).then(function(){ t.textContent = '✓ 복사했어요'; }); }
+    if (t.dataset.drun) {
+      const live = APP.shell && APP.shell.live, lite = APP.shell && APP.shell.lite;
+      if (!live && !lite) { alert('점프 Live는 껍데기 6판부터 쓸 수 있어요.'); return; }
+      const q = '&duel=' + encodeURIComponent(t.dataset.drun) + '&dur=' + t.dataset.ddur;
+      const url = location.origin + '/jumpropelive/monitor.html?' + (live ? '' : 'lite=1' + (APP.club ? '&club=1' : '') + '&') + 's=' + encodeURIComponent(APP.shellUrl) + q;
+      if (!window.open(url, '_blank')) alert('새 창이 막혔어요. 주소창 오른쪽에서 팝업을 허용해 주세요.');
+      return;
+    }
     if (t.dataset.dcancel && confirm('이 도전장을 취소할까요?')) NAT.post('duelCancel', { key: NAT.cfg.key, code: t.dataset.dcancel }).then(list).catch(function(err){ alert(err.message); });
     if (t.dataset.dday) {
       const date = document.querySelector('[data-ddate="' + t.dataset.dday + '"]').value;
