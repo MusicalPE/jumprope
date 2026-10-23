@@ -23,7 +23,7 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 16;  // 16: 도전장을 만든 학교는 상대가 받기 전에도 먼저 뛰고 결과를 보낼 수 있음(기록을 걸고 도전)  // 15: 15: 학교 대결(도전장) — Duels 시트, 대결 코드로 두 학교가 같은 종목(점프 Live N분 한 판 / 하루 카메라 기록)을 1인당 평균으로 겨룸  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 17;  // 17: 학교 대결 종목 '박 터트리기' — 들어온 학생 수 × 30·50·100회 박을 3분 안에 누가 더 빨리 깨나  // 16: 도전장을 만든 학교는 상대가 받기 전에도 먼저 뛰고 결과를 보낼 수 있음(기록을 걸고 도전)  // 15: 15: 학교 대결(도전장) — Duels 시트, 대결 코드로 두 학교가 같은 종목(점프 Live N분 한 판 / 하루 카메라 기록)을 1인당 평균으로 겨룸  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -782,7 +782,8 @@ function getMatSchool_(pid, month, game, diff, band) {
  * 한 학교가 종목을 정해 도전장(대결 코드 6자리)을 만들고, 상대 학교 선생님이 코드를 넣어 받아들임.
  * 종목  run : 점프 Live 에서 dur 초(60·120·180) 한 판 — 선생님 화면이 그 판 결과(합계·뛴 학생 수)를 보냄
  *       day : 기한 안의 하루를 골라 그날 카메라로 인증된 횟수 — 수집기에 이미 모인 하루 집계(Daily)로 계산
- * 겨루는 값: run = 합계 ÷ 뛴 학생 수, day = 카메라 횟수 ÷ 등록 학생 수 (인원이 달라도 공정하게)
+ *       bak : 박 터트리기 — 들어온 학생 수 × dur(30·50·100)회 박을 3분 안에 깨는 시간 (17판, dur 칸에 1인당 횟수)
+ * 겨루는 값: run = 합계 ÷ 뛴 학생 수, day = 카메라 횟수 ÷ 등록 학생 수, bak = 깬 시간(짧을수록) · 못 깨면 몇 % 채웠나
  * 반마다 따로 설치해 합친 학교는 대표 학교(canon)로 묶음 */
 const SH_DUELS = 'Duels';
 const DUEL_HEADER_ = ['Code', 'Created', 'Kind', 'Dur', 'Deadline', 'HostPid', 'GuestPid', 'HostRes', 'GuestRes', 'HostAt', 'GuestAt'];
@@ -812,14 +813,20 @@ function duelPublic_(x, schools) {
   const today = today_(), h = side(x.host, x.hostRes), g = side(x.guest, x.guestRes);
   const done = !!(x.hostRes && x.guestRes), expired = !done && today > x.deadline;
   let winner = '';
-  if (done) { const a = Number(x.hostRes.avg) || 0, b = Number(x.guestRes.avg) || 0; winner = a > b ? 'host' : b > a ? 'guest' : 'tie'; }
+  if (done && x.kind === 'bak') {
+    const A = x.hostRes, B = x.guestRes;
+    if (A.ok && B.ok) winner = A.sec < B.sec ? 'host' : B.sec < A.sec ? 'guest' : 'tie';
+    else if (A.ok !== B.ok) winner = A.ok ? 'host' : 'guest';
+    else winner = A.pct > B.pct ? 'host' : B.pct > A.pct ? 'guest' : 'tie';
+  } else if (done) { const a = Number(x.hostRes.avg) || 0, b = Number(x.guestRes.avg) || 0; winner = a > b ? 'host' : b > a ? 'guest' : 'tie'; }
   return { code: x.code, kind: x.kind, dur: x.dur, created: x.created, deadline: x.deadline, host: h, guest: g,
     status: done ? 'done' : expired ? 'expired' : !x.guest ? 'waiting' : 'playing', winner: winner };
 }
 function duelCreate_(p) {
   const schools = loadSchools_(), me = duelSide_(p.key, schools);
-  const kind = p.kind === 'day' ? 'day' : 'run';
-  const dur = kind === 'run' ? ([60, 120, 180].indexOf(Number(p.dur)) >= 0 ? Number(p.dur) : 60) : 0;
+  const kind = p.kind === 'day' ? 'day' : p.kind === 'bak' ? 'bak' : 'run';
+  const dur = kind === 'run' ? ([60, 120, 180].indexOf(Number(p.dur)) >= 0 ? Number(p.dur) : 60)
+    : kind === 'bak' ? ([30, 50, 100].indexOf(Number(p.dur)) >= 0 ? Number(p.dur) : 50) : 0;   // bak: 1인당 횟수
   const days = Math.max(1, Math.min(14, Math.round(Number(p.days) || 7)));
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
@@ -884,7 +891,16 @@ function duelSubmit_(p) {
     if (x[side + 'Res']) throw new Error('이 대결 결과는 이미 보냈어요.');
     const r = p.res || {};
     let res;
-    if (x.kind === 'run') {
+    if (x.kind === 'bak') {
+      const players = Math.round(Number(r.players)), goal = Math.round(Number(r.goal)), sum = Math.round(Number(r.sum)), ms = Math.round(Number(r.ms));
+      if (!(players >= 1 && players <= 60)) throw new Error('뛴 학생 수가 올바르지 않아요.');
+      if (Math.round(Number(r.per)) !== x.dur || goal !== Math.max(10, players * x.dur)) throw new Error('대결 종목은 들어온 인원 × ' + x.dur + '회 박이에요. 같은 목표로 깬 판만 보낼 수 있어요.');
+      if (Math.round(Number(r.limit)) !== 180) throw new Error('박 터트리기 대결은 시간 제한 3분으로 뛰어요.');
+      const ok = r.ok === true && ms > 0 && ms <= 185000;
+      if (!(sum >= 0 && sum <= players * 800)) throw new Error('합계가 너무 커요.');
+      const sec = ok ? Math.round(ms / 100) / 10 : null;
+      res = { ok: ok, sec: sec, sum: sum, goal: goal, players: players, pct: Math.min(100, Math.round(sum / goal * 1000) / 10), avg: ok ? sec : null, at: today, mode: cleanText_(r.mode, 20) };
+    } else if (x.kind === 'run') {
       const players = Math.round(Number(r.players)), total = Math.round(Number(r.total));
       if (!(players >= 1 && players <= 60)) throw new Error('뛴 학생 수가 올바르지 않아요.');
       if (Math.round(Number(r.dur)) !== x.dur) throw new Error('대결 종목은 ' + (x.dur / 60) + '분 한 판이에요. 같은 시간으로 뛴 판만 보낼 수 있어요.');

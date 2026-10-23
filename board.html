@@ -461,12 +461,13 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
   }
   function duelHtml(L){
     if (!L.length) return '';
-    const kind = function(d){ return d.kind === 'day' ? '하루 카메라 기록' : (d.dur / 60) + '분 한 판'; };
+    const kind = function(d){ return d.kind === 'day' ? '하루 카메라 기록' : d.kind === 'bak' ? '박 터트리기 · 인원 × ' + d.dur : (d.dur / 60) + '분 한 판'; };
     const md = function(x){ return x ? Number(x.slice(5, 7)) + '/' + Number(x.slice(8, 10)) : ''; };
+    const val = function(r){ return 'goal' in r ? (r.ok ? '<b class="mono">' + r.sec + '초</b><small>에 깼어요</small>' : '<b class="mono">' + r.pct + '%</b><small>3분 동안 채움</small>') : '<b class="mono">' + r.avg + '</b><small>1인당</small>'; };
     const sd = function(x, win){ if (!x) return '<span class="dl-s">상대 기다리는 중</span>';
       return '<div class="dl-s' + (win ? ' win' : '') + (x.pid === me ? ' mine' : '') + '"><span class="' + (x.named ? '' : 'anon') + '">' + schHtml(x.label) + '</span>' +
-        (x.res ? '<b class="mono">' + x.res.avg + '</b><small>1인당</small>' : '<small>' + '아직' + '</small>') + '</div>'; };
-    return '<div class="card"><div class="card-head"><div><h2>⚔ 학교 대결</h2><span class="hint">도전장을 주고받은 두 학교가 같은 종목으로 겨뤄요 · 1인당 평균</span></div></div>' +
+        (x.res ? val(x.res) : '<small>아직</small>') + '</div>'; };
+    return '<div class="card"><div class="card-head"><div><h2>⚔ 학교 대결</h2><span class="hint">도전장을 주고받은 두 학교가 같은 종목으로 겨뤄요 · 인원이 달라도 공정하게 (1인당 평균 · 인원 × 목표)</span></div></div>' +
       '<div class="duels">' + L.slice(0, 8).map(function(d){
         const st = d.status === 'done' ? (d.winner === 'tie' ? '비김' : '끝') : d.status === 'expired' ? '기한 지남' : '대결 중 · ' + md(d.deadline) + '까지';
         return '<div class="dl"><div class="dl-k">' + kind(d) + '<span>' + st + '</span></div><div class="dl-v">' + sd(d.host, d.winner === 'host') + '<i>VS</i>' + sd(d.guest, d.winner === 'guest') + '</div></div>';
