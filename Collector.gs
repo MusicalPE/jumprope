@@ -18,11 +18,12 @@
  *              (현황판·기록실 응답에는 절대 나가지 않음. 담당 교사·연락처는 관리자 화면에서 보낼 때만 옴)
  *  - Daily   : PublicId, Date, Total, Participants, Camera, Students(JSON), UpdatedAt
  *              Students = [[학생키, 가린이름, 학년, 횟수, 카메라횟수, 최고연속], ...]  (최고연속: 껍데기 5판부터, 스마트 줄넘기·카메라 판정기로 잰 한 번에 이어 뛴 가장 많은 수)
+ *  - Duels   : Code, Created, Kind, Dur, Deadline, HostPid, GuestPid, HostRes(JSON), GuestRes(JSON), HostAt, GuestAt  ← 학교 대결(도전장)
  *  - MatDaily: PublicId, Date, Rows(JSON), UpdatedAt   ← 색깔 매트 놀이터(카메라 판정·교사 승인 기록만)
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 14;  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 15;  // 15: 학교 대결(도전장) — Duels 시트, 대결 코드로 두 학교가 같은 종목(점프 Live N분 한 판 / 하루 카메라 기록)을 1인당 평균으로 겨룸  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -43,6 +44,8 @@ function doGet(e) {
     else if (q.api === 'hall') out = getHall_(q.month);
     else if (q.api === 'matBoard') out = getMatBoard_(q.month, q.game, q.diff, q.band);
     else if (q.api === 'matSchool') out = getMatSchool_(q.pid, q.month, q.game, q.diff, q.band);
+    else if (q.api === 'duel') out = duelView_(q.code);
+    else if (q.api === 'duels') out = duelList_();
     else out = { collector: COLLECTOR_VERSION, today: today_() };
     out = { ok: true, result: out };
   } catch (err) {
@@ -60,6 +63,11 @@ function doPost(e) {
     if (body.fn === 'report') out = report_(p);
     else if (body.fn === 'leave') out = leave_(p);
     else if (body.fn === 'matReport') out = matReport_(p);
+    else if (body.fn === 'duelCreate') out = duelCreate_(p);
+    else if (body.fn === 'duelJoin') out = duelJoin_(p);
+    else if (body.fn === 'duelSubmit') out = duelSubmit_(p);
+    else if (body.fn === 'duelMine') out = duelMine_(p);
+    else if (body.fn === 'duelCancel') out = duelCancel_(p);
     else throw new Error('알 수 없는 요청');
     out = { ok: true, result: out };
   } catch (err) {
@@ -766,5 +774,149 @@ function getMatSchool_(pid, month, game, diff, band) {
     }) };
   const text = JSON.stringify(out);
   if (text.length < 95000) cache.put(ck, text, BOARD_CACHE_SEC);
+  return out;
+}
+
+
+/************ 학교 대결 (도전장) — 15판 ************
+ * 한 학교가 종목을 정해 도전장(대결 코드 6자리)을 만들고, 상대 학교 선생님이 코드를 넣어 받아들임.
+ * 종목  run : 점프 Live 에서 dur 초(60·120·180) 한 판 — 선생님 화면이 그 판 결과(합계·뛴 학생 수)를 보냄
+ *       day : 기한 안의 하루를 골라 그날 카메라로 인증된 횟수 — 수집기에 이미 모인 하루 집계(Daily)로 계산
+ * 겨루는 값: run = 합계 ÷ 뛴 학생 수, day = 카메라 횟수 ÷ 등록 학생 수 (인원이 달라도 공정하게)
+ * 반마다 따로 설치해 합친 학교는 대표 학교(canon)로 묶음 */
+const SH_DUELS = 'Duels';
+const DUEL_HEADER_ = ['Code', 'Created', 'Kind', 'Dur', 'Deadline', 'HostPid', 'GuestPid', 'HostRes', 'GuestRes', 'HostAt', 'GuestAt'];
+const DUEL_CH_ = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function duelsSheet_() { return sheet_(SH_DUELS, DUEL_HEADER_); }
+function duelSide_(key, schools) {
+  const k = cleanText_(key, 80);
+  if (k.length < 16) throw new Error('학교 키가 올바르지 않습니다. 전국 현황판 참여를 먼저 켜 주세요.');
+  const pid = publicId_(k), s = schools[pid];
+  if (!s) throw new Error('아직 전국 현황판에 한 번도 보고되지 않은 학교예요. 기록을 하나 넣은 뒤 다시 해 주세요.');
+  if (s.hidden) throw new Error('현황판에서 빠진 학교라 대결을 할 수 없어요.');
+  return s.canon;
+}
+function duelRead_(sh) {
+  const v = sh.getDataRange().getValues(), out = [];
+  for (let i = 1; i < v.length; i++) {
+    const r = v[i]; if (!r[0]) continue;
+    const j = function (x) { try { return x ? JSON.parse(x) : null; } catch (e) { return null; } };
+    const d = function (x) { return x instanceof Date ? Utilities.formatDate(x, TZ_, 'yyyy-MM-dd') : String(x || ''); };
+    out.push({ row: i + 1, code: String(r[0]), created: d(r[1]), kind: String(r[2]), dur: Number(r[3]) || 0, deadline: d(r[4]),
+      host: String(r[5]), guest: String(r[6] || ''), hostRes: j(r[7]), guestRes: j(r[8]) });
+  }
+  return out;
+}
+function duelPublic_(x, schools) {
+  const side = function (pid, res) { if (!pid) return null; const s = schools[pid] || {}; return { pid: pid, label: s.label || '익명 학교', named: !!s.named, res: res || null }; };
+  const today = today_(), h = side(x.host, x.hostRes), g = side(x.guest, x.guestRes);
+  const done = !!(x.hostRes && x.guestRes), expired = !done && today > x.deadline;
+  let winner = '';
+  if (done) { const a = Number(x.hostRes.avg) || 0, b = Number(x.guestRes.avg) || 0; winner = a > b ? 'host' : b > a ? 'guest' : 'tie'; }
+  return { code: x.code, kind: x.kind, dur: x.dur, created: x.created, deadline: x.deadline, host: h, guest: g,
+    status: done ? 'done' : expired ? 'expired' : !x.guest ? 'waiting' : 'playing', winner: winner };
+}
+function duelCreate_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const kind = p.kind === 'day' ? 'day' : 'run';
+  const dur = kind === 'run' ? ([60, 120, 180].indexOf(Number(p.dur)) >= 0 ? Number(p.dur) : 60) : 0;
+  const days = Math.max(1, Math.min(14, Math.round(Number(p.days) || 7)));
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = duelsSheet_(), all = duelRead_(sh), today = today_();
+    const open = all.filter(function (x) { return x.host === me && !x.guest && x.deadline >= today; }).length;
+    if (open >= 5) throw new Error('아직 상대가 받지 않은 도전장이 5개 있어요. 먼저 받거나 취소한 뒤 만들어 주세요.');
+    const used = {}; all.forEach(function (x) { used[x.code] = 1; });
+    let code = '';
+    for (let t = 0; t < 50 && (!code || used[code]); t++) { code = ''; for (let i = 0; i < 6; i++) code += DUEL_CH_.charAt(Math.floor(Math.random() * DUEL_CH_.length)); }
+    const dl = Utilities.formatDate(new Date(Date.now() + days * 86400000), TZ_, 'yyyy-MM-dd');
+    sh.appendRow([code, today, kind, dur, dl, me, '', '', '', '', '']);
+    sh.getRange(sh.getLastRow(), 2, 1, 1).setNumberFormat('@'); sh.getRange(sh.getLastRow(), 5, 1, 1).setNumberFormat('@');
+    sh.getRange(sh.getLastRow(), 2).setValue(today); sh.getRange(sh.getLastRow(), 5).setValue(dl);
+    return duelPublic_({ code: code, created: today, kind: kind, dur: dur, deadline: dl, host: me, guest: '', hostRes: null, guestRes: null }, schools);
+  } finally { lock.releaseLock(); }
+}
+function duelFind_(all, code) {
+  const c = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const x = all.filter(function (d) { return d.code === c; })[0];
+  if (!x) throw new Error('그런 대결 코드가 없어요. 코드를 다시 확인해 주세요.');
+  return x;
+}
+function duelView_(code) { const schools = loadSchools_(); return duelPublic_(duelFind_(duelRead_(duelsSheet_()), code), schools); }
+function duelJoin_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = duelsSheet_(), x = duelFind_(duelRead_(sh), p.code);
+    if (x.host === me) throw new Error('우리 학교가 만든 도전장이에요. 상대 학교 선생님께 코드를 보내 주세요.');
+    if (x.guest && x.guest !== me) throw new Error('이미 다른 학교가 받은 도전장이에요.');
+    if (today_() > x.deadline) throw new Error('기한이 지난 도전장이에요.');
+    if (!x.guest) { sh.getRange(x.row, 7).setValue(me); x.guest = me; }
+    return duelPublic_(x, schools);
+  } finally { lock.releaseLock(); }
+}
+function duelCancel_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = duelsSheet_(), x = duelFind_(duelRead_(sh), p.code);
+    if (x.host !== me) throw new Error('도전장을 만든 학교만 취소할 수 있어요.');
+    if (x.guest) throw new Error('상대 학교가 이미 받은 도전장은 취소할 수 없어요.');
+    sh.deleteRow(x.row); return { ok: true };
+  } finally { lock.releaseLock(); }
+}
+function duelMine_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const all = duelRead_(duelsSheet_()).filter(function (x) { return x.host === me || x.guest === me; });
+  all.sort(function (a, b) { return a.created < b.created ? 1 : a.created > b.created ? -1 : 0; });
+  return { me: me, list: all.slice(0, 30).map(function (x) { const o = duelPublic_(x, schools); o.side = x.host === me ? 'host' : 'guest'; return o; }) };
+}
+function duelSubmit_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = duelsSheet_(), x = duelFind_(duelRead_(sh), p.code), today = today_();
+    const side = x.host === me ? 'host' : x.guest === me ? 'guest' : '';
+    if (!side) throw new Error('우리 학교가 참여한 대결이 아니에요.');
+    if (!x.guest) throw new Error('상대 학교가 아직 도전장을 받지 않았어요.');
+    if (today > x.deadline) throw new Error('기한이 지난 대결이에요.');
+    if (x[side + 'Res']) throw new Error('이 대결 결과는 이미 보냈어요.');
+    const r = p.res || {};
+    let res;
+    if (x.kind === 'run') {
+      const players = Math.round(Number(r.players)), total = Math.round(Number(r.total));
+      if (!(players >= 1 && players <= 60)) throw new Error('뛴 학생 수가 올바르지 않아요.');
+      if (Math.round(Number(r.dur)) !== x.dur) throw new Error('대결 종목은 ' + (x.dur / 60) + '분 한 판이에요. 같은 시간으로 뛴 판만 보낼 수 있어요.');
+      if (!(total >= 0 && total <= players * x.dur * 4)) throw new Error('합계가 너무 커요.');
+      res = { total: total, players: players, avg: Math.round(total / players * 10) / 10, at: today, mode: cleanText_(r.mode, 20) };
+    } else {
+      const date = String(r.date || '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < x.created || date > today || date > x.deadline) throw new Error('도전장 기간 안의 날짜(오늘까지)를 골라 주세요.');
+      const members = Object.keys(schools).filter(function (k) { return schools[k].canon === me; });
+      const v = dailySheet_().getDataRange().getValues();
+      let cam = 0, parts = 0;
+      for (let i = 1; i < v.length; i++) {
+        const ds = v[i][1] instanceof Date ? Utilities.formatDate(v[i][1], TZ_, 'yyyy-MM-dd') : String(v[i][1]);
+        if (ds === date && members.indexOf(String(v[i][0])) >= 0) { cam += Number(v[i][4]) || 0; parts += Number(v[i][3]) || 0; }
+      }
+      if (!cam) throw new Error(date + ' 에 카메라로 인증된 기록이 아직 현황판에 없어요. 기록을 넣은 뒤 잠시 기다렸다가 다시 보내 주세요.');
+      const reg = (schools[me] && schools[me].registered) || parts;
+      res = { date: date, total: cam, players: parts, registered: reg, avg: Math.round(cam / Math.max(1, reg) * 10) / 10, at: today };
+    }
+    sh.getRange(x.row, side === 'host' ? 8 : 9).setValue(JSON.stringify(res));
+    sh.getRange(x.row, side === 'host' ? 10 : 11).setValue(new Date());
+    x[side + 'Res'] = res;
+    return duelPublic_(x, schools);
+  } finally { lock.releaseLock(); }
+}
+// 현황판: 최근 대결 (상대가 받은 것만, 20개)
+function duelList_() {
+  const cache = CacheService.getScriptCache(), hit = cache.get('duels');
+  if (hit) return JSON.parse(hit);
+  const schools = loadSchools_();
+  const all = duelRead_(duelsSheet_()).filter(function (x) { return x.guest && !(schools[x.host] || {}).hidden && !(schools[x.guest] || {}).hidden; });
+  all.sort(function (a, b) { return a.created < b.created ? 1 : a.created > b.created ? -1 : 0; });
+  const out = { list: all.slice(0, 20).map(function (x) { return duelPublic_(x, schools); }) };
+  cache.put('duels', JSON.stringify(out), 60);
   return out;
 }

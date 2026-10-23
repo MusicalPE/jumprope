@@ -191,6 +191,15 @@
   td.nm { white-space: nowrap; }
   .champ { display: inline-flex; vertical-align: -9px; margin-left: 6px; cursor: pointer; border-radius: 50%; filter: drop-shadow(0 1px 2px rgba(120,40,10,.18)); }
   .champ:hover, .champ:focus-visible { outline: 2px solid #F6C445; outline-offset: 1px; }
+  .duels { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+  .dl { border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; }
+  .dl-k { display: flex; justify-content: space-between; font-weight: 800; font-size: .9em; color: var(--ink-2); } .dl-k span { font-weight: 600; }
+  .dl-v { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-top: 6px; }
+  .dl-v i { font-style: normal; font-weight: 900; color: var(--coral); }
+  .dl-s { display: flex; flex-direction: column; gap: 2px; font-size: .92em; } .dl-v .dl-s:last-child { text-align: right; align-items: flex-end; }
+  .dl-s b { font-size: 1.35em; } .dl-s small { color: var(--ink-2); font-size: .78em; }
+  .dl-s.win b { color: var(--coral-dark); } .dl-s.win b::after { content: ' 승'; font-size: .6em; }
+  .dl-s.mine > span:first-child { color: var(--coral-dark); font-weight: 800; }
   .champ-pop { position: fixed; z-index: 1000; background: var(--surface, #fff); border: 1px solid var(--line, #E5E7EB); border-radius: 14px; box-shadow: 0 10px 30px rgba(31,36,48,.18); padding: 12px 16px; min-width: 200px; max-width: 280px; }
   .champ-pop .cp-head { display: flex; gap: 10px; align-items: center; }
   .champ-pop .cp-head b { display: block; font-size: 1.05em; } .champ-pop .cp-head span { font-size: .85em; color: var(--ink-2, #6B7280); }
@@ -363,6 +372,7 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     fetch(collector + '?api=board' + (month ? '&month=' + encodeURIComponent(month) : '') + (grade ? '&grade=' + encodeURIComponent(grade) : ''), { cache: 'no-store' })
       .then(function(r){ if (!r.ok) throw new Error('응답 오류 ' + r.status); return r.json(); })
       .then(function(j){ if (!j.ok) throw new Error(j.error || '불러오기 실패'); data = j.result; if (data.alias && data.alias[me]) me = data.alias[me]; draw();
+        duelLoad();
         if (!CHD) champLoad().then(function(d){ CHD = d; if (Object.keys(d).some(function(c){ return Object.keys(d[c]).length; })) draw(); }); })
       .catch(function(err){ $('body').innerHTML = '<div class="err">현황판을 불러오지 못했어요: ' + esc(err.message || err) + '</div>'; });
   }
@@ -442,6 +452,26 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
   document.addEventListener('click', function(e){ const c = e.target.closest && e.target.closest('.champ'); if (c) { e.stopPropagation(); e.preventDefault(); champPop(c); return; } const p = document.getElementById('champPop'); if (p && !e.target.closest('#champPop')) p.remove(); }, true);
   document.addEventListener('keydown', function(e){ const c = e.target.closest && e.target.closest('.champ'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); champPop(c); } });
   window.addEventListener('scroll', function(){ const p = document.getElementById('champPop'); if (p) p.remove(); }, true);
+  // 학교 대결(도전장): 최근 대결 — 상대가 받은 것만 (수집기 15판)
+  let DUELS = null;
+  function duelLoad(){
+    const put = function(){ const el = $('duelCard'); if (el && DUELS) el.innerHTML = duelHtml(DUELS); };
+    if (DUELS) return put();
+    fetch(collector + '?api=duels', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(j){ if (j.ok && j.result && j.result.list) { DUELS = j.result.list; put(); } }).catch(function(){});
+  }
+  function duelHtml(L){
+    if (!L.length) return '';
+    const kind = function(d){ return d.kind === 'day' ? '하루 카메라 기록' : (d.dur / 60) + '분 한 판'; };
+    const md = function(x){ return x ? Number(x.slice(5, 7)) + '/' + Number(x.slice(8, 10)) : ''; };
+    const sd = function(x, win){ if (!x) return '<span class="dl-s">상대 기다리는 중</span>';
+      return '<div class="dl-s' + (win ? ' win' : '') + (x.pid === me ? ' mine' : '') + '"><span class="' + (x.named ? '' : 'anon') + '">' + schHtml(x.label) + '</span>' +
+        (x.res ? '<b class="mono">' + x.res.avg + '</b><small>1인당</small>' : '<small>' + '아직' + '</small>') + '</div>'; };
+    return '<div class="card"><div class="card-head"><div><h2>⚔ 학교 대결</h2><span class="hint">도전장을 주고받은 두 학교가 같은 종목으로 겨뤄요 · 1인당 평균</span></div></div>' +
+      '<div class="duels">' + L.slice(0, 8).map(function(d){
+        const st = d.status === 'done' ? (d.winner === 'tie' ? '비김' : '끝') : d.status === 'expired' ? '기한 지남' : '대결 중 · ' + md(d.deadline) + '까지';
+        return '<div class="dl"><div class="dl-k">' + kind(d) + '<span>' + st + '</span></div><div class="dl-v">' + sd(d.host, d.winner === 'host') + '<i>VS</i>' + sd(d.guest, d.winner === 'guest') + '</div></div>';
+      }).join('') + '</div><p class="hint" style="margin-bottom:0;">대결은 우리 학교 프로그램의 관리자 메뉴 → 학교 대결에서 도전장을 만들거나 받아요.</p></div>';
+  }
   const STU_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">횟수</th><th class="num hide-sm">📷</th></tr>';
   const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champS(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   const RUN_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">연속</th><th class="num hide-sm">횟수</th></tr>';
@@ -620,6 +650,7 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
       html += '<p class="hint" style="margin-bottom:0;">참여 ' + nSchools + '개 학교 중 ' + SCH_MAX + '등까지 보여요' + (me ? ' (우리 학교는 늘 보여요)' : '') + '. 1인당 평균 = 합계 ÷ 등록 학생 수 · 참여율 = 이번 달 한 번이라도 뛴 학생 ÷ 등록 학생 수. 두 순위는 등록 학생 ' + (data.minRegistered || 5) + '명 이상인 학교만 매겨요.' + (data.grade ? ' 학년별로 볼 때는 학년별 학생 수를 보낸 학교(2.2 이상)만 1인당 평균·참여율 순위에 들어가요.' : '') + ' 📷 카메라는 줄넘기 판정기로 인증된 횟수예요.</p>';
     }
     html += '</div>';
+    html += '<div id="duelCard">' + (DUELS ? duelHtml(DUELS) : '') + '</div>';
 
     // 전국 학생 순위: 10등까지, 나머지는 팝업(10명씩, 50등까지)
     const st = ranked(data.students || [], 'c');

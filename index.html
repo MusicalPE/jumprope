@@ -683,7 +683,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.6.6', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.6.7', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1331,6 +1331,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <button type="button" data-tab="camera"><span class="ico"></span>카메라 판정기</button>
       <button type="button" data-tab="ai"><span class="ico"></span>AI 한마디</button>
       <button type="button" data-tab="national"><span class="ico"></span>Jump Earth! 전국</button>
+      <button type="button" data-tab="duel"><span class="ico"></span>학교 대결<span class="new-dot feat-new" data-new="duel">NEW</span></button>
       <button type="button" data-tab="levels"><span class="ico"></span>급수 인증<span class="new-dot feat-new" data-new="levels">NEW</span></button>
       <button type="button" data-tab="certs"><span class="ico"></span>인증서 · 상장<span class="new-dot feat-new" data-new="certs">NEW</span></button>
       <button type="button" data-tab="journey"><span class="ico"></span>우리 반 여행<span class="new-dot feat-new" data-new="journey">NEW</span></button>
@@ -1577,6 +1578,30 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="card" id="natPreviewCard" style="display:none;">
       <h2>이번 달 우리 학교 (현황판에 보이는 모습)</h2>
       <div id="natPreview"></div>
+    </div>
+    </section>
+
+    <section class="tab-pane" data-tab="duel">
+    <div class="card">
+      <h2>학교 대결 · 도전장</h2>
+      <p class="hint" style="margin-top:0;">다른 학교와 같은 종목으로 겨뤄요. 인원이 달라도 공정하도록 <b>1인당 평균</b>으로 비교하고, 카메라 판정기·스마트 줄넘기로 센 기록만 들어가요. 결과는 Jump Earth! 현황판의 <b>학교 대결</b>에 올라가요. (전국 현황판 참여가 켜져 있어야 해요)</p>
+      <div id="duelOff" class="warn-box" style="display:none;">Jump Earth! 전국 탭에서 전국 현황판 참여를 먼저 켜 주세요.</div>
+      <h3 style="margin:18px 0 8px;">도전장 만들기</h3>
+      <div class="form-row">
+        <label>종목 <select id="duelKind"><option value="run:60">점프 Live 1분 한 판</option><option value="run:120">점프 Live 2분 한 판</option><option value="run:180" selected>점프 Live 3분 한 판</option><option value="day">하루 동안 카메라로 뛴 횟수</option></select></label>
+        <label>기한 <select id="duelDays"><option value="3">3일</option><option value="7" selected>7일</option><option value="14">14일</option></select></label>
+      </div>
+      <p class="hint" id="duelKindHint" style="margin:0 0 10px;"></p>
+      <button type="button" id="duelMake">도전장 만들기</button>
+      <div id="duelMade"></div>
+      <h3 style="margin:22px 0 8px;">도전장 받기</h3>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;"><input type="text" id="duelCode" maxlength="7" placeholder="대결 코드 6자리" style="max-width:200px; text-transform:uppercase; letter-spacing:2px; font-weight:800;"><button type="button" class="btn-outline" id="duelLook">코드 확인</button></div>
+      <div id="duelPreview"></div>
+      <p id="duelMsg" class="hint"></p>
+    </div>
+    <div class="card">
+      <h2>우리 학교 대결</h2>
+      <div id="duelList" class="hint">불러오는 중…</div>
     </div>
     </section>
 
@@ -2775,6 +2800,91 @@ loadTypes();
   try { const saved = localStorage.getItem('jumpropeAdminTab'); if (saved && btns.some(function(b){ return b.dataset.tab === saved; })) first = saved; } catch (e) {}
   if (location.hash && btns.some(function(b){ return '#' + b.dataset.tab === location.hash; })) first = location.hash.slice(1);
   show(first);
+})();
+
+/* ---- 학교 대결 (도전장) — 수집기 15판 ---- */
+(function(){
+  const nav = document.querySelector('#adminNav button[data-tab="duel"]'); if (!nav) return;
+  const $d = function(id){ return document.getElementById(id); };
+  const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  const KIND = function(d){ return d.kind === 'day' ? '하루 동안 카메라로 뛴 횟수' : '점프 Live ' + (d.dur / 60) + '분 한 판'; };
+  const md = function(s){ return s ? Number(s.slice(5, 7)) + '/' + Number(s.slice(8, 10)) : ''; };
+  const ST = { waiting: '상대를 기다리는 중', playing: '대결 중', done: '끝', expired: '기한 지남' };
+  const today = function(){ return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }); };
+  let ready = null;
+  function ctx(){
+    if (!ready) ready = NAT.load().then(function(){ if (!NAT.collector || !NAT.cfg.on || !NAT.cfg.key) throw new Error('off'); return NAT; });
+    return ready;
+  }
+  function hint(){ const v = $d('duelKind').value; $d('duelKindHint').innerHTML = v === 'day'
+    ? '기한 안에서 <b>하루</b>를 골라 그날 카메라 판정기·스마트 줄넘기로 센 횟수를 <b>등록 학생 수</b>로 나눠 겨뤄요. 그날 많이 뛸수록, 많은 학생이 함께 뛸수록 유리해요.'
+    : '점프 Live(또는 점프 라이브)에서 <b>' + (Number(v.split(':')[1]) / 60) + '분</b>으로 한 판을 뛰고, 결과 창의 <b>대결 결과로 보내기</b>를 눌러요. 합계를 <b>뛴 학생 수</b>로 나눠 겨뤄요.'; }
+  function side(x, mine){ if (!x) return '<span class="hint">아직 없음</span>';
+    const r = x.res; return '<b>' + esc(x.label) + '</b>' + (mine ? ' <span class="badge badge-approved">우리 학교</span>' : '') + '<br>' +
+      (r ? '<span style="font-size:1.3em;font-weight:800;">1인당 ' + r.avg + '회</span> <span class="hint">(' + Number(r.total).toLocaleString() + '회 ÷ ' + (r.registered || r.players) + '명' + (r.date ? ' · ' + md(r.date) : '') + ')</span>' : '<span class="hint">결과를 아직 안 보냈어요</span>'); }
+  function card(d, mineSide){
+    const me = mineSide ? d[mineSide] : null, them = mineSide === 'host' ? d.guest : mineSide === 'guest' ? d.host : null;
+    let h = '<div style="border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:10px 0;">' +
+      '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><b>' + esc(KIND(d)) + '</b><span class="hint">코드 <b style="letter-spacing:1px;">' + esc(d.code) + '</b> · ' + md(d.created) + '~' + md(d.deadline) + ' · ' + ST[d.status] + '</span></div>' +
+      '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-top:10px;">' +
+      '<div>' + side(d.host, mineSide === 'host') + '</div><div style="font-weight:900;color:var(--coral);">VS</div><div>' + side(d.guest, mineSide === 'guest') + '</div></div>';
+    if (d.status === 'done') h += '<p style="margin:10px 0 0;font-weight:800;color:var(--coral-dark);">' + (d.winner === 'tie' ? '비겼어요! 둘 다 최고!' : (d.winner === mineSide ? '우리 학교 승리! ' : (d[d.winner] ? esc(d[d.winner].label) + ' 승! ' : '')) + '서로 응원하며 뛴 모두에게 박수!') + '</p>';
+    if (mineSide && d.status === 'waiting' && mineSide === 'host') h += '<div style="margin-top:10px;"><button type="button" class="btn-outline" data-dcopy="' + esc(d.code) + '">초대 글 복사</button> <button type="button" class="btn-outline" data-dcancel="' + esc(d.code) + '">취소</button></div>';
+    if (mineSide && d.status === 'playing' && me && !me.res) {
+      if (d.kind === 'day') h += '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><input type="date" data-ddate="' + esc(d.code) + '" value="' + today() + '" min="' + d.created + '" max="' + (d.deadline < today() ? d.deadline : today()) + '" style="max-width:180px;"><button type="button" data-dday="' + esc(d.code) + '">이 날 기록으로 결과 보내기</button></div>';
+      else h += '<p class="hint" style="margin:10px 0 0;">점프 Live에서 <b>' + (d.dur / 60) + '분</b>으로 한 판을 뛰고, 결과 창의 <b>대결 결과로 보내기</b>를 눌러요.</p>';
+    }
+    return h + '</div>';
+  }
+  function invite(d){ return '[점퍼스 학교 대결 도전장]\n' + (d.host ? d.host.label : '') + '이(가) 줄넘기 대결을 신청했어요!\n종목: ' + KIND(d) + ' (1인당 평균으로 겨뤄요)\n기한: ' + md(d.deadline) + '까지\n대결 코드: ' + d.code + '\n받는 방법: 점퍼스 관리자 메뉴 → 학교 대결 → 도전장 받기에 코드를 넣어 주세요.'; }
+  function list(){
+    $d('duelList').innerHTML = '불러오는 중…';
+    return ctx().then(function(){ return NAT.post('duelMine', { key: NAT.cfg.key }); }).then(function(r){
+      const L = r.list || [];
+      $d('duelList').innerHTML = L.length ? L.map(function(d){ return card(d, d.side); }).join('') : '<p class="hint">아직 대결이 없어요. 도전장을 만들어 다른 학교에 보내 보세요!</p>';
+    }).catch(function(e){ if (e.message === 'off') { $d('duelOff').style.display = ''; $d('duelList').innerHTML = ''; } else $d('duelList').textContent = '불러오지 못했어요: ' + e.message; });
+  }
+  let loaded = false;
+  function open(){ if (loaded) return; loaded = true; hint(); list(); }
+  nav.addEventListener('click', open);
+  if (document.querySelector('.tab-pane[data-tab="duel"].on')) open();
+  $d('duelKind').addEventListener('change', hint);
+  $d('duelMake').addEventListener('click', function(){
+    const v = $d('duelKind').value, b = this; b.disabled = true; $d('duelMade').innerHTML = '<p class="hint">만드는 중…</p>';
+    ctx().then(function(){ return NAT.post('duelCreate', { key: NAT.cfg.key, kind: v === 'day' ? 'day' : 'run', dur: v === 'day' ? 0 : Number(v.split(':')[1]), days: Number($d('duelDays').value) }); })
+      .then(function(d){
+        $d('duelMade').innerHTML = '<div style="background:var(--coral-tint);border-radius:14px;padding:16px;margin-top:12px;"><div class="hint">대결 코드</div><div style="font-size:2.2em;font-weight:900;letter-spacing:6px;color:var(--coral-dark);">' + esc(d.code) + '</div>' +
+          '<textarea id="duelInvite" rows="6" readonly style="width:100%;margin-top:8px;">' + esc(invite(d)) + '</textarea><button type="button" id="duelCopy">초대 글 복사</button> <span class="hint">카톡이나 메신저로 상대 학교 선생님께 보내 주세요.</span></div>';
+        $d('duelCopy').onclick = function(){ navigator.clipboard.writeText($d('duelInvite').value).then(function(){ $d('duelCopy').textContent = '✓ 복사했어요'; }); };
+        list();
+      }).catch(function(e){ $d('duelMade').innerHTML = '<p class="hint" style="color:var(--danger);">' + (e.message === 'off' ? '전국 현황판 참여를 먼저 켜 주세요.' : esc(e.message)) + '</p>'; })
+      .then(function(){ b.disabled = false; });
+  });
+  function code(){ return $d('duelCode').value.toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+  $d('duelLook').addEventListener('click', function(){
+    const c = code(); if (c.length !== 6) { $d('duelMsg').textContent = '대결 코드 6자리를 넣어 주세요.'; return; }
+    $d('duelMsg').textContent = '확인하는 중…'; $d('duelPreview').innerHTML = '';
+    ctx().then(function(){ return fetch(NAT.collector + '?api=duel&code=' + c, { cache: 'no-store' }).then(function(r){ return r.json(); }); }).then(function(j){
+      if (!j.ok) throw new Error(j.error); const d = j.result; $d('duelMsg').textContent = '';
+      $d('duelPreview').innerHTML = card(d, '') + (d.status === 'waiting' ? '<button type="button" id="duelAccept">도전을 받아들여요</button>' : '<p class="hint">' + ST[d.status] + '인 대결이에요.</p>');
+      const a = $d('duelAccept'); if (a) a.onclick = function(){ a.disabled = true;
+        NAT.post('duelJoin', { key: NAT.cfg.key, code: c }).then(function(){ $d('duelPreview').innerHTML = ''; $d('duelCode').value = ''; $d('duelMsg').textContent = '✓ 도전을 받아들였어요! 아래 우리 학교 대결에서 확인하세요.'; list(); })
+          .catch(function(e){ a.disabled = false; $d('duelMsg').textContent = e.message; }); };
+    }).catch(function(e){ $d('duelMsg').textContent = e.message === 'off' ? '전국 현황판 참여를 먼저 켜 주세요.' : e.message; });
+  });
+  $d('duelList').addEventListener('click', function(e){
+    const t = e.target;
+    if (t.dataset.dcopy) { const box = t.closest('div[style]').parentNode; ctx().then(function(){ return fetch(NAT.collector + '?api=duel&code=' + t.dataset.dcopy).then(function(r){ return r.json(); }); }).then(function(j){ return navigator.clipboard.writeText(invite(j.result)); }).then(function(){ t.textContent = '✓ 복사했어요'; }); }
+    if (t.dataset.dcancel && confirm('이 도전장을 취소할까요?')) NAT.post('duelCancel', { key: NAT.cfg.key, code: t.dataset.dcancel }).then(list).catch(function(err){ alert(err.message); });
+    if (t.dataset.dday) {
+      const date = document.querySelector('[data-ddate="' + t.dataset.dday + '"]').value;
+      if (!confirm(date + ' 하루 기록으로 결과를 보낼까요? 한 번 보내면 바꿀 수 없어요.')) return;
+      t.disabled = true; t.textContent = '보내는 중…';
+      // 오늘 기록이 현황판에 다 갔는지 먼저 한 번 보냄
+      NAT.syncAll(token, true).catch(function(){}).then(function(){ return NAT.post('duelSubmit', { key: NAT.cfg.key, code: t.dataset.dday, res: { date: date } }); })
+        .then(list).catch(function(err){ t.disabled = false; t.textContent = '이 날 기록으로 결과 보내기'; alert(err.message); });
+    }
+  });
 })();
 
 /* ---- 테마 · 색상 ---- */
