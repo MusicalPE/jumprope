@@ -683,7 +683,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.6.7', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.6.8', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -2829,14 +2829,15 @@ loadTypes();
       '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-top:10px;">' +
       '<div>' + side(d.host, mineSide === 'host') + '</div><div style="font-weight:900;color:var(--coral);">VS</div><div>' + side(d.guest, mineSide === 'guest') + '</div></div>';
     if (d.status === 'done') h += '<p style="margin:10px 0 0;font-weight:800;color:var(--coral-dark);">' + (d.winner === 'tie' ? '비겼어요! 둘 다 최고!' : (d.winner === mineSide ? '우리 학교 승리! ' : (d[d.winner] ? esc(d[d.winner].label) + ' 승! ' : '')) + '서로 응원하며 뛴 모두에게 박수!') + '</p>';
-    if (mineSide && d.status === 'waiting' && mineSide === 'host') h += '<div style="margin-top:10px;"><button type="button" class="btn-outline" data-dcopy="' + esc(d.code) + '">초대 글 복사</button> <button type="button" class="btn-outline" data-dcancel="' + esc(d.code) + '">취소</button></div>';
-    if (mineSide && d.status === 'playing' && me && !me.res) {
+    if (mineSide && d.status === 'waiting' && mineSide === 'host') h += '<div style="margin-top:10px;"><button type="button" class="btn-outline" data-dcopy="' + esc(d.code) + '">초대 글 복사</button>' + (d.host && d.host.res ? '' : ' <button type="button" class="btn-outline" data-dcancel="' + esc(d.code) + '">취소</button>') + '</div>';
+    if (mineSide && (d.status === 'playing' || (d.status === 'waiting' && mineSide === 'host')) && me && !me.res) {
+      if (d.status === 'waiting') h += '<p class="hint" style="margin:10px 0 0;">상대가 받기 전에 <b>우리 학교가 먼저 뛰어 기록을 걸어 둘 수 있어요.</b> 걸어 둔 기록은 초대 글에도 들어가요.</p>';
       if (d.kind === 'day') h += '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><input type="date" data-ddate="' + esc(d.code) + '" value="' + today() + '" min="' + d.created + '" max="' + (d.deadline < today() ? d.deadline : today()) + '" style="max-width:180px;"><button type="button" data-dday="' + esc(d.code) + '">이 날 기록으로 결과 보내기</button></div>';
       else h += '<p class="hint" style="margin:10px 0 0;">점프 Live에서 <b>' + (d.dur / 60) + '분</b>으로 한 판을 뛰고, 결과 창의 <b>대결 결과로 보내기</b>를 눌러요.</p>';
     }
     return h + '</div>';
   }
-  function invite(d){ return '[점퍼스 학교 대결 도전장]\n' + (d.host ? d.host.label : '') + '이(가) 줄넘기 대결을 신청했어요!\n종목: ' + KIND(d) + ' (1인당 평균으로 겨뤄요)\n기한: ' + md(d.deadline) + '까지\n대결 코드: ' + d.code + '\n받는 방법: 점퍼스 관리자 메뉴 → 학교 대결 → 도전장 받기에 코드를 넣어 주세요.'; }
+  function invite(d){ return '[점퍼스 학교 대결 도전장]\n' + (d.host ? d.host.label : '') + '이(가) 줄넘기 대결을 신청했어요!\n종목: ' + KIND(d) + ' (1인당 평균으로 겨뤄요)\n' + (d.host && d.host.res ? '우리 학교 기록: 1인당 ' + d.host.res.avg + '회 — 이 기록을 넘어 보세요!\n' : '') + '기한: ' + md(d.deadline) + '까지\n대결 코드: ' + d.code + '\n받는 방법: 점퍼스 관리자 메뉴 → 학교 대결 → 도전장 받기에 코드를 넣어 주세요.'; }
   function list(){
     $d('duelList').innerHTML = '불러오는 중…';
     return ctx().then(function(){ return NAT.post('duelMine', { key: NAT.cfg.key }); }).then(function(r){
