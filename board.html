@@ -171,6 +171,12 @@
     .tag-me { display: block; width: fit-content; margin: 2px 0 0; }
     td.num .sub { display: block; margin-left: 0; }
   }
+  /* 좁은 화면(휴대폰·세로 태블릿): 지구 대장정·숫자 → 학교 순위 → 학생 순위 → 한 번에 최고 연속 → 며칠 연속 → 학교 대결 */
+  @media (max-width: 999.98px) {
+    #body { display: flex; flex-direction: column; }
+    #body > .bw-l, #body > .bw-r { display: contents; }
+    .o-sch { order: 1; } .o-stu { order: 2; } .o-best { order: 3; } .o-run { order: 4; } .o-duel { order: 5; } .o-end { order: 6; }
+  }
   /* 넓은 화면(PC·노트북·가로 태블릿): 두 칸 — 왼쪽 로고·지구 대장정·숫자, 오른쪽 순위들(학교·학생·연속) */
   @media (min-width: 1000px) {
     .container { max-width: 1560px; }
@@ -598,7 +604,7 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
     // 한 번에 최고 연속 (수집기 13판 이상): 스마트 줄넘기·카메라 판정기로 잰 기록만 — 줄이 걸리지 않고 이어 뛴 가장 많은 수
     if (Array.isArray(data.ropeBest)) {
       const rb = ranked(data.ropeBest, 'best');
-      html += '<div class="card"><div class="card-head"><div><h2>⚡ 한 번에 최고 연속</h2><span class="hint">걸리지 않고 이어 뛴 가장 많은 수 · 스마트 줄넘기나 카메라 판정기로 뛴 기록만</span></div></div>';
+      html += '<div class="card o-best"><div class="card-head"><div><h2>⚡ 한 번에 최고 연속</h2><span class="hint">걸리지 않고 이어 뛴 가장 많은 수 · 스마트 줄넘기나 카메라 판정기로 뛴 기록만</span></div></div>';
       if (!rb.length) html += '<div class="empty"><span style="display:inline-block">스마트 줄넘기나 카메라 판정기로 뛰면 여기에 올라와요.</span><br><span style="display:inline-block">학교 껍데기 5판부터 기록돼요.</span></div>';
       else {
         html += '<div class="table-wrap">' + table(BEST_HEAD, rb.slice(0, SHOW_BEST), bestRow) + '</div>';
@@ -625,7 +631,7 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
       if (!mine && data.v) { const d = schoolData(me); mine = d && d.school; }
     }
     const nSchools = data.schoolsTotal || (data.summary && data.summary.schools) || schools.length;
-    html += '<div class="card"><div class="card-head"><div><h2>학교 순위</h2><span class="hint">학교 줄을 누르면 그 학교 안 학생 순위가 보여요</span></div>' +
+    html += '<div class="card o-sch"><div class="card-head"><div><h2>학교 순위</h2><span class="hint">학교 줄을 누르면 그 학교 안 학생 순위가 보여요</span></div>' +
       '<div class="seg" id="sortSeg"><button data-k="total"' + (sortBy === 'total' ? ' class="on"' : '') + '>합계</button><button data-k="avg"' + (sortBy === 'avg' ? ' class="on"' : '') + '>1인당 평균</button><button data-k="rate"' + (sortBy === 'rate' ? ' class="on"' : '') + '>참여율</button></div></div>';
     if (!schools.length) html += '<div class="empty"><span style="display:inline-block">' + mLabel(data.month) + ' 기록이 아직 없어요.</span><br><span style="display:inline-block">첫 기록의 주인공이 되어 보세요!</span></div>';
     else {
@@ -651,11 +657,10 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
       html += '<p class="hint" style="margin-bottom:0;">참여 ' + nSchools + '개 학교 중 ' + SCH_MAX + '등까지 보여요' + (me ? ' (우리 학교는 늘 보여요)' : '') + '. 1인당 평균 = 합계 ÷ 등록 학생 수 · 참여율 = 이번 달 한 번이라도 뛴 학생 ÷ 등록 학생 수. 두 순위는 등록 학생 ' + (data.minRegistered || 5) + '명 이상인 학교만 매겨요.' + (data.grade ? ' 학년별로 볼 때는 학년별 학생 수를 보낸 학교(2.2 이상)만 1인당 평균·참여율 순위에 들어가요.' : '') + ' 📷 카메라는 줄넘기 판정기로 인증된 횟수예요.</p>';
     }
     html += '</div>';
-    html += '<div id="duelCard">' + (DUELS ? duelHtml(DUELS) : '') + '</div>';
 
     // 전국 학생 순위: 10등까지, 나머지는 팝업(10명씩, 50등까지)
     const st = ranked(data.students || [], 'c');
-    html += '<div class="card"><div class="card-head"><div><h2>전국 학생 순위</h2><span class="hint">' + mLabel(data.month) + ' 동안 뛴 횟수 합계</span></div></div>';
+    html += '<div class="card o-stu"><div class="card-head"><div><h2>전국 학생 순위</h2><span class="hint">' + mLabel(data.month) + ' 동안 뛴 횟수 합계</span></div></div>';
     if (!st.length) html += '<div class="empty">아직 기록이 없어요.</div>';
     else {
       html += '<div class="table-wrap">' + table(STU_HEAD, st.slice(0, SHOW_STU), stuRow) + '</div>';
@@ -665,7 +670,7 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
     // 며칠 연속 뛰었나 (수집기 9판 이상)
     if (Array.isArray(data.streaks)) {
       const sk = ranked(data.streaks, 'run');
-      html += '<div class="card"><div class="card-head"><div><h2>🔥 며칠 연속 뛰었나</h2><span class="hint">이어서 뛴 날 수 - 이틀 이상부터</span></div></div>';
+      html += '<div class="card o-run"><div class="card-head"><div><h2>🔥 며칠 연속 뛰었나</h2><span class="hint">이어서 뛴 날 수 - 이틀 이상부터</span></div></div>';
       if (!sk.length) html += '<div class="empty"><span style="display:inline-block">아직 이틀 연속 뛴 친구가 없어요.</span><br><span style="display:inline-block">첫 주인공이 되어 보세요!</span></div>';
       else {
         html += '<div class="table-wrap">' + table(RUN_HEAD, sk.slice(0, SHOW_STU), runRow) + '</div>';
@@ -673,8 +678,9 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
       }
       html += '</div>';
     }
+    html += '<div id="duelCard" class="o-duel">' + (DUELS ? duelHtml(DUELS) : '') + '</div>';   // 학교 대결은 맨 끝
     html += '</div>';
-    html += '<p class="hint" style="text-align:center;">집계는 몇 분마다 새로 고쳐져요 · 마지막 갱신 ' + new Date(data.updated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + '</p>';
+    html += '<p class="hint o-end" style="text-align:center;">집계는 몇 분마다 새로 고쳐져요 · 마지막 갱신 ' + new Date(data.updated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + '</p>';
     $('body').innerHTML = html;
     if ($('ejMapBtn')) $('ejMapBtn').onclick = showEarthMap;
     ejDraw();
