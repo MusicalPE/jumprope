@@ -708,7 +708,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.7.2', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.7.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1610,6 +1610,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="card">
       <h2>학교 대결 · 도전장</h2>
       <p class="hint" style="margin-top:0;">다른 학교와 같은 종목으로 겨뤄요. 인원이 달라도 공정하도록 <b>1인당 평균</b>으로 비교하고, 카메라 판정기·스마트 줄넘기로 센 기록만 들어가요. 점수와 승패는 두 학교만 이 목록에서 보고, Jump Earth! 현황판의 <b>학교 대결 소식</b>에는 두 학교가 함께 뛰었다는 것만 올라가요. (전국 현황판 참여가 켜져 있어야 해요)</p>
+      <div class="info-box" style="margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#FFF4E5;border:1px solid #F6C445;font-size:14px;line-height:1.55;">같은 시각에 함께 뛰고 싶다면 <b>실시간 학교 함께 뛰기</b>: 점프 Live (Lite) 화면 위쪽의 <b>학교와 함께</b>를 눌러 방을 만들고 코드 6자리를 상대 선생님께 알려 주세요. <b>실시간 대결</b>(1인당 평균)과 <b>두 학교 함께 박 깨기</b>를 고를 수 있어요. 결과는 두 학교 화면에만 보여요.</div>
       <div id="duelOff" class="warn-box" style="display:none;">Jump Earth! 전국 탭에서 전국 현황판 참여를 먼저 켜 주세요.</div>
       <h3 style="margin:18px 0 8px;">도전장 만들기</h3>
       <div class="form-row">
@@ -1691,6 +1692,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <h2>점프 Live (Lite) <span style="font-size:13px;font-weight:600;color:var(--coral-dark);">학교 시트만으로</span></h2>
       <p class="hint">바깥 서버 없이 이 학교 시트만으로 수업 방을 열어요. 학생은 1인 1기기로 카메라 판정기에서 뛰고, 큰 화면에는 <b>끝나고 한 번에</b>(또는 10·15·20·30초마다 잠깐씩, 또는 바로바로) 공개돼요. 끝나면 결과가 <b>승인된 카메라 기록</b>으로 들어가요.</p>
       <p class="hint">학생 화면의 숫자는 몇 초씩 늦게 모일 수 있어서, 끝난 뒤 결과를 모두 모아 한꺼번에 보여 줘요. 껍데기 <b>6판</b>부터 쓸 수 있어요.</p>
+      <p class="hint"><b>학교와 함께 (실시간)</b> · 방을 연 뒤 위쪽 <b>학교와 함께</b>를 누르면 다른 학교와 같은 시각에 시작해 실시간 대결이나 두 학교 함께 박 깨기를 할 수 있어요 (전국 현황판 참여가 켜져 있어야 해요).</p>
       <button type="button" id="openLiteBtn">점프 Live (Lite) 열기 →</button>
       <p id="liteMsg" class="hint"></p>
     </div>

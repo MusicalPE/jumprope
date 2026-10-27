@@ -23,7 +23,7 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 17;  // 17: 학교 대결 종목 '박 터트리기' — 들어온 학생 수 × 30·50·100회 박을 3분 안에 누가 더 빨리 깨나  // 16: 도전장을 만든 학교는 상대가 받기 전에도 먼저 뛰고 결과를 보낼 수 있음(기록을 걸고 도전)  // 15: 15: 학교 대결(도전장) — Duels 시트, 대결 코드로 두 학교가 같은 종목(점프 Live N분 한 판 / 하루 카메라 기록)을 1인당 평균으로 겨룸  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 18;  // 18: 실시간 학교 함께 뛰기 — 두 학교 선생님 화면이 같은 시각에 시작해 몇 초마다 합계를 주고받음 (실시간 대결 · 두 학교 함께 박 깨기), 자료는 6시간 캐시에만  // 17: 학교 대결 종목 '박 터트리기' — 들어온 학생 수 × 30·50·100회 박을 3분 안에 누가 더 빨리 깨나  // 16: 도전장을 만든 학교는 상대가 받기 전에도 먼저 뛰고 결과를 보낼 수 있음(기록을 걸고 도전)  // 15: 15: 학교 대결(도전장) — Duels 시트, 대결 코드로 두 학교가 같은 종목(점프 Live N분 한 판 / 하루 카메라 기록)을 1인당 평균으로 겨룸  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -68,6 +68,12 @@ function doPost(e) {
     else if (body.fn === 'duelSubmit') out = duelSubmit_(p);
     else if (body.fn === 'duelMine') out = duelMine_(p);
     else if (body.fn === 'duelCancel') out = duelCancel_(p);
+    else if (body.fn === 'lmOpen') out = lmOpen_(p);
+    else if (body.fn === 'lmJoin') out = lmJoin_(p);
+    else if (body.fn === 'lmStart') out = lmStart_(p);
+    else if (body.fn === 'lmPush') out = lmPush_(p);
+    else if (body.fn === 'lmState') out = lmState_(p);
+    else if (body.fn === 'lmLeave') out = lmLeave_(p);
     else throw new Error('알 수 없는 요청');
     out = { ok: true, result: out };
   } catch (err) {
@@ -936,4 +942,98 @@ function duelList_() {
   const out = { list: all.slice(0, 20).map(function (x) { return duelPublic_(x, schools); }) };
   cache.put('duels', JSON.stringify(out), 60);
   return out;
+}
+
+/************ 실시간 학교 함께 뛰기 (18판) ************
+ * 두 학교 선생님 화면(점프 Live·Lite)이 같은 시각에 시작하고, 뛰는 동안 몇 초마다 우리 학교 합계를 올리고 상대 합계를 받아 감.
+ * kind: 'vs' = 실시간 대결 (1·2·3분 한 판, 1인당 평균) · 'coop' = 두 학교 함께 박 깨기 (두 학교 들어온 인원 × 1인당 per 회, 3분 안에)
+ * rv: 상대 숫자 보이기 — 'live' 바로바로 · 'i10'/'i20' 중간에 한 번씩 · 'end' 끝나고 공개 (방을 연 학교가 정함, 함께 박 깨기는 늘 바로바로)
+ * 자료는 시트에 남기지 않고 캐시(6시간)에만 — 결과는 두 학교 화면에만 보이고 현황판에는 올리지 않음
+ */
+const LM_TTL_ = 21600;
+function lmGet_(code) { const v = CacheService.getScriptCache().get('LM_' + code); return v ? JSON.parse(v) : null; }
+function lmPut_(x) { CacheService.getScriptCache().put('LM_' + x.code, JSON.stringify(x), LM_TTL_); }
+function lmCode_(c) { const code = String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6); if (code.length !== 6) throw new Error('방 코드 6자리를 넣어 주세요.'); return code; }
+function lmPublic_(x, me) {
+  const schools = loadSchools_();
+  const side = function (pid, d) { if (!pid) return null; const s = schools[pid] || {}; return { label: s.label || '익명 학교', named: !!s.named, sum: d.sum || 0, players: d.players || 0, fin: !!d.fin, t: d.t || 0 }; };
+  const mine = me === x.host ? 'host' : me === x.guest ? 'guest' : '';
+  return { code: x.code, kind: x.kind, dur: x.dur, per: x.per, rv: x.rv, start: x.start || 0, id: x.id || '', now: Date.now(), side: mine,
+    host: side(x.host, x.h || {}), guest: side(x.guest, x.g || {}), round: x.round || 0, left: x.left || '', broke: x.broke || 0 };
+}
+function lmOpen_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const kind = p.kind === 'coop' ? 'coop' : 'vs';
+  const dur = kind === 'coop' ? 180 : ([60, 120, 180].indexOf(Number(p.dur)) >= 0 ? Number(p.dur) : 60);
+  const per = kind === 'coop' ? ([30, 50, 100].indexOf(Number(p.per)) >= 0 ? Number(p.per) : 50) : 0;
+  const rv = kind === 'coop' ? 'live' : (['live', 'i10', 'i20', 'end'].indexOf(p.rv) >= 0 ? p.rv : 'live');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    let code = '';
+    for (let t = 0; t < 30 && (!code || lmGet_(code)); t++) { code = ''; for (let i = 0; i < 6; i++) code += DUEL_CH_.charAt(Math.floor(Math.random() * DUEL_CH_.length)); }
+    const x = { code: code, kind: kind, dur: dur, per: per, rv: rv, host: me, guest: '', start: 0, id: '', h: {}, g: {}, round: 0, made: Date.now() };
+    lmPut_(x);
+    return lmPublic_(x, me);
+  } finally { lock.releaseLock(); }
+}
+function lmJoin_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), code = lmCode_(p.code);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const x = lmGet_(code); if (!x) throw new Error('없거나 끝난 방이에요. 코드를 다시 확인해 주세요.');
+    if (x.host === me) return lmPublic_(x, me);   // 연 학교가 다시 들어옴
+    if (x.guest && x.guest !== me) throw new Error('이미 다른 학교가 들어온 방이에요.');
+    x.guest = me; x.left = ''; lmPut_(x);
+    return lmPublic_(x, me);
+  } finally { lock.releaseLock(); }
+}
+// 연 학교가 '같이 시작' → 20초 뒤 두 화면이 함께 시작 (학생 기기 카운트다운 5초 포함). 같은 방에서 여러 판 가능
+function lmStart_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), code = lmCode_(p.code);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const x = lmGet_(code); if (!x) throw new Error('없거나 끝난 방이에요.');
+    if (x.host !== me) throw new Error('방을 연 학교 선생님이 시작해요.');
+    if (!x.guest) throw new Error('상대 학교가 아직 들어오지 않았어요.');
+    if (x.start && Date.now() < x.start + x.dur * 1000 + 20000) throw new Error('지금 판이 아직 끝나지 않았어요.');
+    x.round = (x.round || 0) + 1; x.start = Date.now() + 20000; x.id = 'm' + x.code + x.round;
+    x.h = {}; x.g = {}; x.broke = 0;
+    if (p.dur && x.kind === 'vs' && [60, 120, 180].indexOf(Number(p.dur)) >= 0) x.dur = Number(p.dur);
+    if (p.rv && x.kind === 'vs' && ['live', 'i10', 'i20', 'end'].indexOf(p.rv) >= 0) x.rv = p.rv;
+    lmPut_(x);
+    return lmPublic_(x, me);
+  } finally { lock.releaseLock(); }
+}
+// 뛰는 동안 우리 학교 합계 올리기 (fin: 이 판이 끝나 마지막 숫자)
+function lmPush_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), code = lmCode_(p.code);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const x = lmGet_(code); if (!x) throw new Error('없거나 끝난 방이에요.');
+    const k = x.host === me ? 'h' : x.guest === me ? 'g' : ''; if (!k) throw new Error('이 방에 들어온 학교가 아니에요.');
+    if (p.id !== x.id) return lmPublic_(x, me);   // 지난 판 숫자는 받지 않음
+    const players = Math.round(Number(p.players)) || 0, sum = Math.round(Number(p.sum)) || 0;
+    if (players < 0 || players > 60 || sum < 0 || sum > Math.max(1, players) * x.dur * 4) throw new Error('합계가 올바르지 않아요.');
+    const d = x[k] || {}; if (d.fin) return lmPublic_(x, me);
+    x[k] = { sum: Math.max(sum, d.sum || 0), players: Math.max(players, d.players || 0), fin: !!p.fin, t: Date.now() };
+    const br = Math.round(Number(p.broke)) || 0;   // 함께 박 깨기: 박이 깨진 때(시작부터 ms) — 먼저 알린 쪽 값으로 두 화면이 같은 시간을 보여 줌
+    if (x.kind === 'coop' && br > 0 && br <= x.dur * 1000 + 5000 && !x.broke) x.broke = br;
+    lmPut_(x);
+    return lmPublic_(x, me);
+  } finally { lock.releaseLock(); }
+}
+function lmState_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), code = lmCode_(p.code);
+  const x = lmGet_(code); if (!x) throw new Error('없거나 끝난 방이에요.');
+  return lmPublic_(x, me);
+}
+function lmLeave_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), code = lmCode_(p.code);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const x = lmGet_(code); if (!x) return { ok: true };
+    if (x.host === me) { CacheService.getScriptCache().remove('LM_' + code); return { ok: true }; }
+    if (x.guest === me) { x.guest = ''; x.left = 'guest'; x.g = {}; lmPut_(x); }
+    return { ok: true };
+  } finally { lock.releaseLock(); }
 }
