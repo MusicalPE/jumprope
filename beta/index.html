@@ -634,6 +634,32 @@
   .loading { text-align: center; color: var(--muted); padding: 80px 20px; font-weight: 700; }
   .loading::before { content: ''; display: block; width: 34px; height: 34px; margin: 0 auto 14px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--coral); animation: spin .8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  /* 도전장 게시판 (2.8.0) */
+  .pb-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 14px}.pb-tabs button{background:var(--line-2,#F3F4F6);color:var(--ink-2,#4B5563);border:none;border-radius:999px;padding:7px 14px;font-weight:700;font-size:14px;box-shadow:none}
+  .pb-tabs button.on{background:var(--ink,#1F2937);color:#fff}.pb-n{background:var(--coral);color:#fff;border-radius:999px;padding:0 6px;font-size:11px;margin-left:2px}
+  .pb-post{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:center}
+  .pb-sch{font-weight:800;font-size:16px}.pb-sch small{font-weight:600;color:var(--muted,#6B7280);margin-left:6px}
+  .pb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.pb-chip{background:#F3F4F6;border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600;color:#374151}
+  .pb-chip.k{background:var(--coral-tint);color:var(--coral-dark)}.pb-chip.rt{background:#FFF5E6;color:#8A5300}
+  .pb-ov{font-size:13px;color:#0B7A68;font-weight:700}.pb-ov.no{color:var(--muted,#6B7280);font-weight:600}
+  table.pb-tg{border-collapse:separate;border-spacing:4px;width:auto;margin:0}table.pb-tg tr,table.pb-tg tr:hover{background:none}table.pb-tg th{background:none!important;border:none!important;text-align:center;padding:0 4px;width:auto;position:static}table.pb-tg td{border:none!important;padding:0}
+  .pb-post select,.pb-q select{width:auto;max-width:240px;margin:0}table.pb-tg th{font-size:12.5px;color:var(--muted,#6B7280);font-weight:700;padding:0 4px}
+  table.pb-tg td{width:64px;height:32px;border-radius:8px;background:#F3F4F6;text-align:center;font-size:12px;color:#6B7280;font-weight:700;cursor:default;user-select:none}
+  table.pb-tg.edit td{cursor:pointer}table.pb-tg td.on{background:var(--coral);color:#fff}table.pb-tg td.they{background:#FFD9C9;color:#9A3412}table.pb-tg td.both{background:#12A089;color:#fff}
+  .pb-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--muted,#6B7280);margin:4px 0 6px}.pb-legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:4px;vertical-align:-2px}
+  .pb-says{display:flex;flex-wrap:wrap;gap:6px}.pb-says button{background:#fff;color:var(--ink,#1F2937);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:600;box-shadow:none}
+  .pb-says button.on{border-color:var(--coral);background:var(--coral-tint);color:var(--coral-dark)}
+  .pb-th{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+  .pb-msg{display:flex;gap:10px;margin:8px 0;align-items:flex-start}.pb-msg .w{font-weight:800;font-size:13px;min-width:100px}.pb-msg .w.me{color:var(--coral-dark)}
+  .pb-bub{background:#F3F4F6;border-radius:12px;padding:7px 12px;font-size:14px}.pb-bub.me{background:var(--coral-tint)}.pb-bub small{color:var(--muted,#6B7280);margin-left:6px;font-size:11.5px}
+  .pb-promise{background:#E6F6F2;border:1px solid #9ADBCB;border-radius:12px;padding:10px 14px;font-weight:700;color:#0B5F52;margin:8px 0}
+  .pb-q{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+  .pb-q button.g{background:#fff;color:var(--ink,#1F2937);border:1px solid var(--line);box-shadow:none}
+  .duel-ban{margin:12px 0 0;background:var(--card,#fff);border-radius:16px;padding:12px 16px;display:flex;gap:12px;align-items:center;box-shadow:var(--shadow-sm,0 4px 18px rgba(0,0,0,.06))}
+  .duel-ban .ic{width:42px;height:42px;border-radius:12px;background:#FFF5E6;display:flex;align-items:center;justify-content:center;font-size:22px;flex:none}
+  .duel-ban b{font-size:15px}.duel-ban small{display:block;color:var(--muted,#6B7280);font-size:12.5px;margin-top:2px}
+  .duel-ban .dd{margin-left:auto;background:var(--coral);color:#fff;border-radius:12px;padding:7px 11px;font-weight:800;text-align:center;line-height:1.2;flex:none}.duel-ban .dd small{color:#FFE3D8;margin:0}
+  .duel-ban.w .dd{background:#F3F4F6;color:#6B7280}
 </style>
 <script>
 /* 학생 접속 주소 QR — 메인 화면 버튼·관리자 메뉴에서 같이 씀 (v1.6.1) */
@@ -693,6 +719,22 @@ window.JRQR = {
     try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
   }
 };
+/* ---- 도전장 게시판 공용 (학생 첫 화면 · 관리자 메뉴 둘 다 씀) ---- */
+const PB_SAYS = ['누구든 환영해요!', '같은 학년이면 더 좋아요', '처음 해 봐요, 같이 해 봐요', '작은 학교예요, 살살 부탁해요', '지난번엔 아쉬웠어요, 다시 한 번!'];
+const PB_HOURS = [9, 10, 11, 13, 14], PB_DOW = ['', '월', '화', '수', '목', '금'];
+const PB_KIND = function(p){ return p.kind === 'lvs' ? '실시간 대결 · ' + (p.dur / 60) + '분 한 판' : p.kind === 'lcoop' ? '두 학교 함께 박 깨기 · 1인당 ' + p.per + '회' : p.kind === 'bak' ? '박 터트리기 · 1인당 ' + p.per + '회' : p.kind === 'day' ? '하루 동안 카메라로 뛴 횟수' : (p.dur / 60) + '분 한 판'; };
+const PB_RT = function(k){ return k === 'lvs' || k === 'lcoop'; };
+function pbSlotTxt(s){ if (!s) return ''; const m = /^(\d{4})-(\d{2})-(\d{2})\|(\d+)$/.exec(s); if (!m) return s; const dow = new Date(m[1] + '-' + m[2] + '-' + m[3] + 'T12:00:00+09:00').getUTCDay(); const h = +m[4]; return Number(m[2]) + '/' + Number(m[3]) + '(' + '일월화수목금토'[dow] + ') ' + (h > 12 ? h - 12 : h) + '시'; }
+// 두 가능 시간(요일-시)이 겹치는 실제 날짜·시각 (오늘 지금 이후 ~ 마지막 날)
+function pbOverlap(a, b, today, hour, last){
+  const B = {}; (b || []).forEach(function(x){ B[x] = 1; }); const out = [];
+  for (let i = 0; i < 22; i++) {
+    const d = new Date(new Date(today + 'T12:00:00+09:00').getTime() + i * 86400000), ds = d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }); if (ds > last) break;
+    const w = d.getUTCDay(); if (w < 1 || w > 5) continue;
+    PB_HOURS.forEach(function(h){ const k = w + '-' + h; if ((a || []).indexOf(k) >= 0 && B[k] && (i > 0 || h > hour)) out.push(ds + '|' + h); });
+  }
+  return out;
+}
 </script>
 <script>
 /* ===================== 줄넘기 기록 관리 v2 — 시작 ===================== */
@@ -708,7 +750,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.7.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.8.0', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1147,6 +1189,7 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
       </div>
     </div>
+    <div id="duelBans"></div>
 
     <div class="note-panel">
       <div class="note-eyebrow">오늘의 한마디</div>
@@ -1607,6 +1650,31 @@ document.addEventListener('DOMContentLoaded', function(){
     </section>
 
     <section class="tab-pane" data-tab="duel">
+    <div class="card" id="pbCard">
+      <h2>도전장 게시판</h2>
+      <p class="hint" style="margin-top:0;">다른 학교가 올린 <b>열린 도전장</b>이에요. <b>받기</b>를 누르면 대결이 시작돼요. 실시간 종목은 두 학교가 뛸 수 있는 시간 중 <b>겹치는 시간</b>을 자동으로 찾아 버튼으로 약속해요. 이 게시판은 선생님만 봐요.</p>
+      <div class="pb-tabs" id="pbTabs"><button type="button" data-pt="open" class="on">열린 도전장 <span id="pbNOpen"></span></button><button type="button" data-pt="mine">우리 학교 약속 <span class="pb-n" id="pbNMine" hidden></span></button><button type="button" data-pt="new">도전장 올리기</button></div>
+      <div id="pbOpen"></div>
+      <div id="pbMine" hidden></div>
+      <div id="pbNew" hidden>
+        <div class="form-row">
+          <label>종목 <select id="pbKind"><optgroup label="실시간 (같은 시각에 함께)"><option value="lvs:180">실시간 대결 · 3분 한 판</option><option value="lvs:120">실시간 대결 · 2분 한 판</option><option value="lvs:60">실시간 대결 · 1분 한 판</option><option value="lcoop:50">두 학교 함께 박 깨기 · 1인당 50회</option><option value="lcoop:30">두 학교 함께 박 깨기 · 1인당 30회</option><option value="lcoop:100">두 학교 함께 박 깨기 · 1인당 100회</option></optgroup><optgroup label="각자 편한 때"><option value="run:180">3분 한 판</option><option value="run:120">2분 한 판</option><option value="run:60">1분 한 판</option><option value="bak:50">박 터트리기 · 1인당 50회</option><option value="bak:30">박 터트리기 · 1인당 30회</option><option value="bak:100">박 터트리기 · 1인당 100회</option><option value="day">하루 동안 카메라로 뛴 횟수</option></optgroup></select></label>
+          <label>뛰는 학년 <select id="pbGrade"><option>1학년</option><option>2학년</option><option>3학년</option><option>4학년</option><option selected>5학년</option><option>6학년</option><option>중1</option><option>중2</option><option>중3</option><option>여러 학년</option></select></label>
+          <label>인원 <input type="number" id="pbPlayers" min="1" max="60" value="20" style="max-width:90px;"></label>
+          <label>기한 <select id="pbDays"><option value="3">3일</option><option value="5">5일</option><option value="7" selected>7일</option><option value="14">14일</option></select></label>
+          <label id="pbRvL">상대 숫자 <select id="pbRv"><option value="live">바로바로</option><option value="i10">10초마다 잠깐</option><option value="i20">20초마다 잠깐</option><option value="end">끝나고 공개</option></select></label>
+        </div>
+        <div id="pbSlotsBox">
+          <h3 style="margin:14px 0 4px;">우리 학교가 뛸 수 있는 시간 <span class="hint" style="font-weight:600;">눌러서 고르면 이 기기에 기억돼요</span></h3>
+          <div id="pbSlots"></div>
+          <p class="hint" style="margin:6px 0 0;">학교마다 교시 시각이 달라서 시계 시각(한 시간 단위)으로 골라요. 그 시간 안 40분이면 돼요.</p>
+        </div>
+        <h3 style="margin:14px 0 6px;">한마디</h3>
+        <div class="pb-says" id="pbSay"></div>
+        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;"><button type="button" id="pbPost">도전장 올리기</button><span class="hint" id="pbPostMsg"></span></div>
+        <p class="hint" style="margin:10px 0 0;">한 학교가 걸어 둘 수 있는 열린 도전장은 3개까지예요. 기한이 지나면 저절로 내려가요.</p>
+      </div>
+    </div>
     <div class="card">
       <h2>학교 대결 · 도전장</h2>
       <p class="hint" style="margin-top:0;">다른 학교와 같은 종목으로 겨뤄요. 인원이 달라도 공정하도록 <b>1인당 평균</b>으로 비교하고, 카메라 판정기·스마트 줄넘기로 센 기록만 들어가요. 점수와 승패는 두 학교만 이 목록에서 보고, Jump Earth! 현황판의 <b>학교 대결 소식</b>에는 두 학교가 함께 뛰었다는 것만 올라가요. (전국 현황판 참여가 켜져 있어야 해요)</p>
@@ -2155,6 +2223,25 @@ NAT.load().then(function(){
     a.href = NAT.pageUrl('board.html', pid); a.style.display = '';
   });
   NAT.reportToday(20 * 60 * 1000);
+});
+
+/* ---- 학생 첫 화면: 학교 대결 소식 (수집기 19판 ?api=posts) — 약속 잡힌 대결 · 진행 중 도전 · 기다리는 도전장 ---- */
+NAT.load().then(function(){
+  if (!NAT.active()) return;
+  const box = document.getElementById('duelBans'); if (!box) return;
+  NAT.myPid().then(function(pid){ return fetch(NAT.collector + '?api=posts&pid=' + encodeURIComponent(pid), { cache: 'no-store' }); }).then(function(r){ return r.json(); }).then(function(j){
+    if (!j.ok || !j.result || !j.result.list || !j.result.list.length) return;
+    const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+    const dday = function(d){ const n = Math.round((new Date(d + 'T12:00:00+09:00') - new Date(today + 'T12:00:00+09:00')) / 86400000); return n <= 0 ? '오늘!' : 'D-' + n; };
+    box.innerHTML = j.result.list.slice(0, 2).map(function(x){
+      const k = esc(PB_KIND(x));
+      if (x.t === 'promise') return '<div class="duel-ban"><div class="ic">⚔</div><div><b>' + esc(x.other) + '와(과) ' + (x.kind === 'lcoop' ? '함께 박 깨기가' : '실시간 대결이') + ' 잡혔어요!</b><small>' + k + (x.kind === 'lcoop' ? ' · 두 학교가 힘을 모아요' : ' · 1인당 평균으로 겨뤄요') + ' · 미리 연습해 봐요</small></div><div class="dd">' + dday(x.when.slice(0, 10)) + '<small>' + esc(pbSlotTxt(x.when)) + '</small></div></div>';
+      if (x.t === 'playing') return '<div class="duel-ban"><div class="ic">⚔</div><div><b>' + esc(x.other) + '와(과) 대결 중이에요!</b><small>' + k + ' · ' + Number(x.deadline.slice(5, 7)) + '/' + Number(x.deadline.slice(8, 10)) + '까지</small></div><div class="dd">' + dday(x.deadline) + '<small>마감</small></div></div>';
+      if (x.t === 'arranging') return '<div class="duel-ban w"><div class="ic">📮</div><div><b>' + esc(x.other) + '가(이) 도전장을 받았어요!</b><small>' + k + ' · 선생님들이 함께 뛸 시간을 맞추는 중</small></div><div class="dd">곧 정해져요</div></div>';
+      return '<div class="duel-ban w"><div class="ic">📮</div><div><b>우리 학교 도전장이 올라가 있어요</b><small>' + k + ' · 함께 뛸 학교를 기다리는 중</small></div><div class="dd">기다리는 중</div></div>';
+    }).join('');
+  }).catch(function(){});
 });
 
 function loadPending() {
@@ -2926,6 +3013,111 @@ loadTypes();
       NAT.syncAll(token, true).catch(function(){}).then(function(){ return NAT.post('duelSubmit', { key: NAT.cfg.key, code: t.dataset.dday, res: { date: date } }); })
         .then(list).catch(function(err){ t.disabled = false; t.textContent = '이 날 기록으로 결과 보내기'; alert(err.message); });
     }
+  });
+})();
+
+/* ---- 도전장 게시판 (2.8.0) — 수집기 19판 ----
+   열린 도전장을 올리고 아무 학교나 받기. 실시간 종목은 두 학교 가능 시간이 겹치는 때를 골라 버튼으로 약속.
+   글은 정해진 문구·버튼으로만 주고받음. 우리 가능 시간은 이 기기(localStorage)에 기억 */
+(function(){
+  const nav = document.querySelector('#adminNav button[data-tab="duel"]'); if (!nav || !document.getElementById('pbCard')) return;
+  const $p = function(id){ return document.getElementById(id); };
+  const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  const md = function(s){ return s ? Number(s.slice(5, 7)) + '/' + Number(s.slice(8, 10)) : ''; };
+  const ls = { get: function(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set: function(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+  let mySlots = ls.get('jr_myslots', []), say = 0, data = null, tab = 'open';
+  function ctx(){ return NAT.load().then(function(){ if (!NAT.collector || !NAT.cfg.on || !NAT.cfg.key) throw new Error('off'); return NAT; }); }
+  function grid(cls, cell){ let h = '<table class="pb-tg ' + (cls || '') + '"><tr><th></th>' + PB_DOW.slice(1).map(function(d){ return '<th>' + d + '</th>'; }).join('') + '</tr>';
+    PB_HOURS.forEach(function(hh){ h += '<tr><th>' + (hh > 12 ? hh - 12 : hh) + '시</th>'; for (let w = 1; w <= 5; w++) { const c = cell(w + '-' + hh) || ['', '']; h += '<td data-sl="' + w + '-' + hh + '" class="' + c[0] + '">' + c[1] + '</td>'; } h += '</tr>'; });
+    return h + '</table>'; }
+  function slotsUi(){ $p('pbSlots').innerHTML = grid('edit', function(k){ return mySlots.indexOf(k) >= 0 ? ['on', '✓'] : null; }); }
+  function kindUi(){ const v = $p('pbKind').value, k = v.split(':')[0]; $p('pbSlotsBox').style.display = PB_RT(k) ? '' : 'none'; $p('pbRvL').style.display = k === 'lvs' ? '' : 'none'; }
+  function sayUi(){ $p('pbSay').innerHTML = PB_SAYS.map(function(t, i){ return '<button type="button" data-say="' + i + '"' + (i === say ? ' class="on"' : '') + '>' + esc(t) + '</button>'; }).join(''); }
+  function setTab(t){ tab = t; ['open', 'mine', 'new'].forEach(function(x){ $p('pb' + x[0].toUpperCase() + x.slice(1)).hidden = x !== t; });
+    Array.prototype.forEach.call($p('pbTabs').children, function(b){ b.classList.toggle('on', b.dataset.pt === t); });
+    if (t === 'mine') { markSeen(); } }
+  function seenMap(){ return ls.get('jr_pbseen', {}); }
+  function unseen(p){ const th = p.thread || [], mine = p.side === 'host' ? 'h' : 'g'; const last = th.filter(function(m){ return m.by !== mine; }).pop(); return last && last.at > (seenMap()[p.id] || 0); }
+  function markSeen(){ if (!data) return; const m = seenMap(); data.mine.forEach(function(p){ (p.thread || []).forEach(function(x){ m[p.id] = Math.max(m[p.id] || 0, x.at || 0); }); }); ls.set('jr_pbseen', m); badge(); }
+  function badge(){ if (!data) return; const n = data.mine.filter(unseen).length; $p('pbNMine').hidden = !n; $p('pbNMine').textContent = n;
+    let dot = nav.querySelector('.pb-dot'); if (n && !dot) { dot = document.createElement('span'); dot.className = 'new-dot pb-dot'; nav.appendChild(dot); } if (dot) { dot.textContent = n ? '새 소식 ' + n : ''; dot.style.display = n ? '' : 'none'; } }
+  function openCard(p){
+    let ov = '', btn = '<button type="button" data-take="' + esc(p.id) + '">받기</button>';
+    if (PB_RT(p.kind)) {
+      const L = pbOverlap(p.slots, mySlots, data.today, data.hour, p.deadline);
+      if (!mySlots.length) { ov = '<div class="pb-ov no">우리 학교가 뛸 수 있는 시간을 먼저 골라 주세요 (도전장 올리기 탭의 시간표)</div>'; btn = '<button type="button" class="g" data-pt="new" style="background:#fff;color:inherit;border:1px solid var(--line);box-shadow:none;">시간 고르기</button>'; }
+      else if (!L.length) { ov = '<div class="pb-ov no">겹치는 시간이 없어요 — 우리 학교 가능 시간을 늘려 보세요</div>'; btn = '<button type="button" disabled style="opacity:.5;">시간 안 맞음</button>'; }
+      else { ov = '<div class="pb-ov">겹치는 시간 ' + L.length + '개 · 가장 빠른 때 ' + pbSlotTxt(L[0]) + '</div>' +
+        '<div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;"><span class="hint" style="margin:0;">제안할 시간</span><select data-tslot="' + esc(p.id) + '">' + L.slice(0, 12).map(function(s){ return '<option value="' + s + '">' + pbSlotTxt(s) + '</option>'; }).join('') + '</select></div>'; }
+    }
+    return '<div class="pb-post"><div><div class="pb-sch">' + esc(p.host.label) + '<small>' + esc(p.grade) + ' · ' + p.players + '명</small></div>' +
+      '<div class="pb-chips"><span class="pb-chip ' + (PB_RT(p.kind) ? 'rt' : 'k') + '">' + esc(PB_KIND(p)) + '</span>' + (p.kind === 'lvs' ? '<span class="pb-chip">상대 숫자 ' + ({ live: '바로바로', i10: '10초마다 잠깐', i20: '20초마다 잠깐', end: '끝나고 공개' })[p.rv] + '</span>' : PB_RT(p.kind) ? '' : '<span class="pb-chip">각자 편한 때 뛰기</span>') + '<span class="pb-chip">' + md(p.deadline) + '까지</span></div>' +
+      '<div>“' + esc(PB_SAYS[p.say] || PB_SAYS[0]) + '”</div>' + ov + '</div>' + btn + '</div>';
+  }
+  function msgTxt(m){ return m.t === 'take' ? '도전장을 받았어요! 아래 학교 대결에서 각자 뛰고 결과를 보내요' : m.t === 'propose' ? '<b>' + pbSlotTxt(m.s) + '</b> 어때요?' : m.t === 'ok' ? '<b>좋아요!</b> ' + pbSlotTxt(m.s) + '로 정해요' : m.t === 'ready' ? '준비됐어요!' : m.t === 'late' ? '조금 늦어요 (10분)' : m.t === 'thanks' ? '고마워요!' : m.t; }
+  function mineCard(p){
+    const meK = p.side === 'host' ? 'h' : 'g', other = p.side === 'host' ? p.guest : p.host, th = p.thread || [];
+    let h = '<div class="pb-th"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><b style="font-size:16px;">' + (other ? '우리 학교 × ' + esc(other.label) : '우리 학교 도전장') + '</b><span class="pb-chip ' + (PB_RT(p.kind) ? 'rt' : 'k') + '">' + esc(PB_KIND(p)) + '</span><span class="pb-chip">' + esc(p.grade) + ' · ' + md(p.deadline) + '까지</span></div>';
+    if (p.status === 'open') return h + '<p class="hint" style="margin:8px 0 0;">함께 뛸 학교를 기다리는 중이에요 · “' + esc(PB_SAYS[p.say] || '') + '”</p><div class="pb-q"><button type="button" class="g" data-pcancel="' + esc(p.id) + '">도전장 내리기</button></div></div>';
+    if (!PB_RT(p.kind)) return h + '<p class="hint" style="margin:8px 0 0;">' + esc(other ? other.label : '') + '와(과) 도전장 대결로 이어졌어요 (코드 <b>' + esc(p.duel || '') + '</b>). 아래 <b>우리 학교 대결</b>에서 뛰고 결과를 보내요.</p></div>';
+    const first = th[0] || {}, hostSl = p.slots || [], guestSl = first.gs || [];
+    const mineSl = p.side === 'host' ? hostSl : guestSl, theirSl = p.side === 'host' ? guestSl : hostSl;
+    const L = pbOverlap(hostSl, guestSl.length ? guestSl : hostSl, data.today, data.hour, (function(){ const d = new Date(new Date(p.deadline + 'T12:00:00+09:00').getTime() + 7 * 86400000); return d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }); })());
+    const near = {}; L.forEach(function(s){ const w = new Date(s.slice(0, 10) + 'T12:00:00+09:00').getUTCDay() + '-' + s.split('|')[1]; if (!near[w]) near[w] = s; });
+    h += '<h3 style="margin:12px 0 4px;font-size:14px;">두 학교 시간표</h3>' + grid('', function(k){ const a = mineSl.indexOf(k) >= 0, b = theirSl.indexOf(k) >= 0; return a && b ? ['both', near[k] ? md(near[k].slice(0, 10)) : '둘 다'] : a ? ['on', '우리'] : b ? ['they', '상대'] : null; }) +
+      '<div class="pb-legend"><span><i style="background:var(--coral)"></i>우리만</span><span><i style="background:#FFD9C9"></i>상대만</span><span><i style="background:#12A089"></i>둘 다 됨 (자동으로 찾은 시간)</span></div>';
+    th.forEach(function(m){ const me = m.by === meK; h += '<div class="pb-msg"><span class="w' + (me ? ' me' : '') + '">' + (me ? '우리 학교' : esc(other ? other.label : '')) + '</span><div class="pb-bub' + (me ? ' me' : '') + '">' + msgTxt(m) + '<small>' + new Date(m.at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + '</small></div></div>'; });
+    const lastP = th.filter(function(m){ return m.t === 'propose'; }).pop(), waitingMe = lastP && lastP.by !== meK && !p.promise;
+    if (p.promise) h += '<div class="pb-promise">약속 · ' + pbSlotTxt(p.promise) + ' ' + esc(PB_KIND(p)) + ' — 그 시간에 점프 Live를 열고 <b>학교와 함께</b>를 누르면 이 대결로 바로 이어져요' + (p.side === 'host' ? ' (우리 학교가 <b>같이 시작</b>을 눌러요)' : '') + '</div>';
+    const prop = '<select data-pslot="' + esc(p.id) + '">' + L.slice(0, 12).map(function(s){ return '<option value="' + s + '">' + pbSlotTxt(s) + '</option>'; }).join('') + '</select><button type="button" class="g" data-prop="' + esc(p.id) + '">다른 시간 제안</button>';
+    h += '<div class="pb-q">';
+    if (waitingMe) h += '<button type="button" data-rep="ok" data-id="' + esc(p.id) + '">좋아요! ' + pbSlotTxt(lastP.s) + '</button>' + (L.length ? prop : '');
+    else if (p.promise) h += '<button type="button" data-live="' + esc(p.id) + '">점프 Live 열기 →</button><button type="button" class="g" data-rep="ready" data-id="' + esc(p.id) + '">준비됐어요</button><button type="button" class="g" data-rep="late" data-id="' + esc(p.id) + '">조금 늦어요 (10분)</button><button type="button" class="g" data-rep="thanks" data-id="' + esc(p.id) + '">고마워요!</button>' + (L.length ? prop : '');
+    else h += '<span class="hint" style="margin:0;">상대 학교 답을 기다리는 중</span>' + (L.length ? prop : '');
+    h += '<button type="button" class="g" data-rep="cant" data-id="' + esc(p.id) + '">이번엔 어려워요</button></div>';
+    return h + '</div>';
+  }
+  function render(){
+    if (!data) return;
+    $p('pbNOpen').textContent = data.open.length;
+    $p('pbOpen').innerHTML = data.open.length ? data.open.map(openCard).join('') : '<p class="hint">아직 열린 도전장이 없어요. <b>도전장 올리기</b>에서 먼저 올려 보세요!</p>';
+    $p('pbMine').innerHTML = data.mine.length ? data.mine.map(mineCard).join('') : '<p class="hint">아직 우리 학교가 올리거나 받은 도전장이 없어요.</p>';
+    badge(); if (tab === 'mine') markSeen();
+  }
+  function load(){ $p('pbOpen').innerHTML = '<p class="hint">불러오는 중…</p>';
+    return ctx().then(function(){ return NAT.post('postList', { key: NAT.cfg.key }); }).then(function(r){ data = r; render(); })
+      .catch(function(e){ $p('pbOpen').innerHTML = '<p class="hint">' + (e.message === 'off' ? 'Jump Earth! 전국 탭에서 전국 현황판 참여를 먼저 켜 주세요.' : /알 수 없는 요청/.test(e.message) ? '도전장 게시판은 수집기 19판부터 써요. 운영자가 수집기를 새로 배포하면 열려요.' : '불러오지 못했어요: ' + esc(e.message)) + '</p>'; }); }
+  function act(fn, payload, btn){ if (btn) btn.disabled = true;
+    return ctx().then(function(){ return NAT.post(fn, Object.assign({ key: NAT.cfg.key }, payload)); }).then(function(){ return load(); }).catch(function(e){ alert(e.message); if (btn) btn.disabled = false; }); }
+  let loaded = false;
+  function open(){ if (loaded) return; loaded = true; slotsUi(); sayUi(); kindUi(); load(); }
+  nav.addEventListener('click', open); if (document.querySelector('.tab-pane[data-tab="duel"].on')) open();
+  setInterval(function(){ if (loaded && document.querySelector('.tab-pane[data-tab="duel"].on')) load(); }, 60000);   // 1분마다 새 소식
+  $p('pbTabs').addEventListener('click', function(e){ const b = e.target.closest('[data-pt]'); if (b) setTab(b.dataset.pt); });
+  $p('pbKind').addEventListener('change', kindUi);
+  $p('pbSlots').addEventListener('click', function(e){ const td = e.target.closest('[data-sl]'); if (!td) return; const k = td.dataset.sl, i = mySlots.indexOf(k); if (i >= 0) mySlots.splice(i, 1); else mySlots.push(k); ls.set('jr_myslots', mySlots); slotsUi(); render(); });
+  $p('pbSay').addEventListener('click', function(e){ const b = e.target.closest('[data-say]'); if (b) { say = +b.dataset.say; sayUi(); } });
+  $p('pbPost').addEventListener('click', function(){
+    const v = $p('pbKind').value, k = v.split(':')[0], n = Number(v.split(':')[1]) || 0;
+    if (PB_RT(k) && !mySlots.length) { $p('pbPostMsg').textContent = '실시간 종목은 뛸 수 있는 시간을 하나 이상 골라 주세요.'; return; }
+    const b = this; b.disabled = true; $p('pbPostMsg').textContent = '올리는 중…';
+    ctx().then(function(){ return NAT.post('postCreate', { key: NAT.cfg.key, kind: k, dur: k === 'run' || k === 'lvs' ? n : 0, per: k === 'bak' || k === 'lcoop' ? n : 0, rv: $p('pbRv').value, grade: $p('pbGrade').value, players: Number($p('pbPlayers').value), days: Number($p('pbDays').value), slots: mySlots, say: say }); })
+      .then(function(){ $p('pbPostMsg').textContent = '✓ 올렸어요! 다른 학교가 받으면 우리 학교 약속에 알림이 떠요.'; return load(); }).then(function(){ setTab('mine'); })
+      .catch(function(e){ $p('pbPostMsg').textContent = e.message === 'off' ? '전국 현황판 참여를 먼저 켜 주세요.' : e.message; }).then(function(){ b.disabled = false; });
+  });
+  $p('pbCard').addEventListener('click', function(e){
+    const t = e.target;
+    if (t.dataset.pt && t.closest('.pb-post')) { setTab(t.dataset.pt); return; }
+    if (t.dataset.take) { const p = data.open.filter(function(x){ return x.id === t.dataset.take; })[0]; if (!p) return;
+      const sel = document.querySelector('[data-tslot="' + t.dataset.take + '"]');
+      if (!confirm(p.host.label + '의 도전장을 받을까요?\n' + PB_KIND(p) + (sel ? '\n제안할 시간: ' + pbSlotTxt(sel.value) : '\n받으면 바로 대결이 시작돼요 (각자 편한 때 뛰기)'))) return;
+      act('postTake', { id: p.id, slot: sel ? sel.value : '', myslots: mySlots }, t).then(function(){ setTab('mine'); }); return; }
+    if (t.dataset.rep) { if (t.dataset.rep === 'cant' && !confirm('이번 대결을 그만둘까요? 기한이 남았으면 도전장이 다시 열려요.')) return; act('postReply', { id: t.dataset.id, t: t.dataset.rep }, t); return; }
+    if (t.dataset.prop) { const s = document.querySelector('[data-pslot="' + t.dataset.prop + '"]').value; act('postReply', { id: t.dataset.prop, t: 'propose', slot: s }, t); return; }
+    if (t.dataset.pcancel && confirm('이 도전장을 내릴까요?')) { act('postCancel', { id: t.dataset.pcancel }, t); return; }
+    if (t.dataset.live) { const live = APP.shell && APP.shell.live, lite = APP.shell && APP.shell.lite; if (!live && !lite) { alert('점프 Live는 껍데기 6판부터 쓸 수 있어요.'); return; }
+      const url = location.origin + '/jumpropelive/monitor.html?' + (live ? '' : 'lite=1' + (APP.club ? '&club=1' : '') + '&') + 's=' + encodeURIComponent(APP.shellUrl) + '&lmpost=' + encodeURIComponent(t.dataset.live);
+      if (!window.open(url, '_blank')) alert('새 창이 막혔어요. 주소창 오른쪽에서 팝업을 허용해 주세요.'); }
   });
 })();
 

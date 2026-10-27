@@ -23,7 +23,7 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 18;  // 18: 실시간 학교 함께 뛰기 — 두 학교 선생님 화면이 같은 시각에 시작해 몇 초마다 합계를 주고받음 (실시간 대결 · 두 학교 함께 박 깨기), 자료는 6시간 캐시에만  // 17: 학교 대결 종목 '박 터트리기' — 들어온 학생 수 × 30·50·100회 박을 3분 안에 누가 더 빨리 깨나  // 16: 도전장을 만든 학교는 상대가 받기 전에도 먼저 뛰고 결과를 보낼 수 있음(기록을 걸고 도전)  // 15: 15: 학교 대결(도전장) — Duels 시트, 대결 코드로 두 학교가 같은 종목(점프 Live N분 한 판 / 하루 카메라 기록)을 1인당 평균으로 겨룸  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 19;  // 19: 도전장 게시판 — 열린 도전장을 올리고 아무 학교나 받기, 실시간 종목은 두 학교 가능 시간이 겹치는 때를 골라 버튼으로 약속 (Posts 시트), 학생 화면용 ?api=posts  // 18: 실시간 학교 함께 뛰기 — 두 학교 선생님 화면이 같은 시각에 시작해 몇 초마다 합계를 주고받음 (실시간 대결 · 두 학교 함께 박 깨기), 자료는 6시간 캐시에만  // 17: 학교 대결 종목 '박 터트리기' — 들어온 학생 수 × 30·50·100회 박을 3분 안에 누가 더 빨리 깨나  // 16: 도전장을 만든 학교는 상대가 받기 전에도 먼저 뛰고 결과를 보낼 수 있음(기록을 걸고 도전)  // 15: 15: 학교 대결(도전장) — Duels 시트, 대결 코드로 두 학교가 같은 종목(점프 Live N분 한 판 / 하루 카메라 기록)을 1인당 평균으로 겨룸  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -46,6 +46,7 @@ function doGet(e) {
     else if (q.api === 'matSchool') out = getMatSchool_(q.pid, q.month, q.game, q.diff, q.band);
     else if (q.api === 'duel') out = duelView_(q.code);
     else if (q.api === 'duels') out = duelList_();
+    else if (q.api === 'posts') out = postsForStudents_(q.pid);
     else out = { collector: COLLECTOR_VERSION, today: today_() };
     out = { ok: true, result: out };
   } catch (err) {
@@ -74,6 +75,12 @@ function doPost(e) {
     else if (body.fn === 'lmPush') out = lmPush_(p);
     else if (body.fn === 'lmState') out = lmState_(p);
     else if (body.fn === 'lmLeave') out = lmLeave_(p);
+    else if (body.fn === 'lmForPost') out = lmForPost_(p);
+    else if (body.fn === 'postCreate') out = postCreate_(p);
+    else if (body.fn === 'postList') out = postList_(p);
+    else if (body.fn === 'postTake') out = postTake_(p);
+    else if (body.fn === 'postReply') out = postReply_(p);
+    else if (body.fn === 'postCancel') out = postCancel_(p);
     else throw new Error('알 수 없는 요청');
     out = { ok: true, result: out };
   } catch (err) {
@@ -958,7 +965,7 @@ function lmPublic_(x, me) {
   const schools = loadSchools_();
   const side = function (pid, d) { if (!pid) return null; const s = schools[pid] || {}; return { label: s.label || '익명 학교', named: !!s.named, sum: d.sum || 0, players: d.players || 0, fin: !!d.fin, t: d.t || 0 }; };
   const mine = me === x.host ? 'host' : me === x.guest ? 'guest' : '';
-  return { code: x.code, kind: x.kind, dur: x.dur, per: x.per, rv: x.rv, start: x.start || 0, id: x.id || '', now: Date.now(), side: mine,
+  return { code: x.code, kind: x.kind, dur: x.dur, per: x.per, rv: x.rv, start: x.start || 0, id: x.id || '', now: Date.now(), side: mine, post: x.post || '',
     host: side(x.host, x.h || {}), guest: side(x.guest, x.g || {}), round: x.round || 0, left: x.left || '', broke: x.broke || 0 };
 }
 function lmOpen_(p) {
@@ -1036,4 +1043,184 @@ function lmLeave_(p) {
     if (x.guest === me) { x.guest = ''; x.left = 'guest'; x.g = {}; lmPut_(x); }
     return { ok: true };
   } finally { lock.releaseLock(); }
+}
+
+/************ 도전장 게시판 (19판) ************
+ * 열린 도전장: 한 학교가 종목·학년·인원·기한(·실시간이면 가능한 요일·시각)을 올리면 아무 학교나 '받기'
+ *  - 각자 편한 때 뛰는 종목(run·bak·day): 받으면 바로 도전장 대결(Duels)로 이어짐
+ *  - 실시간 종목(lvs 실시간 대결 · lcoop 함께 박 깨기): 받는 학교가 겹치는 시간 하나를 제안 → 버튼으로 주고받아 약속
+ *    약속한 때 점프 Live의 '학교와 함께'가 lmForPost 로 이 두 학교 방을 바로 엶
+ * 글은 정해진 문구(say 번호)와 버튼(t)으로만 주고받음 — 자유 글 없음. 운영자는 Hidden 칸에 1을 넣어 숨김
+ * slots: '요일-시' (요일 1=월~5=금, 시 9·10·11·13·14) · 약속 시간: 'YYYY-MM-DD|시'
+ */
+const SH_POSTS = 'Posts';
+const POST_HEADER_ = ['Id', 'Created', 'Host', 'Kind', 'Dur', 'Per', 'Rv', 'Grade', 'Players', 'Deadline', 'Slots', 'Say', 'Status', 'Guest', 'Duel', 'Lm', 'Thread', 'Promise', 'Hidden'];
+const POST_KINDS_ = ['run', 'bak', 'day', 'lvs', 'lcoop'];
+const POST_HOURS_ = [9, 10, 11, 13, 14];
+const POST_REPLIES_ = ['propose', 'ok', 'ready', 'late', 'cant', 'thanks'];
+const POST_OPEN_MAX_ = 3;
+function postsSheet_() { return sheet_(SH_POSTS, POST_HEADER_); }
+function postRt_(k) { return k === 'lvs' || k === 'lcoop'; }
+function postRead_(sh) {
+  const v = sh.getDataRange().getValues(), out = [];
+  const j = function (x, d) { try { return x ? JSON.parse(x) : d; } catch (e) { return d; } };
+  const ds = function (x) { return x instanceof Date ? Utilities.formatDate(x, TZ_, 'yyyy-MM-dd') : String(x || ''); };
+  for (let i = 1; i < v.length; i++) {
+    const r = v[i]; if (!r[0]) continue;
+    out.push({ row: i + 1, id: String(r[0]), created: Number(r[1]) || 0, host: String(r[2]), kind: String(r[3]), dur: Number(r[4]) || 0, per: Number(r[5]) || 0, rv: String(r[6] || ''),
+      grade: String(r[7] || ''), players: Number(r[8]) || 0, deadline: ds(r[9]), slots: j(r[10], []), say: Number(r[11]) || 0, status: String(r[12] || 'open'),
+      guest: String(r[13] || ''), duel: String(r[14] || ''), lm: String(r[15] || ''), thread: j(r[16], []), promise: String(r[17] || ''), hidden: !!r[18] });
+  }
+  return out;
+}
+function postWrite_(sh, x) {
+  sh.getRange(x.row, 13, 1, 6).setValues([[x.status, x.guest, x.duel, x.lm, JSON.stringify(x.thread || []), x.promise || '']]);
+}
+function postFind_(all, id) { const x = all.filter(function (p) { return p.id === String(id || ''); })[0]; if (!x || x.hidden) throw new Error('없거나 내려간 도전장이에요.'); return x; }
+function postDow_(date) { return Number(Utilities.formatDate(new Date(date + 'T12:00:00+09:00'), TZ_, 'u')); }   // 1=월 … 7=일
+// 약속 시간이 이 도전장 가능 시간 안이고, 아직 지나지 않았고, 기한(+7일 여유) 안인지
+function postSlotOk_(x, slot) {
+  const m = /^(\d{4}-\d{2}-\d{2})\|(\d{1,2})$/.exec(String(slot || '')); if (!m) return false;
+  const d = m[1], h = Number(m[2]), dow = postDow_(d);
+  if (POST_HOURS_.indexOf(h) < 0 || dow > 5) return false;
+  if ((x.slots || []).indexOf(dow + '-' + h) < 0) return false;
+  const nowH = Number(Utilities.formatDate(new Date(), TZ_, 'H')), today = today_();
+  if (d < today || (d === today && h <= nowH)) return false;
+  const last = Utilities.formatDate(new Date(new Date(x.deadline + 'T12:00:00+09:00').getTime() + 7 * 86400000), TZ_, 'yyyy-MM-dd');
+  return d <= last;
+}
+function postPublic_(x, schools, me) {
+  const lab = function (pid) { if (!pid) return null; const s = schools[pid] || {}; return { label: s.label || '익명 학교', named: !!s.named }; };
+  const side = x.host === me ? 'host' : x.guest === me ? 'guest' : '';
+  const o = { id: x.id, kind: x.kind, dur: x.dur, per: x.per, rv: x.rv, grade: x.grade, players: x.players, deadline: x.deadline, slots: x.slots, say: x.say,
+    status: x.status, host: lab(x.host), guest: lab(x.guest), side: side, promise: x.promise, created: x.created };
+  if (side) { o.thread = x.thread || []; o.duel = x.duel; }
+  return o;
+}
+function postCreate_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const kind = POST_KINDS_.indexOf(p.kind) >= 0 ? p.kind : 'run';
+  const dur = kind === 'run' || kind === 'lvs' ? ([60, 120, 180].indexOf(Number(p.dur)) >= 0 ? Number(p.dur) : 60) : kind === 'bak' || kind === 'lcoop' ? 180 : 0;
+  const per = kind === 'bak' || kind === 'lcoop' ? ([30, 50, 100].indexOf(Number(p.per)) >= 0 ? Number(p.per) : 50) : 0;
+  const rv = kind === 'lvs' ? (['live', 'i10', 'i20', 'end'].indexOf(p.rv) >= 0 ? p.rv : 'live') : '';
+  const days = [3, 5, 7, 14].indexOf(Number(p.days)) >= 0 ? Number(p.days) : 7;
+  const slots = postRt_(kind) ? (Array.isArray(p.slots) ? p.slots : []).map(String).filter(function (s) { const m = /^([1-5])-(\d{1,2})$/.exec(s); return m && POST_HOURS_.indexOf(Number(m[2])) >= 0; }).slice(0, 25) : [];
+  if (postRt_(kind) && !slots.length) throw new Error('실시간 종목은 우리 학교가 뛸 수 있는 시간을 하나 이상 골라 주세요.');
+  const grade = cleanText_(p.grade, 6), players = Math.max(1, Math.min(60, Math.round(Number(p.players)) || 0)), say = Math.max(0, Math.min(9, Math.round(Number(p.say)) || 0));
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = postsSheet_(), all = postRead_(sh), today = today_();
+    if (all.filter(function (x) { return x.host === me && x.status === 'open' && x.deadline >= today && !x.hidden; }).length >= POST_OPEN_MAX_) throw new Error('열린 도전장은 ' + POST_OPEN_MAX_ + '개까지 걸어 둘 수 있어요. 하나를 내린 뒤 올려 주세요.');
+    const id = 'P' + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase();
+    const dl = Utilities.formatDate(new Date(Date.now() + days * 86400000), TZ_, 'yyyy-MM-dd');
+    sh.appendRow([id, Date.now(), me, kind, dur, per, rv, grade, players, dl, JSON.stringify(slots), say, 'open', '', '', '', '[]', '', '']);
+    sh.getRange(sh.getLastRow(), 10).setNumberFormat('@'); sh.getRange(sh.getLastRow(), 10).setValue(dl);
+    return postPublic_({ id: id, created: Date.now(), host: me, kind: kind, dur: dur, per: per, rv: rv, grade: grade, players: players, deadline: dl, slots: slots, say: say, status: 'open', guest: '', thread: [], promise: '' }, schools, me);
+  } finally { lock.releaseLock(); }
+}
+function postList_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), today = today_();
+  const all = postRead_(postsSheet_()).filter(function (x) { return !x.hidden && !(schools[x.host] || {}).hidden; });
+  const open = all.filter(function (x) { return x.status === 'open' && x.deadline >= today && x.host !== me; })
+    .sort(function (a, b) { return b.created - a.created; }).slice(0, 40).map(function (x) { return postPublic_(x, schools, me); });
+  const old = Utilities.formatDate(new Date(Date.now() - 14 * 86400000), TZ_, 'yyyy-MM-dd');
+  const mine = all.filter(function (x) { return (x.host === me || x.guest === me) && x.status !== 'closed' && (x.deadline >= old || (x.promise && x.promise.slice(0, 10) >= old)); })
+    .sort(function (a, b) { return b.created - a.created; }).slice(0, 30).map(function (x) { return postPublic_(x, schools, me); });
+  return { me: me, today: today, hour: Number(Utilities.formatDate(new Date(), TZ_, 'H')), open: open, mine: mine };
+}
+function postTake_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = postsSheet_(), x = postFind_(postRead_(sh), p.id), today = today_();
+    if (x.host === me) throw new Error('우리 학교가 올린 도전장이에요.');
+    if (x.status !== 'open' || x.deadline < today) throw new Error('이미 다른 학교가 받았거나 기한이 지난 도전장이에요.');
+    x.guest = me; x.status = 'taken';
+    if (postRt_(x.kind)) {
+      if (!postSlotOk_(x, p.slot)) throw new Error('이 도전장의 가능한 시간 중에서 골라 주세요.');
+      const gs = (Array.isArray(p.myslots) ? p.myslots : []).map(String).filter(function (q) { return /^[1-5]-(9|10|11|13|14)$/.test(q); }).slice(0, 25);   // 받은 학교 가능 시간 (다른 시간 제안할 때 겹치는 시간 찾기)
+      x.thread = [{ by: 'g', t: 'propose', s: String(p.slot), gs: gs, at: Date.now() }];
+    } else {
+      // 각자 편한 때 뛰는 종목: 바로 도전장 대결로 (상대가 이미 받은 상태)
+      const dsh = duelsSheet_(), used = {}; duelRead_(dsh).forEach(function (d) { used[d.code] = 1; });
+      let code = ''; for (let t = 0; t < 50 && (!code || used[code]); t++) { code = ''; for (let i = 0; i < 6; i++) code += DUEL_CH_.charAt(Math.floor(Math.random() * DUEL_CH_.length)); }
+      dsh.appendRow([code, today, x.kind, x.kind === 'bak' ? x.per : x.dur, x.deadline, x.host, me, '', '', '', '']);
+      dsh.getRange(dsh.getLastRow(), 2, 1, 1).setNumberFormat('@'); dsh.getRange(dsh.getLastRow(), 5, 1, 1).setNumberFormat('@');
+      dsh.getRange(dsh.getLastRow(), 2).setValue(today); dsh.getRange(dsh.getLastRow(), 5).setValue(x.deadline);
+      x.duel = code; x.thread = [{ by: 'g', t: 'take', at: Date.now() }];
+      CacheService.getScriptCache().remove('duels');
+    }
+    postWrite_(sh, x);
+    return postPublic_(x, schools, me);
+  } finally { lock.releaseLock(); }
+}
+function postReply_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), t = String(p.t || '');
+  if (POST_REPLIES_.indexOf(t) < 0) throw new Error('알 수 없는 답이에요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = postsSheet_(), x = postFind_(postRead_(sh), p.id);
+    const by = x.host === me ? 'h' : x.guest === me ? 'g' : ''; if (!by) throw new Error('우리 학교가 참여한 도전장이 아니에요.');
+    if (x.status !== 'taken') throw new Error('지금은 답할 수 없는 도전장이에요.');
+    const th = x.thread || [], e = { by: by, t: t, at: Date.now() };
+    if (t === 'propose') { if (!postRt_(x.kind) || !postSlotOk_(x, p.slot)) throw new Error('이 도전장의 가능한 시간 중에서 골라 주세요.'); e.s = String(p.slot); x.promise = ''; }
+    if (t === 'ok') {
+      const last = th.filter(function (m) { return m.t === 'propose'; }).pop();
+      if (!last || last.by === by) throw new Error('상대 학교가 제안한 시간이 없어요.');
+      if (!postSlotOk_(x, last.s)) throw new Error('제안된 시간이 지났어요. 다른 시간을 제안해 주세요.');
+      e.s = last.s; x.promise = last.s;
+    }
+    if (t === 'cant') {   // 이번엔 어려워요 — 기한이 남았으면 다시 열린 도전장으로
+      x.guest = ''; x.thread = []; x.promise = ''; x.lm = ''; x.status = x.deadline >= today_() && !x.duel ? 'open' : 'closed';
+      postWrite_(sh, x); return postPublic_(x, schools, me);
+    }
+    th.push(e); x.thread = th.slice(-40);
+    postWrite_(sh, x);
+    return postPublic_(x, schools, me);
+  } finally { lock.releaseLock(); }
+}
+function postCancel_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = postsSheet_(), x = postFind_(postRead_(sh), p.id);
+    if (x.host !== me) throw new Error('도전장을 올린 학교만 내릴 수 있어요.');
+    if (x.status !== 'open') throw new Error('다른 학교가 이미 받은 도전장은 내릴 수 없어요. 대화에서 \'이번엔 어려워요\'를 눌러 주세요.');
+    x.status = 'closed'; postWrite_(sh, x); return { ok: true };
+  } finally { lock.releaseLock(); }
+}
+// 약속한 실시간 대결: 두 학교 방(18판 LM)을 바로 열거나 이어 줌 — 도전장을 올린 학교가 '같이 시작'
+function lmForPost_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = postsSheet_(), x = postFind_(postRead_(sh), p.id);
+    if (x.host !== me && x.guest !== me) throw new Error('우리 학교가 참여한 도전장이 아니에요.');
+    if (!postRt_(x.kind) || x.status !== 'taken' || !x.promise) throw new Error('아직 약속이 잡히지 않은 대결이에요.');
+    let st = x.lm ? lmGet_(x.lm) : null;
+    if (!st) {
+      let code = ''; for (let t = 0; t < 30 && (!code || lmGet_(code)); t++) { code = ''; for (let i = 0; i < 6; i++) code += DUEL_CH_.charAt(Math.floor(Math.random() * DUEL_CH_.length)); }
+      st = { code: code, kind: x.kind === 'lcoop' ? 'coop' : 'vs', dur: x.kind === 'lcoop' ? 180 : x.dur, per: x.kind === 'lcoop' ? x.per : 0, rv: x.kind === 'lcoop' ? 'live' : (x.rv || 'live'),
+        host: x.host, guest: x.guest, start: 0, id: '', h: {}, g: {}, round: 0, made: Date.now(), post: x.id };
+      lmPut_(st); x.lm = code; postWrite_(sh, x);
+    }
+    return lmPublic_(st, me);
+  } finally { lock.releaseLock(); }
+}
+// 학생 화면: 우리 학교 약속 잡힌 대결 · 진행 중인 도전 · 기다리는 도전장 (학교 공개 번호로, 키 없이)
+function postsForStudents_(pid) {
+  const schools = loadSchools_(), s = schools[String(pid || '')]; if (!s || s.hidden) return { list: [] };
+  const me = s.canon, today = today_();
+  const lab = function (q) { const t = schools[q] || {}; return t.label || '익명 학교'; };
+  const L = [];
+  postRead_(postsSheet_()).forEach(function (x) {
+    if (x.hidden || (x.host !== me && x.guest !== me)) return;
+    const other = x.host === me ? x.guest : x.host;
+    if (x.status === 'taken' && postRt_(x.kind) && x.promise && x.promise.slice(0, 10) >= today) L.push({ t: 'promise', other: lab(other), kind: x.kind, dur: x.dur, per: x.per, when: x.promise });
+    else if (x.status === 'taken' && !postRt_(x.kind) && x.deadline >= today) L.push({ t: 'playing', other: lab(other), kind: x.kind, dur: x.dur, per: x.per, deadline: x.deadline });
+    else if (x.status === 'taken' && postRt_(x.kind) && !x.promise && x.deadline >= today) L.push({ t: 'arranging', other: lab(other), kind: x.kind, dur: x.dur, per: x.per });
+    else if (x.status === 'open' && x.host === me && x.deadline >= today) L.push({ t: 'waiting', kind: x.kind, dur: x.dur, per: x.per, deadline: x.deadline });
+  });
+  L.sort(function (a, b) { const o = { promise: 0, playing: 1, arranging: 2, waiting: 3 }; return o[a.t] - o[b.t] || String(a.when || a.deadline || '').localeCompare(String(b.when || b.deadline || '')); });
+  return { list: L.slice(0, 3) };
 }
