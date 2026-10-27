@@ -203,6 +203,11 @@
   .duel-news .dn-x { color: var(--ink-2); }
   .duel-news .dn-k { color: var(--ink-2); font-size: .88em; }
   .duel-news .dn-d { margin-left: auto; color: var(--ink-2); font-size: .82em; }
+  .duel-news li.dn-empty { visibility: hidden; }
+  .dn-pager { display: flex; justify-content: center; gap: 6px; margin: 0 0 10px; }
+  .dn-pager button { min-width: 34px; height: 34px; padding: 0 8px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--ink-2); font: inherit; font-weight: 700; cursor: pointer; }
+  .dn-pager button.on { background: var(--coral-dark); border-color: var(--coral-dark); color: #fff; }
+  .dn-pager button:disabled { opacity: .35; cursor: default; }
   .champ-pop { position: fixed; z-index: 1000; background: var(--surface, #fff); border: 1px solid var(--line, #E5E7EB); border-radius: 14px; box-shadow: 0 10px 30px rgba(31,36,48,.18); padding: 12px 16px; min-width: 200px; max-width: 280px; }
   .champ-pop .cp-head { display: flex; gap: 10px; align-items: center; }
   .champ-pop .cp-head b { display: block; font-size: 1.05em; } .champ-pop .cp-head span { font-size: .85em; color: var(--ink-2, #6B7280); }
@@ -463,17 +468,32 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
     fetch(collector + '?api=duels', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(j){ if (j.ok && j.result && j.result.list) { DUELS = j.result.list; put(); } }).catch(function(){});
   }
   // 학교 대결은 결과(점수·승패)를 띄우지 않고, 두 학교가 겨뤘다는 소식만 가볍게 — 결과는 두 학교 관리자 메뉴에서만
+  // 대결이 많아져도 카드가 길어지지 않게 한 쪽에 DUEL_PER 개씩, 지난 대결은 2·3쪽으로 넘겨 봐요
+  const DUEL_PER = 5;
+  let duelPage = 1;
   function duelHtml(L){
     L = L.filter(function(d){ return d.host && d.guest && (d.status === 'playing' || d.status === 'done'); });
     if (!L.length) return '';
+    const pages = Math.ceil(L.length / DUEL_PER);
+    duelPage = Math.min(Math.max(1, duelPage), pages);
     const kind = function(d){ return d.kind === 'day' ? '하루 카메라 기록' : d.kind === 'bak' ? '박 터트리기' : (d.dur / 60) + '분 한 판'; };
     const md = function(x){ return x ? Number(x.slice(5, 7)) + '/' + Number(x.slice(8, 10)) : ''; };
     const nm = function(x){ return '<b class="' + (x.named ? '' : 'anon') + (x.pid === me ? ' mine' : '') + '">' + schHtml(x.label) + '</b>'; };
+    const rows = L.slice((duelPage - 1) * DUEL_PER, duelPage * DUEL_PER).map(function(d){
+      return '<li>' + nm(d.host) + '<span class="dn-x">×</span>' + nm(d.guest) + '<span class="dn-k">' + kind(d) + ' · ' + (d.status === 'done' ? '함께 뛰었어요' : '겨루는 중') + '</span><span class="dn-d">' + md(d.created) + '</span></li>';
+    });
+    for (let i = rows.length; pages > 1 && i < DUEL_PER; i++) rows.push(rows[0].replace('<li>', '<li class="dn-empty" aria-hidden="true">'));   // 마지막 쪽도 같은 높이로
+    let pager = '';
+    if (pages > 1) {
+      pager = '<div class="dn-pager"><button type="button" data-dpage="' + (duelPage - 1) + '"' + (duelPage === 1 ? ' disabled' : '') + ' aria-label="앞 쪽">‹</button>';
+      for (let i = 1; i <= pages; i++) pager += '<button type="button" data-dpage="' + i + '"' + (i === duelPage ? ' class="on" aria-current="page"' : '') + '>' + i + '</button>';
+      pager += '<button type="button" data-dpage="' + (duelPage + 1) + '"' + (duelPage === pages ? ' disabled' : '') + ' aria-label="다음 쪽">›</button></div>';
+    }
     return '<div class="card"><div class="card-head"><div><h2>학교 대결 소식</h2><span class="hint">도전장을 주고받고 같은 종목으로 함께 뛴 학교들이에요</span></div></div>' +
-      '<ul class="duel-news">' + L.slice(0, 8).map(function(d){
-        return '<li>' + nm(d.host) + '<span class="dn-x">×</span>' + nm(d.guest) + '<span class="dn-k">' + kind(d) + ' · ' + (d.status === 'done' ? '함께 뛰었어요' : '겨루는 중') + '</span><span class="dn-d">' + md(d.created) + '</span></li>';
-      }).join('') + '</ul><p class="hint" style="margin-bottom:0;">결과는 두 학교의 관리자 메뉴 → 학교 대결에서만 볼 수 있어요. 도전장도 거기서 만들거나 받아요.</p></div>';
+      '<ul class="duel-news">' + rows.join('') + '</ul>' + pager +
+      '<p class="hint" style="margin-bottom:0;">결과는 두 학교의 관리자 메뉴 → 학교 대결에서만 볼 수 있어요. 도전장도 거기서 만들거나 받아요.</p></div>';
   }
+  document.addEventListener('click', function(e){ const b = e.target.closest && e.target.closest('[data-dpage]'); if (!b || b.disabled) return; duelPage = +b.dataset.dpage; const el = $('duelCard'); if (el && DUELS) el.innerHTML = duelHtml(DUELS); });
   const STU_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">횟수</th><th class="num hide-sm">📷</th></tr>';
   const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champS(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   const RUN_HEAD = '<tr><th>순위</th><th>이름</th><th>학교</th><th class="num">연속</th><th class="num hide-sm">횟수</th></tr>';
