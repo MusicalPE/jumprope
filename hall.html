@@ -221,7 +221,7 @@
 <script>
 // 학생 순위표의 학교 이름은 짧게 (전주송원초등학교 → 전주송원초) — 학교 순위표는 정식 이름 그대로
 // 지역 두 글자와 학교 이름 사이는 띄어 씀 (전주송원초등학교 → 전주 송원초등학교). 지역이 안 붙은 이름(송원초등학교)은 그대로
-function schName(v){ const t = String(v == null ? '' : v).trim(); const m = /^([가-힣]{2})([가-힣]+?)(초등학교|초|중학교|중)$/.exec(t); return m && t.indexOf(' ') < 0 ? m[1] + ' ' + m[2] + m[3] : t; }
+function schName(v){ const t = String(v == null ? '' : v).trim(); const m = /^([가-힣]{2})([가-힣]+?)(초등학교|초|중학교|중|분교장|분교)$/.exec(t); return m && t.indexOf(' ') < 0 ? m[1] + ' ' + m[2] + m[3] : t; }
 function shortSch(v){ return schName(v).replace(/초등학교$/, '초'); }
 // 학교 순위표: 넓은 화면은 정식 이름, 휴대폰은 짧은 이름 — 둘 다 한 줄로
 function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }; const f = schName(v), sh = shortSch(v); return f === sh ? '<span class="sch">' + esc(f) + '</span>' : '<span class="sch sch-f">' + esc(f) + '</span><span class="sch sch-s">' + esc(sh) + '</span>'; }
