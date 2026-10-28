@@ -23,7 +23,7 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 19;  // 19: 도전장 게시판 — 열린 도전장을 올리고 아무 학교나 받기, 실시간 종목은 두 학교 가능 시간이 겹치는 때를 골라 버튼으로 약속 (Posts 시트), 학생 화면용 ?api=posts  // 18: 실시간 학교 함께 뛰기 — 두 학교 선생님 화면이 같은 시각에 시작해 몇 초마다 합계를 주고받음 (실시간 대결 · 두 학교 함께 박 깨기), 자료는 6시간 캐시에만  // 17: 학교 대결 종목 '박 터트리기' — 들어온 학생 수 × 30·50·100회 박을 3분 안에 누가 더 빨리 깨나  // 16: 도전장을 만든 학교는 상대가 받기 전에도 먼저 뛰고 결과를 보낼 수 있음(기록을 걸고 도전)  // 15: 15: 학교 대결(도전장) — Duels 시트, 대결 코드로 두 학교가 같은 종목(점프 Live N분 한 판 / 하루 카메라 기록)을 1인당 평균으로 겨룸  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 20;  // 20: 실시간 대결·두 학교 함께 박 깨기·도전장 게시판을 파이어베이스(jumpers-together)로 — 스크립트 속성 FB_URL·FB_SECRET 이 있으면 방 정보와 게시판 변경 신호를 파이어베이스에 써서 두 학교 화면이 바로 바뀜, 없으면 19판처럼  // 19: 도전장 게시판 — 열린 도전장을 올리고 아무 학교나 받기, 실시간 종목은 두 학교 가능 시간이 겹치는 때를 골라 버튼으로 약속 (Posts 시트), 학생 화면용 ?api=posts  // 18: 실시간 학교 함께 뛰기 — 두 학교 선생님 화면이 같은 시각에 시작해 몇 초마다 합계를 주고받음 (실시간 대결 · 두 학교 함께 박 깨기), 자료는 6시간 캐시에만  // 17: 학교 대결 종목 '박 터트리기' — 들어온 학생 수 × 30·50·100회 박을 3분 안에 누가 더 빨리 깨나  // 16: 도전장을 만든 학교는 상대가 받기 전에도 먼저 뛰고 결과를 보낼 수 있음(기록을 걸고 도전)  // 15: 15: 학교 대결(도전장) — Duels 시트, 대결 코드로 두 학교가 같은 종목(점프 Live N분 한 판 / 하루 카메라 기록)을 1인당 평균으로 겨룸  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -951,6 +951,39 @@ function duelList_() {
   return out;
 }
 
+/************ 파이어베이스 거울 (20판) ************
+ * 수집기가 학교 키를 확인한 뒤 결과만 파이어베이스(Realtime Database)에 씀 — 학생 이름은 올리지 않음
+ *  lm/{방}/info : 실시간 방 정보 (방에 들어온 두 학교 화면만 방 주소를 앎) · lm/{방}/a|b : 두 학교 화면이 직접 쓰는 합계 (규칙: 그 학교 화면 익명 uid만)
+ *  board/open/v : 열린 도전장이 바뀐 때 · board/sch/{학교 채널}/v : 그 학교가 낀 도전장이 바뀐 때 (화면은 이 신호를 듣고 postList 를 다시 부름)
+ * 스크립트 속성 FB_URL(데이터베이스 주소) · FB_SECRET(데이터베이스 비밀번호)이 없으면 아무것도 하지 않음
+ */
+function fbCfg_() {
+  const P = PropertiesService.getScriptProperties();
+  const u = String(P.getProperty('FB_URL') || '').trim().replace(/\/+$/, ''), k = String(P.getProperty('FB_SECRET') || '').trim();
+  return /^https:\/\/[a-z0-9.-]+$/i.test(u) && k ? { url: u, secret: k } : null;
+}
+function fbPatch_(obj) {
+  const c = fbCfg_(); if (!c || !obj || !Object.keys(obj).length) return false;
+  try { return UrlFetchApp.fetch(c.url + '/.json?auth=' + encodeURIComponent(c.secret), { method: 'patch', contentType: 'application/json', payload: JSON.stringify(obj), muteHttpExceptions: true }).getResponseCode() < 300; }
+  catch (e) { return false; }
+}
+function fbGet_(path) {
+  const c = fbCfg_(); if (!c) return null;
+  try { const r = UrlFetchApp.fetch(c.url + '/' + path + '.json?auth=' + encodeURIComponent(c.secret), { muteHttpExceptions: true }); return r.getResponseCode() < 300 ? JSON.parse(r.getContentText()) : null; }
+  catch (e) { return null; }
+}
+// 학교마다 바뀌지 않는 긴 채널 이름 (비밀번호로 만든 서명이라 다른 학교가 짐작할 수 없음)
+function fbChan_(canon) {
+  const c = fbCfg_(); if (!c || !canon) return '';
+  return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature('board:' + canon, c.secret)).replace(/=+$/, '');
+}
+function fbBoard_(schs) {
+  if (!fbCfg_()) return;
+  const o = { 'board/open/v': Date.now() };
+  (schs || []).forEach(function (q) { const ch = q && fbChan_(q); if (ch) o['board/sch/' + ch + '/v'] = Date.now(); });
+  fbPatch_(o);
+}
+
 /************ 실시간 학교 함께 뛰기 (18판) ************
  * 두 학교 선생님 화면(점프 Live·Lite)이 같은 시각에 시작하고, 뛰는 동안 몇 초마다 우리 학교 합계를 올리고 상대 합계를 받아 감.
  * kind: 'vs' = 실시간 대결 (1·2·3분 한 판, 1인당 평균) · 'coop' = 두 학교 함께 박 깨기 (두 학교 들어온 인원 × 1인당 per 회, 3분 안에)
@@ -965,8 +998,39 @@ function lmPublic_(x, me) {
   const schools = loadSchools_();
   const side = function (pid, d) { if (!pid) return null; const s = schools[pid] || {}; return { label: s.label || '익명 학교', named: !!s.named, sum: d.sum || 0, players: d.players || 0, fin: !!d.fin, t: d.t || 0 }; };
   const mine = me === x.host ? 'host' : me === x.guest ? 'guest' : '';
-  return { code: x.code, kind: x.kind, dur: x.dur, per: x.per, rv: x.rv, start: x.start || 0, id: x.id || '', now: Date.now(), side: mine, post: x.post || '',
+  return { code: x.code, kind: x.kind, dur: x.dur, per: x.per, rv: x.rv, start: x.start || 0, id: x.id || '', now: Date.now(), side: mine, post: x.post || '', fb: mine && x.fb && fbCfg_() ? x.fb : '',
     host: side(x.host, x.h || {}), guest: side(x.guest, x.g || {}), round: x.round || 0, left: x.left || '', broke: x.broke || 0 };
+}
+// 파이어베이스 방: 새 방 주소 (32자) + 6시간 지난 방 치우기
+function lmFbNew_(x) {
+  if (!fbCfg_()) return;
+  x.fb = Utilities.getUuid().replace(/-/g, '');
+  const idx = fbGet_('lmIdx') || {}, o = {}; o['lmIdx/' + x.fb] = Date.now();
+  Object.keys(idx).forEach(function (k) { if (Date.now() - Number(idx[k]) > LM_TTL_ * 1000) { o['lm/' + k] = null; o['lmIdx/' + k] = null; } });
+  fbPatch_(o);
+}
+// 두 학교 화면의 익명 uid (자기 칸에만 쓰게 하는 규칙에 씀)
+function lmUid_(x, me, p) {
+  const u = String(p.uid || ''); if (!/^[A-Za-z0-9]{10,128}$/.test(u)) return false;
+  if (x.host === me && x.au !== u) { x.au = u; return true; }
+  if (x.guest === me && x.bu !== u) { x.bu = u; return true; }
+  return false;
+}
+function lmFbInfo_(x, o) {
+  if (!x.fb || !fbCfg_()) return o || {};
+  const schools = loadSchools_(), lab = function (pid) { if (!pid) return null; const s = schools[pid] || {}; return { label: s.label || '익명 학교', named: !!s.named }; };
+  o = o || {};
+  o['lm/' + x.fb + '/info'] = { code: x.code, kind: x.kind, dur: x.dur, per: x.per, rv: x.rv, start: x.start || 0, id: x.id || '', round: x.round || 0, left: x.left || '', post: x.post || '',
+    host: lab(x.host), guest: lab(x.guest), aUid: x.au || '', bUid: x.bu || '', at: Date.now() };
+  return o;
+}
+function lmFbSync_(x, o) { if (x.fb) fbPatch_(lmFbInfo_(x, o)); }
+// 파이어베이스를 못 쓰는 화면(예전 방식)을 위해: 상대가 파이어베이스에 쓴 합계를 캐시 쪽에 합침
+function lmFbMerge_(x) {
+  if (!x.fb || !x.start || !fbCfg_()) return;
+  const d = fbGet_('lm/' + x.fb); if (!d) return;
+  [['a', 'h'], ['b', 'g']].forEach(function (q) { const v = d[q[0]], c = x[q[1]] || {}; if (v && (Number(v.t) || 0) > (c.t || 0)) x[q[1]] = { sum: Number(v.sum) || 0, players: Number(v.players) || 0, fin: !!v.fin, t: Number(v.t) || 0 }; });
+  [d.a, d.b].forEach(function (v) { const br = v && Number(v.broke) || 0; if (x.kind === 'coop' && br > 0 && (!x.broke || br < x.broke)) x.broke = br; });
 }
 function lmOpen_(p) {
   const schools = loadSchools_(), me = duelSide_(p.key, schools);
@@ -979,7 +1043,8 @@ function lmOpen_(p) {
     let code = '';
     for (let t = 0; t < 30 && (!code || lmGet_(code)); t++) { code = ''; for (let i = 0; i < 6; i++) code += DUEL_CH_.charAt(Math.floor(Math.random() * DUEL_CH_.length)); }
     const x = { code: code, kind: kind, dur: dur, per: per, rv: rv, host: me, guest: '', start: 0, id: '', h: {}, g: {}, round: 0, made: Date.now() };
-    lmPut_(x);
+    lmFbNew_(x); lmUid_(x, me, p);
+    lmPut_(x); lmFbSync_(x);
     return lmPublic_(x, me);
   } finally { lock.releaseLock(); }
 }
@@ -988,9 +1053,9 @@ function lmJoin_(p) {
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const x = lmGet_(code); if (!x) throw new Error('없거나 끝난 방이에요. 코드를 다시 확인해 주세요.');
-    if (x.host === me) return lmPublic_(x, me);   // 연 학교가 다시 들어옴
+    if (x.host === me) { if (lmUid_(x, me, p)) { lmPut_(x); lmFbSync_(x); } return lmPublic_(x, me); }   // 연 학교가 다시 들어옴
     if (x.guest && x.guest !== me) throw new Error('이미 다른 학교가 들어온 방이에요.');
-    x.guest = me; x.left = ''; lmPut_(x);
+    x.guest = me; x.left = ''; lmUid_(x, me, p); lmPut_(x); lmFbSync_(x);
     return lmPublic_(x, me);
   } finally { lock.releaseLock(); }
 }
@@ -1007,7 +1072,8 @@ function lmStart_(p) {
     x.h = {}; x.g = {}; x.broke = 0;
     if (p.dur && x.kind === 'vs' && [60, 120, 180].indexOf(Number(p.dur)) >= 0) x.dur = Number(p.dur);
     if (p.rv && x.kind === 'vs' && ['live', 'i10', 'i20', 'end'].indexOf(p.rv) >= 0) x.rv = p.rv;
-    lmPut_(x);
+    lmUid_(x, me, p); lmPut_(x);
+    if (x.fb) { const o = {}; o['lm/' + x.fb + '/a'] = null; o['lm/' + x.fb + '/b'] = null; lmFbSync_(x, o); }
     return lmPublic_(x, me);
   } finally { lock.releaseLock(); }
 }
@@ -1018,6 +1084,7 @@ function lmPush_(p) {
   try {
     const x = lmGet_(code); if (!x) throw new Error('없거나 끝난 방이에요.');
     const k = x.host === me ? 'h' : x.guest === me ? 'g' : ''; if (!k) throw new Error('이 방에 들어온 학교가 아니에요.');
+    lmFbMerge_(x);
     if (p.id !== x.id) return lmPublic_(x, me);   // 지난 판 숫자는 받지 않음
     const players = Math.round(Number(p.players)) || 0, sum = Math.round(Number(p.sum)) || 0;
     if (players < 0 || players > 60 || sum < 0 || sum > Math.max(1, players) * x.dur * 4) throw new Error('합계가 올바르지 않아요.');
@@ -1026,12 +1093,15 @@ function lmPush_(p) {
     const br = Math.round(Number(p.broke)) || 0;   // 함께 박 깨기: 박이 깨진 때(시작부터 ms) — 먼저 알린 쪽 값으로 두 화면이 같은 시간을 보여 줌
     if (x.kind === 'coop' && br > 0 && br <= x.dur * 1000 + 5000 && !x.broke) x.broke = br;
     lmPut_(x);
+    if (x.fb && fbCfg_()) { const o = {}, v = x[k]; o['lm/' + x.fb + '/' + (k === 'h' ? 'a' : 'b')] = { sum: v.sum, players: v.players, fin: v.fin, broke: x.kind === 'coop' && br > 0 ? br : 0, t: v.t }; fbPatch_(o); }
     return lmPublic_(x, me);
   } finally { lock.releaseLock(); }
 }
 function lmState_(p) {
   const schools = loadSchools_(), me = duelSide_(p.key, schools), code = lmCode_(p.code);
   const x = lmGet_(code); if (!x) throw new Error('없거나 끝난 방이에요.');
+  if (lmUid_(x, me, p)) { lmPut_(x); lmFbSync_(x); }
+  if (!p.uid) lmFbMerge_(x);   // 예전 방식 화면만 (파이어베이스 화면은 직접 들음)
   return lmPublic_(x, me);
 }
 function lmLeave_(p) {
@@ -1039,8 +1109,8 @@ function lmLeave_(p) {
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const x = lmGet_(code); if (!x) return { ok: true };
-    if (x.host === me) { CacheService.getScriptCache().remove('LM_' + code); return { ok: true }; }
-    if (x.guest === me) { x.guest = ''; x.left = 'guest'; x.g = {}; lmPut_(x); }
+    if (x.host === me) { CacheService.getScriptCache().remove('LM_' + code); if (x.fb) { const o = {}; o['lm/' + x.fb] = null; o['lmIdx/' + x.fb] = null; fbPatch_(o); } return { ok: true }; }
+    if (x.guest === me) { x.guest = ''; x.left = 'guest'; x.g = {}; x.bu = ''; lmPut_(x); if (x.fb) { const o = {}; o['lm/' + x.fb + '/b'] = null; lmFbSync_(x, o); } }
     return { ok: true };
   } finally { lock.releaseLock(); }
 }
@@ -1115,6 +1185,7 @@ function postCreate_(p) {
     const dl = Utilities.formatDate(new Date(Date.now() + days * 86400000), TZ_, 'yyyy-MM-dd');
     sh.appendRow([id, Date.now(), me, kind, dur, per, rv, grade, players, dl, JSON.stringify(slots), say, 'open', '', '', '', '[]', '', '']);
     sh.getRange(sh.getLastRow(), 10).setNumberFormat('@'); sh.getRange(sh.getLastRow(), 10).setValue(dl);
+    fbBoard_([me]);
     return postPublic_({ id: id, created: Date.now(), host: me, kind: kind, dur: dur, per: per, rv: rv, grade: grade, players: players, deadline: dl, slots: slots, say: say, status: 'open', guest: '', thread: [], promise: '' }, schools, me);
   } finally { lock.releaseLock(); }
 }
@@ -1126,7 +1197,7 @@ function postList_(p) {
   const old = Utilities.formatDate(new Date(Date.now() - 14 * 86400000), TZ_, 'yyyy-MM-dd');
   const mine = all.filter(function (x) { return (x.host === me || x.guest === me) && x.status !== 'closed' && (x.deadline >= old || (x.promise && x.promise.slice(0, 10) >= old)); })
     .sort(function (a, b) { return b.created - a.created; }).slice(0, 30).map(function (x) { return postPublic_(x, schools, me); });
-  return { me: me, today: today, hour: Number(Utilities.formatDate(new Date(), TZ_, 'H')), open: open, mine: mine };
+  return { me: me, today: today, hour: Number(Utilities.formatDate(new Date(), TZ_, 'H')), open: open, mine: mine, chan: fbChan_(me) };
 }
 function postTake_(p) {
   const schools = loadSchools_(), me = duelSide_(p.key, schools);
@@ -1150,7 +1221,7 @@ function postTake_(p) {
       x.duel = code; x.thread = [{ by: 'g', t: 'take', at: Date.now() }];
       CacheService.getScriptCache().remove('duels');
     }
-    postWrite_(sh, x);
+    postWrite_(sh, x); fbBoard_([x.host, x.guest]);
     return postPublic_(x, schools, me);
   } finally { lock.releaseLock(); }
 }
@@ -1171,11 +1242,12 @@ function postReply_(p) {
       e.s = last.s; x.promise = last.s;
     }
     if (t === 'cant') {   // 이번엔 어려워요 — 기한이 남았으면 다시 열린 도전장으로
+      const was = x.guest;
       x.guest = ''; x.thread = []; x.promise = ''; x.lm = ''; x.status = x.deadline >= today_() && !x.duel ? 'open' : 'closed';
-      postWrite_(sh, x); return postPublic_(x, schools, me);
+      postWrite_(sh, x); fbBoard_([x.host, was]); return postPublic_(x, schools, me);
     }
     th.push(e); x.thread = th.slice(-40);
-    postWrite_(sh, x);
+    postWrite_(sh, x); fbBoard_([x.host, x.guest]);
     return postPublic_(x, schools, me);
   } finally { lock.releaseLock(); }
 }
@@ -1186,7 +1258,7 @@ function postCancel_(p) {
     const sh = postsSheet_(), x = postFind_(postRead_(sh), p.id);
     if (x.host !== me) throw new Error('도전장을 올린 학교만 내릴 수 있어요.');
     if (x.status !== 'open') throw new Error('다른 학교가 이미 받은 도전장은 내릴 수 없어요. 대화에서 \'이번엔 어려워요\'를 눌러 주세요.');
-    x.status = 'closed'; postWrite_(sh, x); return { ok: true };
+    x.status = 'closed'; postWrite_(sh, x); fbBoard_([me]); return { ok: true };
   } finally { lock.releaseLock(); }
 }
 // 약속한 실시간 대결: 두 학교 방(18판 LM)을 바로 열거나 이어 줌 — 도전장을 올린 학교가 '같이 시작'
@@ -1202,8 +1274,9 @@ function lmForPost_(p) {
       let code = ''; for (let t = 0; t < 30 && (!code || lmGet_(code)); t++) { code = ''; for (let i = 0; i < 6; i++) code += DUEL_CH_.charAt(Math.floor(Math.random() * DUEL_CH_.length)); }
       st = { code: code, kind: x.kind === 'lcoop' ? 'coop' : 'vs', dur: x.kind === 'lcoop' ? 180 : x.dur, per: x.kind === 'lcoop' ? x.per : 0, rv: x.kind === 'lcoop' ? 'live' : (x.rv || 'live'),
         host: x.host, guest: x.guest, start: 0, id: '', h: {}, g: {}, round: 0, made: Date.now(), post: x.id };
-      lmPut_(st); x.lm = code; postWrite_(sh, x);
-    }
+      lmFbNew_(st); lmUid_(st, me, p);
+      lmPut_(st); lmFbSync_(st); x.lm = code; postWrite_(sh, x);
+    } else if (lmUid_(st, me, p)) { lmPut_(st); lmFbSync_(st); }
     return lmPublic_(st, me);
   } finally { lock.releaseLock(); }
 }

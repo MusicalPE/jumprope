@@ -750,7 +750,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.8.0', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.8.1', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -3085,14 +3085,28 @@ loadTypes();
     badge(); if (tab === 'mine') markSeen();
   }
   function load(){ $p('pbOpen').innerHTML = '<p class="hint">불러오는 중…</p>';
-    return ctx().then(function(){ return NAT.post('postList', { key: NAT.cfg.key }); }).then(function(r){ data = r; render(); })
+    return ctx().then(function(){ return NAT.post('postList', { key: NAT.cfg.key }); }).then(function(r){ data = r; render(); watch(r.chan); })
       .catch(function(e){ $p('pbOpen').innerHTML = '<p class="hint">' + (e.message === 'off' ? 'Jump Earth! 전국 탭에서 전국 현황판 참여를 먼저 켜 주세요.' : /알 수 없는 요청/.test(e.message) ? '도전장 게시판은 수집기 19판부터 써요. 운영자가 수집기를 새로 배포하면 열려요.' : '불러오지 못했어요: ' + esc(e.message)) + '</p>'; }); }
+  // 조용히 다시 불러오기 (새 소식 배지 · 파이어베이스 신호)
+  function quiet(){ return ctx().then(function(){ return NAT.post('postList', { key: NAT.cfg.key }); }).then(function(r){ data = r; render(); watch(r.chan); }).catch(function(){}); }
+  // 수집기 20판~: 함께 뛰기 파이어베이스(jumpers-together)에서 '게시판이 바뀌었어요' 신호를 듣고 바로 다시 불러옴 (학생 정보 없음)
+  let watching = false;
+  function watch(chan){
+    if (watching || !chan) return; watching = true;
+    const SDK = 'https://www.gstatic.com/firebasejs/10.14.1', CFG = { apiKey: 'AIzaSyBE6Une_gpgKiuJML67kzkQLwywdLG8ckk', authDomain: 'jumpers-together.firebaseapp.com', databaseURL: 'https://jumpers-together-default-rtdb.asia-southeast1.firebasedatabase.app', projectId: 'jumpers-together', appId: '1:461671227038:web:e45ebc0ae9db4bc260e58f' };
+    Promise.all([import(SDK + '/firebase-app.js'), import(SDK + '/firebase-database.js')]).then(function(m){
+      const db = m[1].getDatabase(m[0].initializeApp(CFG, 'together')); let t = 0;
+      ['board/open/v', 'board/sch/' + chan + '/v'].forEach(function(path){ let first = true;
+        m[1].onValue(m[1].ref(db, path), function(){ if (first) { first = false; return; } clearTimeout(t); t = setTimeout(quiet, 400); }, function(){ watching = false; }); });
+    }).catch(function(){ watching = false; });
+  }
   function act(fn, payload, btn){ if (btn) btn.disabled = true;
     return ctx().then(function(){ return NAT.post(fn, Object.assign({ key: NAT.cfg.key }, payload)); }).then(function(){ return load(); }).catch(function(e){ alert(e.message); if (btn) btn.disabled = false; }); }
   let loaded = false;
   function open(){ if (loaded) return; loaded = true; slotsUi(); sayUi(); kindUi(); load(); }
   nav.addEventListener('click', open); if (document.querySelector('.tab-pane[data-tab="duel"].on')) open();
-  setInterval(function(){ if (loaded && document.querySelector('.tab-pane[data-tab="duel"].on')) load(); }, 60000);   // 1분마다 새 소식
+  setInterval(function(){ if (!watching && loaded && document.querySelector('.tab-pane[data-tab="duel"].on')) quiet(); }, 60000);   // 파이어베이스를 못 들으면 1분마다 새 소식
+  setTimeout(function(){ if (!loaded) quiet(); }, 3000);   // 관리자 메뉴를 열면 학교 대결 탭을 누르기 전에도 새 소식 배지
   $p('pbTabs').addEventListener('click', function(e){ const b = e.target.closest('[data-pt]'); if (b) setTab(b.dataset.pt); });
   $p('pbKind').addEventListener('change', kindUi);
   $p('pbSlots').addEventListener('click', function(e){ const td = e.target.closest('[data-sl]'); if (!td) return; const k = td.dataset.sl, i = mySlots.indexOf(k); if (i >= 0) mySlots.splice(i, 1); else mySlots.push(k); ls.set('jr_myslots', mySlots); slotsUi(); render(); });
