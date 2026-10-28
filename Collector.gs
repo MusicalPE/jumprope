@@ -977,6 +977,12 @@ function fbChan_(canon) {
   const c = fbCfg_(); if (!c || !canon) return '';
   return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature('board:' + canon, c.secret)).replace(/=+$/, '');
 }
+// 편집기에서 한 번 실행: 외부 연결 권한 허용 + 파이어베이스에 쓰고 읽어 보기 (실행 로그에 결과)
+function fbTest() {
+  const c = fbCfg_(); if (!c) { Logger.log('FB_URL · FB_SECRET 스크립트 속성이 비었거나 주소 모양이 달라요.'); return; }
+  const t = Date.now(), ok = fbPatch_({ 'ping/at': t }), back = fbGet_('ping/at');
+  Logger.log(ok && Number(back) === t ? '파이어베이스 연결 성공!' : '연결 실패 — FB_URL 주소와 FB_SECRET(데이터베이스 비밀번호)을 다시 확인해 주세요. (쓰기 ' + ok + ', 읽기 ' + back + ')');
+}
 function fbBoard_(schs) {
   if (!fbCfg_()) return;
   const o = { 'board/open/v': Date.now() };
