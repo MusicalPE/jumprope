@@ -660,6 +660,8 @@
   .duel-ban b{font-size:15px}.duel-ban small{display:block;color:var(--muted,#6B7280);font-size:12.5px;margin-top:2px}
   .duel-ban .dd{margin-left:auto;background:var(--coral);color:#fff;border-radius:12px;padding:7px 11px;font-weight:800;text-align:center;line-height:1.2;flex:none}.duel-ban .dd small{color:#FFE3D8;margin:0}
   .duel-ban.w .dd{background:#F3F4F6;color:#6B7280}
+.me-remember{display:flex;align-items:center;gap:8px;margin:-4px 0 12px;font-size:14px;font-weight:600;color:var(--ink2,#4a5260);cursor:pointer;width:fit-content}
+.me-remember input{width:18px;height:18px;margin:0;accent-color:var(--accent,#f26b3a)}
 </style>
 <script>
 /* 학생 접속 주소 QR — 메인 화면 버튼·관리자 메뉴에서 같이 씀 (v1.6.1) */
@@ -750,7 +752,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.8.1', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.8.2', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1241,6 +1243,7 @@ document.addEventListener('DOMContentLoaded', function(){
             <select id="nameSelect" required><option value="">반 먼저 선택</option></select>
           </label>
         </div>
+        <label id="meWrap" class="me-remember" data-tip="내 휴대폰·우리 집 컴퓨터처럼 나 혼자 쓰는 기기에서만 켜요. 다음부터 QR만 찍으면 학년·반·이름이 골라져 있어요. 교실에서 여럿이 같이 쓰는 기기에서는 켜지 마세요."><input type="checkbox" id="meRemember"> 이 기기에 내 이름 기억하기 <span id="meNote" class="hint" style="margin:0"></span></label>
         <div class="form-row">
           <label>줄넘기 종류
             <select id="typeSelect" required><option value="">불러오는 중...</option></select>
@@ -1892,6 +1895,7 @@ google.script.run.withSuccessHandler(function(types){
     sel.appendChild(opt);
   });
   if (types && types.length === 1) sel.value = types[0]; // 종류가 하나뿐이면 자동 선택
+  if (typeof ME !== 'undefined' && ME.typeLater && (types || []).indexOf(ME.typeLater) >= 0) sel.value = ME.typeLater;
 }).getJumpTypes();
 
 /* ---- 스마트 줄넘기(JUMPITNOW) 블루투스로 뛰기 ----
@@ -2077,11 +2081,44 @@ document.addEventListener('visibilitychange', function(){
   NAT.reportToday(60 * 1000);
 });
 
+/* ---- 이 기기에 내 이름 기억하기 (2.8.2) ----
+   나 혼자 쓰는 기기(내 휴대폰·집 컴퓨터)에서 학생이 켜면, 다음부터 학년·반·이름(·종류)이 골라진 채로 열림.
+   학교 시트(껍데기 주소)마다 따로 기억. 교실 공용 기기를 생각해 처음엔 꺼져 있음 */
+const ME = {
+  key: function(){ return 'jr_me|' + (APP.shellUrl || ''); },
+  get: function(){ try { return JSON.parse(localStorage.getItem(ME.key()) || 'null'); } catch (e) { return null; } },
+  set: function(v){ try { if (v) localStorage.setItem(ME.key(), JSON.stringify(v)); else localStorage.removeItem(ME.key()); } catch (e) {} },
+  note: function(t){ const n = document.getElementById('meNote'); if (n) n.textContent = t || ''; },
+  save: function(){
+    if (!document.getElementById('meRemember').checked) return;
+    const id = document.getElementById('nameSelect').value; if (!id) return;
+    const st = (allStudents || []).filter(function(s){ return String(s.id) === String(id); })[0]; if (!st) return;
+    ME.set({ g: String(st.grade), c: String(st.cls), id: String(st.id), type: document.getElementById('typeSelect').value || '' });
+    ME.note('· ' + st.name + ' 학생으로 기억했어요');
+  },
+  restore: function(){
+    const m = ME.get(); if (!m) return;
+    const st = (allStudents || []).filter(function(s){ return String(s.id) === String(m.id); })[0];
+    if (!st) { ME.set(null); return; }   // 명단에서 빠진 학생이면 잊음
+    const pick = function(id, v){ const el = document.getElementById(id); el.value = v; el.dispatchEvent(new Event('change')); };
+    pick('gradeSelect', String(st.grade)); pick('classSelect', String(st.cls)); pick('nameSelect', String(st.id));
+    if (m.type) { const t = document.getElementById('typeSelect'); if ([].some.call(t.options, function(o){ return o.value === m.type; })) t.value = m.type; else ME.typeLater = m.type; }
+    document.getElementById('meRemember').checked = true;
+    ME.note('· ' + st.name + ' 학생으로 기억하고 있어요. 다른 사람이면 이름을 바꾸거나 체크를 꺼요');
+  }
+};
+document.getElementById('meRemember').addEventListener('change', function(){
+  if (this.checked) { if (!document.getElementById('nameSelect').value) { ME.note('· 이름을 고르면 기억해요'); return; } ME.save(); }
+  else { ME.set(null); ME.note(''); }
+});
+['nameSelect', 'typeSelect'].forEach(function(id){ document.getElementById(id).addEventListener('change', function(){ ME.save(); }); });
+
 /* ---- 입력 폼: 학년/반/이름 캐스케이드 ---- */
 google.script.run.withSuccessHandler(function(list){
   allStudents = list;
   document.getElementById('statStudents').textContent = list.length;
   APP.ourLabel = ourLabel(list); applyOurLabel();   // 우리 반 / 우리 N학년 / 우리 학교
+  setTimeout(ME.restore, 0);   // 이 기기에 기억한 내 이름 (학년 목록을 채운 뒤)
   const numCmp = (a, b) => (Number(a) || 99) - (Number(b) || 99) || String(a).localeCompare(String(b), 'ko');   // 1학년, 2학년 … 순서대로
   const grades = [...new Set(list.map(s => s.grade))].sort(numCmp);
   const gradeSelect = document.getElementById('gradeSelect');
