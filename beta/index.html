@@ -660,6 +660,11 @@
   .duel-ban b{font-size:15px}.duel-ban small{display:block;color:var(--muted,#6B7280);font-size:12.5px;margin-top:2px}
   .duel-ban .dd{margin-left:auto;background:var(--coral);color:#fff;border-radius:12px;padding:7px 11px;font-weight:800;text-align:center;line-height:1.2;flex:none}.duel-ban .dd small{color:#FFE3D8;margin:0}
   .duel-ban.w .dd{background:#F3F4F6;color:#6B7280}
+.pick-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px}
+.pick-row .pick{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 12px 12px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;text-align:center;box-shadow:none}
+.pick-row .pick:hover{border-color:var(--coral);background:var(--coral-tint)}
+.pick-row .pick b{font-size:16px} .pick-row .pick small{font-size:12.5px;color:var(--muted);font-weight:500}
+.pick-row .pick.hot{border:2px solid #FFB3A8;background:#FFF0EE}
 .me-remember{display:flex;align-items:center;gap:8px;margin:-4px 0 12px;font-size:14px;font-weight:600;color:var(--ink2,#4a5260);cursor:pointer;width:fit-content}
 .pbx{display:flex;flex-direction:column;gap:2px;margin-top:10px;padding:12px 16px;border-radius:14px;background:linear-gradient(90deg,#FFF0EE,#FFF5E6);border:1px solid #FFD3CC}
 .pbx b{font-size:18px;color:#E2513F} .pbx span{font-size:14px;color:#3B4252}
@@ -755,7 +760,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.8.3', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.8.4', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1257,9 +1262,18 @@ document.addEventListener('DOMContentLoaded', function(){
         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
           <button type="submit" data-tip="여러 번 뛰었으면 그때마다 넣어요. 그날 뛴 횟수가 모두 더해집니다.">저장</button>
           <button type="button" id="cameraBtn" class="btn-outline" data-tip="직접 세어 입력하는 대신 학년·반·이름·종류를 고른 뒤 누르면 판정기가 열려요. 뛰고 나서 &quot;끝내고 기록하기&quot;를 누르면 횟수가 자동으로 들어옵니다." style="display:none; padding:10px 16px;">📷 카메라로 뛰기</button>
-          <button type="button" id="camera2Btn" class="btn-outline" data-tip="태블릿 한 대로 두 사람이 나란히 뛰어요. 같이 뛸 친구를 고르면 판정기가 왼쪽(나)·오른쪽(친구)을 따로 세고, 두 사람 기록을 각자 저장해요." style="display:none; padding:10px 16px;">👥 친구와 둘이</button>
           <label id="mateWrap" style="display:none; flex-direction:row; align-items:center; gap:8px; margin:0; white-space:nowrap;">같이 뛸 친구 <select id="mateSelect" style="margin:0; width:auto; padding:10px 12px;"><option value="">선택</option></select></label>
           <button type="button" id="bleBtn" class="btn-outline" data-tip="스마트 줄넘기(JUMPITNOW)를 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬)" style="display:none; padding:10px 16px;">스마트 줄넘기로 뛰기</button>
+        </div>
+        <div id="pickRow" class="pick-row" style="display:none;">
+          <button type="button" id="camera2Btn" class="pick" data-tip="태블릿·노트북 한 대로 두 사람이 나란히 뛰어요. 같이 뛸 친구를 고르면 판정기가 화면 왼쪽(나)·오른쪽(친구)을 따로 세고, 누가 이겼는지 보여 준 뒤 두 사람 기록을 각자 저장해요." style="display:none;">
+            <svg viewBox="0 0 120 64" width="96" height="52" aria-hidden="true"><rect x="22" y="6" width="76" height="52" rx="8" fill="#2a3140"/><rect x="27" y="11" width="66" height="42" rx="4" fill="#3a4253"/><line x1="60" y1="13" x2="60" y2="51" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-dasharray="4 3"/><circle cx="44" cy="24" r="5" fill="#FF8A7D"/><rect x="39" y="31" width="10" height="14" rx="4" fill="#FF8A7D"/><circle cx="76" cy="24" r="5" fill="#5CCFC1"/><rect x="71" y="31" width="10" height="14" rx="4" fill="#5CCFC1"/></svg>
+            <b>한 대로 둘이</b><small>기기 1대 · 화면 왼쪽·오른쪽</small>
+          </button>
+          <button type="button" id="duelBtn" class="pick hot" data-tip="나와 친구가 각자 자기 기기(휴대폰·태블릿)로 카메라 판정기를 켜고 겨뤄요. 한 사람이 방을 만들면 방 번호 4자리가 생기고, 친구는 그 번호로 들어와요. 1대1·2대2·다 같이 중에서 골라요.">
+            <svg viewBox="0 0 120 64" width="96" height="52" aria-hidden="true"><rect x="12" y="6" width="32" height="52" rx="6" fill="#2a3140"/><rect x="16" y="12" width="24" height="38" rx="3" fill="#FF8A7D"/><circle cx="28" cy="25" r="4" fill="#fff"/><rect x="24" y="31" width="8" height="11" rx="3" fill="#fff"/><text x="60" y="38" text-anchor="middle" font-size="13" font-weight="900" fill="#7A8190">VS</text><rect x="76" y="6" width="32" height="52" rx="6" fill="#2a3140"/><rect x="80" y="12" width="24" height="38" rx="3" fill="#5CCFC1"/><circle cx="92" cy="25" r="4" fill="#fff"/><rect x="88" y="31" width="8" height="11" rx="3" fill="#fff"/></svg>
+            <b>각자 기기로 대결</b><small>기기 2~4대 · 방 번호로 1대1·2대2</small>
+          </button>
         </div>
         <p id="bleHint" class="hint form-hint" style="display:none; margin:8px 0 0;">JUMPITNOW 줄넘기가 있으면 <b>스마트 줄넘기로 뛰기</b>를 눌러 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬에서 돼요)</p>
         <p id="cameraHint" class="hint form-hint" style="display:none; margin:8px 0 0;">직접 세어 입력하는 대신, 학년·반·이름·종류를 고른 뒤 <b>📷 카메라로 뛰기</b>를 누르면 판정기가 열려요. 뛰고 나서 "끝내고 기록하기"를 누르면 횟수가 자동으로 들어옵니다.</p>
@@ -2020,11 +2034,12 @@ google.script.run.withSuccessHandler(function(c){
   if (c && c.enabled) {
     document.getElementById('cameraBtn').style.display = '';
     document.getElementById('cameraHint').style.display = '';
-    if (Math.min(screen.width, screen.height) >= 600) document.getElementById('camera2Btn').style.display = '';   // 2인은 태블릿·노트북처럼 화면이 넓은 기기에서만
+    document.getElementById('pickRow').style.display = '';
+    if (Math.min(screen.width, screen.height) >= 600) document.getElementById('camera2Btn').style.display = '';   // 한 대로 둘이는 태블릿·노트북처럼 화면이 넓은 기기에서만
   }
 }).getCameraSettings();
 
-/* ---- 친구와 둘이 (판정기 2인 모드): 표를 두 장 받아 판정기에 함께 넘김 ---- */
+/* ---- 한 대로 둘이 (판정기 2인 모드, 예전 이름 '친구와 둘이'): 표를 두 장 받아 판정기에 함께 넘김 ---- */
 function fillMates() {
   const g = document.getElementById('gradeSelect').value, c = document.getElementById('classSelect').value, me = document.getElementById('nameSelect').value;
   const sel = document.getElementById('mateSelect'), keep = sel.value;
@@ -2044,7 +2059,7 @@ document.getElementById('camera2Btn').addEventListener('click', function(){
   if (!type) { msg.textContent = '줄넘기 종류를 먼저 선택해주세요.'; return; }
   if (wrap.style.display === 'none' || !mate.value) {
     if (wrap.style.display === 'none') { wrap.style.display = 'flex'; fillMates(); }
-    msg.textContent = '같이 뛸 친구(오른쪽에 설 친구)를 고르고 👥 친구와 둘이를 다시 눌러요.'; mate.focus(); return;
+    msg.textContent = '같이 뛸 친구(오른쪽에 설 친구)를 고르고 "한 대로 둘이"를 다시 눌러요.'; mate.focus(); return;
   }
   const win = window.open('', '_blank');
   msg.textContent = '판정기 준비 중...';
@@ -2059,6 +2074,24 @@ document.getElementById('camera2Btn').addEventListener('click', function(){
       msg.innerHTML = '판정기 창이 열렸어요. 화면 왼쪽에 나, 오른쪽에 친구가 서요. 뛰고 나서 <b>"끝내고 기록하기"</b>를 누르면 두 사람 기록이 각자 들어갑니다. 창이 안 열렸다면 <a href="' + url + '" target="_blank">여기</a>를 눌러 주세요.';
     }).withFailureHandler(function(e){ fail('오류: ' + String(e)); }).issueCameraToken(mate.value, type);
   }).withFailureHandler(function(e){ fail('오류: ' + String(e)); }).issueCameraToken(id, type);
+});
+
+/* ---- 각자 기기로 대결 (2.8.4): 판정기를 '방 만들기 · 들어가기' 창을 띄운 채로 엶 (학교 껍데기 6판부터, 1대1·2대2 인원 제한은 8판이 확실히) ---- */
+document.getElementById('duelBtn').addEventListener('click', function(){
+  const id = document.getElementById('nameSelect').value;
+  const type = document.getElementById('typeSelect').value;
+  const msg = document.getElementById('formMsg');
+  if (APP.shell && APP.shell.shell && APP.shell.shell < 6) { msg.textContent = '각자 기기로 대결은 학교 껍데기 6판부터 쓸 수 있어요. 선생님께 말씀드려요.'; return; }
+  if (!id) { msg.textContent = '학년/반/이름을 먼저 선택해주세요.'; return; }
+  if (!type) { msg.textContent = '줄넘기 종류를 먼저 선택해주세요.'; return; }
+  const win = window.open('', '_blank');
+  msg.textContent = '판정기 준비 중...';
+  google.script.run.withSuccessHandler(function(res){
+    if (!res.ok) { if (win) win.close(); msg.textContent = res.message; return; }
+    const url = res.url + '&duel=1';
+    if (win) { win.location.href = url; }
+    msg.innerHTML = '판정기 창이 열렸어요. <b>방 만들기</b>를 누르고 방 번호를 친구에게 알려 주거나, 친구가 알려 준 번호로 <b>들어가기</b>를 눌러요. 창이 안 열렸다면 <a href="' + url + '" target="_blank">여기</a>를 눌러 주세요.';
+  }).withFailureHandler(function(err){ if (win) win.close(); msg.textContent = '오류: ' + String(err); }).issueCameraToken(id, type);
 });
 
 document.getElementById('cameraBtn').addEventListener('click', function(){
