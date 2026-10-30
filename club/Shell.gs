@@ -10,7 +10,7 @@
  * 배포 설정: 다음 사용자로 실행 = 나, 액세스 권한 = 모든 사용자
  *************************************************************/
 
-const SHELL_VERSION = 6;                      // 껍데기 판 (화면이 확인함)  2: 새 클럽은 승인 절차 기본 켜짐, 카메라 기록은 기본 바로 승인  3: 급수(Levels 시트)  4: 전국 현황판 비밀 키를 학생 화면에 내보내지 않음(오늘 기록은 이 껍데기가 직접 보냄)  5: 한 번에 최고 연속(스마트 줄넘기·카메라 판정기) 기록·전국 현황판 보고  6: 점프 Live (Lite) — 클럽 시트만으로 수업 방(바깥 서버 없이) · 학생 방(친구들과 함께 뛰기, 기록은 승인 대기)
+const SHELL_VERSION = 8;                      // 껍데기 판 (화면이 확인함)  2: 새 클럽은 승인 절차 기본 켜짐, 카메라 기록은 기본 바로 승인  3: 급수(Levels 시트)  4: 전국 현황판 비밀 키를 학생 화면에 내보내지 않음(오늘 기록은 이 껍데기가 직접 보냄)  5: 한 번에 최고 연속(스마트 줄넘기·카메라 판정기) 기록·전국 현황판 보고  6: 점프 Live (Lite) — 클럽 시트만으로 수업 방(바깥 서버 없이) · 학생 방(친구들과 함께 뛰기, 기록은 승인 대기)  7: 나와의 대결 — 점프 Live 판 길이(Dur 열)·내 N분 최고, 기록을 넣을 때 하루 최고·연속 최고 갱신 알림  8: 각자 기기로 대결 — 학생 방 방식(다 같이·1대1·2대2)과 인원 제한, 나가면 명단에서 빠짐
 const APP_URL = 'https://musicalpe.github.io/jumprope/club/';
 const BETA_URL = 'https://musicalpe.github.io/jumprope/club/';
 
@@ -75,8 +75,8 @@ const RPC_ALLOW_ = [
   'updateRecordAdmin', 'deleteRecordAdmin', 'getTheme', 'setTheme', 'getCameraSettings', 'getCameraSettingsAdmin',
   'setCameraSettings', 'issueCameraToken', 'generateMotivationMessage', 'getGeminiModelList', 'getMotivationSettings',
   'saveGeminiApiKey', 'regenerateMotivationNow', 'getLevelsPublic', 'saveLevelPasses',
-  'getExtraSettingsAdmin', 'natReportToday', 'addLiveRecordsAdmin',
-  'liteOpenRoom', 'liteSetControl', 'litePull', 'liteCloseRoom', 'liteInfo', 'liteSend', 'liteStuOpen', 'liteStuJoin', 'liteStuBoard'
+  'getExtraSettingsAdmin', 'natReportToday', 'addLiveRecordsAdmin', 'getLiveBestsAdmin',
+  'liteOpenRoom', 'liteSetControl', 'litePull', 'liteCloseRoom', 'liteInfo', 'liteSend', 'liteStuOpen', 'liteStuJoin', 'liteStuBoard', 'liteStuLeave'
 ];
 function doPost(e) {
   let out;
@@ -102,7 +102,7 @@ function ping() {
 /************ 점프 Live (Lite)·점프 라이브 — 선생님 화면이 끝난 회차 결과를 한꺼번에 기록 ************
  * rows: [{ id: 학생ID, count: 횟수, best: 한 번에 최고 연속(5판) }, ...]  · 선생님이 지켜본 카메라·스마트 줄넘기 기록이므로 승인된 카메라 기록으로 넣음
  * runId 가 같은 요청이 다시 오면(다시 보내기) 두 번 넣지 않음 */
-function addLiveRecordsAdmin(token, typeStr, rows, runId) {
+function addLiveRecordsAdmin(token, typeStr, rows, runId, durSec) {
   if (!checkAdminToken_(token)) throw new Error('권한이 없습니다. 관리자 비밀번호로 다시 로그인해 주세요.');
   const type = String(typeStr || '').trim();
   if (!type) throw new Error('줄넘기 종류를 고르세요.');
@@ -115,6 +115,7 @@ function addLiveRecordsAdmin(token, typeStr, rows, runId) {
     const st = getStudentsSheet_().getDataRange().getValues();
     for (let i = 1; i < st.length; i++) ids[String(st[i][0]).trim()] = true;
     const now = new Date(), dateStr = formatDate_(now), timeStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'HH:mm');
+    const dur = Math.round(Number(durSec) || 0), durCell = dur >= 10 && dur <= 600 ? dur : '';   // 7판: 시간으로 뛴 판만(목표 횟수·도전·릴레이는 비움)
     const out = [], skipped = [];
     rows.forEach(function (r) {
       const sid = String((r && r.id) || '').trim(), cnt = Math.round(Number(r && r.count));
@@ -122,15 +123,47 @@ function addLiveRecordsAdmin(token, typeStr, rows, runId) {
       if (!cnt || cnt < 1) return;
       if (cnt > 5000) { skipped.push(sid); return; }
       const bst = Math.max(0, Math.min(Math.round(Number(r && r.best) || 0), cnt));
-      out.push([Utilities.getUuid(), now, sid, dateStr, cnt, 'approved', timeStr, type, 'camera', bst > 0 ? bst : '']);
+      out.push([Utilities.getUuid(), now, sid, dateStr, cnt, 'approved', timeStr, type, 'camera', bst > 0 ? bst : '', durCell]);
     });
     if (out.length) {
-      const sh = getRecordsSheet_();
+      const sh = getRecordsSheet_();   // 시트를 열 때 빠진 Dur 열을 덧붙임
       sh.getRange(sh.getLastRow() + 1, 1, out.length, out[0].length).setValues(out);
     }
     if (key) cache.put(key, '1', 6 * 60 * 60);
     return { saved: out.length, skipped: skipped };
   } finally { lock.releaseLock(); }
+}
+
+/************ 나와의 대결 (7판) ************/
+// 점프 Live: 이 길이(초)로 뛴 판의 학생별 최고 횟수 { 학생ID: 횟수 } — 판을 시작할 때 받아 두었다가 결과 창에서 비교
+function getLiveBestsAdmin(token, durSec) {
+  if (!checkAdminToken_(token)) throw new Error('권한이 없습니다. 관리자 비밀번호로 다시 로그인해 주세요.');
+  const dur = Math.round(Number(durSec) || 0); if (!dur) return {};
+  const v = getRecordsSheet_().getDataRange().getValues(), out = {};
+  for (let i = 1; i < v.length; i++) {
+    if (Number(v[i][10]) !== dur || String(v[i][5] || 'approved') === 'rejected') continue;
+    const sid = String(v[i][2]).trim(), c = Number(v[i][4]) || 0;
+    if (c > (out[sid] || 0)) out[sid] = c;
+  }
+  return out;
+}
+// 기록을 넣기 직전 그 학생의 하루 최고(오늘 빼고)·오늘 합계·한 번에 최고 연속 (거절된 기록은 빼고, 승인 대기는 넣음)
+function studentMarks_(data, sid, dateStr) {
+  const day = {}; let best = 0;
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][2]).trim() !== sid || String(data[i][5] || 'approved') === 'rejected') continue;
+    const d = formatDate_(data[i][3]); day[d] = (day[d] || 0) + (Number(data[i][4]) || 0);
+    best = Math.max(best, Number(data[i][9]) || 0);
+  }
+  let dayMax = 0; Object.keys(day).forEach(function (d) { if (d !== dateStr && day[d] > dayMax) dayMax = day[d]; });
+  return { dayMax: dayMax, today: day[dateStr] || 0, best: best };
+}
+// 넣은 뒤 알림: 하루 합계가 지난 어느 날보다 많아졌는지(전에 뛴 날이 있을 때만) · 한 번에 최고 연속을 넘었는지(전 기록이 있을 때만)
+function studentPB_(m, cnt, bst) {
+  const today = m.today + cnt, out = {};
+  if (m.dayMax > 0 && today > m.dayMax) out.day = { today: today, prev: m.dayMax };
+  if (bst > 0 && m.best > 0 && bst > m.best) out.best = { best: bst, prev: m.best };
+  return out;
 }
 
 /************ 앱 설정 (승인 절차 등) ************/
@@ -297,7 +330,7 @@ function getStudentsSheet_() {
   return sh;
 }
 
-const RECORDS_HEADER_ = ['RecordID', 'Timestamp', 'StudentID', 'Date', 'Count', 'Status', 'Time', 'Type', 'Source', 'Best'];   // Best(5판): 한 번에 최고 연속 — 스마트 줄넘기·카메라 판정기로 잰 기록만
+const RECORDS_HEADER_ = ['RecordID', 'Timestamp', 'StudentID', 'Date', 'Count', 'Status', 'Time', 'Type', 'Source', 'Best', 'Dur'];   // Dur(7판): 점프 Live 한 판 길이(초) — 같은 길이 판끼리 '내 최고' 비교   // Best(5판): 한 번에 최고 연속 — 스마트 줄넘기·카메라 판정기로 잰 기록만
 // Source 열: 'camera' = 카메라 판정기(줄넘기 판정기)가 자동으로 넣은 기록, 비어 있으면 직접 입력
 
 /************ 줄넘기 종류 설정 (관리자 메뉴에서 변경) ************/
@@ -829,8 +862,9 @@ function addRecord(id, dateStr, count, timeStr, typeStr, best) {
   // v2: 입력할 때마다 한 줄씩 쌓는다 (그날 여러 번 뛰면 모두 더해짐). 승인 절차를 켰으면 한 건씩 승인 대기.
   if (cnt > 5000) return { ok: false, message: '한 번에 5000회까지만 입력할 수 있어요.' };
   const bst = Math.min(Math.round(Number(best) || 0), Math.round(cnt));
-  getRecordsSheet_().appendRow([Utilities.getUuid(), new Date(), target, String(dateStr).trim(), Math.round(cnt), approvalOn_() ? 'pending' : 'approved', time, type, bst > 0 ? 'rope' : '', bst > 0 ? bst : '']);
-  return { ok: true, approval: approvalOn_(), message: approvalOn_() ? '입력되었습니다! 선생님 승인 후 그래프에 반영됩니다.' : '저장되었습니다! 그래프에 바로 반영됩니다.' };
+  const rsh = getRecordsSheet_(), marks = studentMarks_(rsh.getDataRange().getValues(), target, String(dateStr).trim());   // 7판: 하루 최고·연속 최고 갱신 알림
+  rsh.appendRow([Utilities.getUuid(), new Date(), target, String(dateStr).trim(), Math.round(cnt), approvalOn_() ? 'pending' : 'approved', time, type, bst > 0 ? 'rope' : '', bst > 0 ? bst : '']);
+  return { ok: true, approval: approvalOn_(), pb: studentPB_(marks, Math.round(cnt), bst), message: approvalOn_() ? '입력되었습니다! 선생님 승인 후 그래프에 반영됩니다.' : '저장되었습니다! 그래프에 바로 반영됩니다.' };
 }
 
 // 누구나 볼 수 있는 승인 대기 목록 (학생이 자기 입력이 잘 접수됐는지 확인하는 용도)
@@ -1272,6 +1306,7 @@ function handleCameraApi_(q) {
       const status = inRoom ? 'pending' : (c.autoApprove || !approvalOn_()) ? 'approved' : 'pending';
       const sh = getRecordsSheet_();
       const data = sh.getDataRange().getValues();
+      const pb = studentPB_(studentMarks_(data, info.id, dateStr), cnt, bst);   // 7판
       let rowIndex = -1;
       for (let i = 1; i < data.length; i++) {
         if (String(data[i][2]).trim() === info.id && formatDate_(data[i][3]) === dateStr &&
@@ -1294,7 +1329,8 @@ function handleCameraApi_(q) {
       }
       if (inRoom) CacheService.getScriptCache().put(runKey, '1', LITE_TTL_);
       const todayTotal = todayTotalForStudent_(info.id);
-      return cameraJson_({ ok: true, data: { 횟수: cnt, 오늘: todayTotal, 하루목표: goal, 달성: todayTotal >= goal, 승인대기: status === 'pending' } });
+      return cameraJson_({ ok: true, data: { 횟수: cnt, 오늘: todayTotal, 하루목표: goal, 달성: todayTotal >= goal, 승인대기: status === 'pending',
+        하루최고: pb.day ? { 오늘: pb.day.today, 전: pb.day.prev } : null, 연속최고: pb.best ? { 연속: pb.best.best, 전: pb.best.prev } : null } });
     }
     return cameraJson_({ ok: false, error: '알 수 없는 요청: ' + api });
   } catch (err) {
@@ -1663,33 +1699,39 @@ function liteStu_(t) {
   if (!info) throw new Error('학생 정보를 찾을 수 없습니다.');
   return { g: Number(info.grade) || 0, c: Number(info.cls) || 0, n: Number(info.number) || 0, name: String(info.name || '').slice(0, 20) };
 }
+const LITE_MODE_ = { all: 40, '1v1': 2, '2v2': 4 };   // 학생 방 방식 → 들어올 수 있는 사람 수 (8판)
 function liteStuAdd_(room, who) {   // 방 사람 명단 (학년-반-번호 → 이름) — 결과에 이름을 보이게
   const c = CacheService.getScriptCache(), k = liteKey_(room, 'ppl'), lock = LockService.getScriptLock();
   if (!lock.tryLock(5000)) throw new Error('잠시 뒤에 다시 해 주세요.');
   try {
     const p = liteJson_(c.get(k), {}), key = who.g + '-' + who.c + '-' + who.n;
-    if (!(key in p) && Object.keys(p).length >= 40) throw new Error('방이 꽉 찼어요 (40명까지).');
+    const meta = liteJson_(c.get(liteKey_(room, 'meta')), {}), cap = LITE_MODE_[meta.mode] || 40;
+    if (!(key in p) && Object.keys(p).length >= cap) throw new Error(cap < 40 ? '방이 꽉 찼어요 (' + (meta.mode === '1v1' ? '1대1' : '2대2') + '는 ' + cap + '명까지). 다른 방에 들어가거나 방을 만들어요.' : '방이 꽉 찼어요 (40명까지).');
     p[key] = who.name; c.put(k, JSON.stringify(p), LITE_TTL_);
   } finally { lock.releaseLock(); }
 }
-function liteStuOpen(t) {
+function liteStuOpen(t, opt) {
   const who = liteStu_(t), c = CacheService.getScriptCache(), hk = 'JL_host_' + String(t);
-  const prev = liteJson_(c.get(hk), null);
-  if (prev && prev.room && c.get(liteKey_(prev.room, 'meta'))) return { room: prev.room, owner: prev.owner, code: prev.code, t: Date.now() };   // 이미 연 방
+  const mode = opt && LITE_MODE_[opt.mode] ? String(opt.mode) : 'all';
+  const prev = liteJson_(c.get(hk), null), pm = prev && prev.room ? liteJson_(c.get(liteKey_(prev.room, 'meta')), null) : null;
+  if (pm) {   // 이미 연 방 — 방식만 새로 고른 것으로
+    if (pm.mode !== mode) { pm.mode = mode; c.put(liteKey_(prev.room, 'meta'), JSON.stringify(pm), LITE_TTL_); }
+    return { room: prev.room, owner: prev.owner, code: prev.code, mode: mode, t: Date.now() };
+  }
   let code = '';
   for (let i = 0; i < 30 && !code; i++) { const k = String(1000 + Math.floor(Math.random() * 9000)); if (!c.get('JL_code_' + k)) code = k; }
   if (!code) throw new Error('지금은 열린 방이 너무 많아요. 잠시 뒤에 다시 해 주세요.');
   const room = 'S' + Utilities.getUuid().replace(/-/g, ''), owner = Utilities.getUuid().replace(/-/g, '');
   const put = {};
   put[liteKey_(room, 'own')] = owner;
-  put[liteKey_(room, 'meta')] = JSON.stringify({ at: Date.now(), g: who.g, c: who.c, max: 60, stu: 1, code: code, host: who.name });
+  put[liteKey_(room, 'meta')] = JSON.stringify({ at: Date.now(), g: who.g, c: who.c, max: 60, stu: 1, code: code, host: who.name, mode: mode });
   put[liteKey_(room, 'ctl')] = JSON.stringify({ ph: 'open' });
   put[liteKey_(room, 'devs')] = '[]';
   put['JL_code_' + code] = room;
   put[hk] = JSON.stringify({ room: room, owner: owner, code: code });
   c.putAll(put, LITE_TTL_);
   liteStuAdd_(room, who);
-  return { room: room, owner: owner, code: code, t: Date.now() };
+  return { room: room, owner: owner, code: code, mode: mode, t: Date.now() };
 }
 function liteStuJoin(t, code) {
   const who = liteStu_(t), c = CacheService.getScriptCache();
@@ -1711,5 +1753,16 @@ function liteStuBoard(room) {   // 방 사람들 이름과 각자 상태·횟수
     const key = d.g + '-' + d.c + '-' + d.n; if (!(key in ppl)) return;
     list.push({ k: key, name: ppl[key], cnt: d.cnt, best: d.best, run: d.run, ctl: d.ctl, st: now - (d.t || 0) > 30000 ? 'off' : d.st });
   });
-  return { t: now, ppl: ppl, devs: list, ctl: liteJson_(got[liteKey_(room, 'ctl')], null), host: meta.host, code: meta.code };
+  return { t: now, ppl: ppl, devs: list, ctl: liteJson_(got[liteKey_(room, 'ctl')], null), host: meta.host, code: meta.code, mode: meta.mode || 'all', cap: LITE_MODE_[meta.mode] || 40 };
+}
+function liteStuLeave(t, room) {   // 친구가 나가면 명단에서 빼서 1대1·2대2 자리를 비움 (8판). 방장은 liteCloseRoom
+  const who = liteStu_(t); room = liteRoom_(room);
+  const c = CacheService.getScriptCache(), k = liteKey_(room, 'ppl'), lock = LockService.getScriptLock();
+  if (!c.get(liteKey_(room, 'meta'))) return { t: Date.now() };
+  if (!lock.tryLock(5000)) throw new Error('잠시 뒤에 다시 해 주세요.');
+  try {
+    const p = liteJson_(c.get(k), {}), key = who.g + '-' + who.c + '-' + who.n;
+    if (key in p) { delete p[key]; c.put(k, JSON.stringify(p), LITE_TTL_); }
+  } finally { lock.releaseLock(); }
+  return { t: Date.now() };
 }
