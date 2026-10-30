@@ -19,11 +19,12 @@
  *              (현황판·기록실 응답에는 절대 나가지 않음. 담당 교사·연락처는 관리자 화면에서 보낼 때만 옴)
  *  - Daily   : PublicId, Date, Total, Participants, Camera, Students(JSON), UpdatedAt
  *              Students = [[학생키, 가린이름, 학년, 횟수, 카메라횟수, 최고연속], ...]  (최고연속: 껍데기 5판부터, 스마트 줄넘기·카메라 판정기로 잰 한 번에 이어 뛴 가장 많은 수)
+ *  - Duels   : Code, Created, Kind, Dur, Deadline, HostPid, GuestPid, HostRes(JSON), GuestRes(JSON), HostAt, GuestAt  ← 학교 대결(도전장)
  *  - MatDaily: PublicId, Date, Rows(JSON), UpdatedAt   ← 색깔 매트 놀이터(카메라 판정·교사 승인 기록만)
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 14;  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 20;  // 20: 실시간 대결·두 학교 함께 박 깨기·도전장 게시판을 파이어베이스(jumpers-together)로 — 스크립트 속성 FB_URL·FB_SECRET 이 있으면 방 정보와 게시판 변경 신호를 파이어베이스에 써서 두 학교 화면이 바로 바뀜, 없으면 19판처럼  // 19: 도전장 게시판 — 열린 도전장을 올리고 아무 학교나 받기, 실시간 종목은 두 학교 가능 시간이 겹치는 때를 골라 버튼으로 약속 (Posts 시트), 학생 화면용 ?api=posts  // 18: 실시간 학교 함께 뛰기 — 두 학교 선생님 화면이 같은 시각에 시작해 몇 초마다 합계를 주고받음 (실시간 대결 · 두 학교 함께 박 깨기), 자료는 6시간 캐시에만  // 17: 학교 대결 종목 '박 터트리기' — 들어온 학생 수 × 30·50·100회 박을 3분 안에 누가 더 빨리 깨나  // 16: 도전장을 만든 학교는 상대가 받기 전에도 먼저 뛰고 결과를 보낼 수 있음(기록을 걸고 도전)  // 15: 15: 학교 대결(도전장) — Duels 시트, 대결 코드로 두 학교가 같은 종목(점프 Live N분 한 판 / 하루 카메라 기록)을 1인당 평균으로 겨룸  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
@@ -44,6 +45,9 @@ function doGet(e) {
     else if (q.api === 'hall') out = getHall_(q.month);
     else if (q.api === 'matBoard') out = getMatBoard_(q.month, q.game, q.diff, q.band);
     else if (q.api === 'matSchool') out = getMatSchool_(q.pid, q.month, q.game, q.diff, q.band);
+    else if (q.api === 'duel') out = duelView_(q.code);
+    else if (q.api === 'duels') out = duelList_();
+    else if (q.api === 'posts') out = postsForStudents_(q.pid);
     else out = { collector: COLLECTOR_VERSION, today: today_() };
     out = { ok: true, result: out };
   } catch (err) {
@@ -61,6 +65,23 @@ function doPost(e) {
     if (body.fn === 'report') out = report_(p);
     else if (body.fn === 'leave') out = leave_(p);
     else if (body.fn === 'matReport') out = matReport_(p);
+    else if (body.fn === 'duelCreate') out = duelCreate_(p);
+    else if (body.fn === 'duelJoin') out = duelJoin_(p);
+    else if (body.fn === 'duelSubmit') out = duelSubmit_(p);
+    else if (body.fn === 'duelMine') out = duelMine_(p);
+    else if (body.fn === 'duelCancel') out = duelCancel_(p);
+    else if (body.fn === 'lmOpen') out = lmOpen_(p);
+    else if (body.fn === 'lmJoin') out = lmJoin_(p);
+    else if (body.fn === 'lmStart') out = lmStart_(p);
+    else if (body.fn === 'lmPush') out = lmPush_(p);
+    else if (body.fn === 'lmState') out = lmState_(p);
+    else if (body.fn === 'lmLeave') out = lmLeave_(p);
+    else if (body.fn === 'lmForPost') out = lmForPost_(p);
+    else if (body.fn === 'postCreate') out = postCreate_(p);
+    else if (body.fn === 'postList') out = postList_(p);
+    else if (body.fn === 'postTake') out = postTake_(p);
+    else if (body.fn === 'postReply') out = postReply_(p);
+    else if (body.fn === 'postCancel') out = postCancel_(p);
     else throw new Error('알 수 없는 요청');
     out = { ok: true, result: out };
   } catch (err) {
@@ -768,4 +789,518 @@ function getMatSchool_(pid, month, game, diff, band) {
   const text = JSON.stringify(out);
   if (text.length < 95000) cache.put(ck, text, BOARD_CACHE_SEC);
   return out;
+}
+
+
+/************ 학교 대결 (도전장) — 15판 ************
+ * 한 학교가 종목을 정해 도전장(대결 코드 6자리)을 만들고, 상대 학교 선생님이 코드를 넣어 받아들임.
+ * 종목  run : 점프 Live 에서 dur 초(60·120·180) 한 판 — 선생님 화면이 그 판 결과(합계·뛴 학생 수)를 보냄
+ *       day : 기한 안의 하루를 골라 그날 카메라로 인증된 횟수 — 수집기에 이미 모인 하루 집계(Daily)로 계산
+ *       bak : 박 터트리기 — 들어온 학생 수 × dur(30·50·100)회 박을 3분 안에 깨는 시간 (17판, dur 칸에 1인당 횟수)
+ * 겨루는 값: run = 합계 ÷ 뛴 학생 수, day = 카메라 횟수 ÷ 등록 학생 수, bak = 깬 시간(짧을수록) · 못 깨면 몇 % 채웠나
+ * 반마다 따로 설치해 합친 학교는 대표 학교(canon)로 묶음 */
+const SH_DUELS = 'Duels';
+const DUEL_HEADER_ = ['Code', 'Created', 'Kind', 'Dur', 'Deadline', 'HostPid', 'GuestPid', 'HostRes', 'GuestRes', 'HostAt', 'GuestAt'];
+const DUEL_CH_ = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function duelsSheet_() { return sheet_(SH_DUELS, DUEL_HEADER_); }
+function duelSide_(key, schools) {
+  const k = cleanText_(key, 80);
+  if (k.length < 16) throw new Error('학교 키가 올바르지 않습니다. 전국 현황판 참여를 먼저 켜 주세요.');
+  const pid = publicId_(k), s = schools[pid];
+  if (!s) throw new Error('아직 전국 현황판에 한 번도 보고되지 않은 학교예요. 기록을 하나 넣은 뒤 다시 해 주세요.');
+  if (s.hidden) throw new Error('현황판에서 빠진 학교라 대결을 할 수 없어요.');
+  return s.canon;
+}
+function duelRead_(sh) {
+  const v = sh.getDataRange().getValues(), out = [];
+  for (let i = 1; i < v.length; i++) {
+    const r = v[i]; if (!r[0]) continue;
+    const j = function (x) { try { return x ? JSON.parse(x) : null; } catch (e) { return null; } };
+    const d = function (x) { return x instanceof Date ? Utilities.formatDate(x, TZ_, 'yyyy-MM-dd') : String(x || ''); };
+    out.push({ row: i + 1, code: String(r[0]), created: d(r[1]), kind: String(r[2]), dur: Number(r[3]) || 0, deadline: d(r[4]),
+      host: String(r[5]), guest: String(r[6] || ''), hostRes: j(r[7]), guestRes: j(r[8]) });
+  }
+  return out;
+}
+function duelPublic_(x, schools) {
+  const side = function (pid, res) { if (!pid) return null; const s = schools[pid] || {}; return { pid: pid, label: s.label || '익명 학교', named: !!s.named, res: res || null }; };
+  const today = today_(), h = side(x.host, x.hostRes), g = side(x.guest, x.guestRes);
+  const done = !!(x.hostRes && x.guestRes), expired = !done && today > x.deadline;
+  let winner = '';
+  if (done && x.kind === 'bak') {
+    const A = x.hostRes, B = x.guestRes;
+    if (A.ok && B.ok) winner = A.sec < B.sec ? 'host' : B.sec < A.sec ? 'guest' : 'tie';
+    else if (A.ok !== B.ok) winner = A.ok ? 'host' : 'guest';
+    else winner = A.pct > B.pct ? 'host' : B.pct > A.pct ? 'guest' : 'tie';
+  } else if (done) { const a = Number(x.hostRes.avg) || 0, b = Number(x.guestRes.avg) || 0; winner = a > b ? 'host' : b > a ? 'guest' : 'tie'; }
+  return { code: x.code, kind: x.kind, dur: x.dur, created: x.created, deadline: x.deadline, host: h, guest: g,
+    status: done ? 'done' : expired ? 'expired' : !x.guest ? 'waiting' : 'playing', winner: winner };
+}
+function duelCreate_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const kind = p.kind === 'day' ? 'day' : p.kind === 'bak' ? 'bak' : 'run';
+  const dur = kind === 'run' ? ([60, 120, 180].indexOf(Number(p.dur)) >= 0 ? Number(p.dur) : 60)
+    : kind === 'bak' ? ([30, 50, 100].indexOf(Number(p.dur)) >= 0 ? Number(p.dur) : 50) : 0;   // bak: 1인당 횟수
+  const days = Math.max(1, Math.min(14, Math.round(Number(p.days) || 7)));
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = duelsSheet_(), all = duelRead_(sh), today = today_();
+    const open = all.filter(function (x) { return x.host === me && !x.guest && x.deadline >= today; }).length;
+    if (open >= 5) throw new Error('아직 상대가 받지 않은 도전장이 5개 있어요. 먼저 받거나 취소한 뒤 만들어 주세요.');
+    const used = {}; all.forEach(function (x) { used[x.code] = 1; });
+    let code = '';
+    for (let t = 0; t < 50 && (!code || used[code]); t++) { code = ''; for (let i = 0; i < 6; i++) code += DUEL_CH_.charAt(Math.floor(Math.random() * DUEL_CH_.length)); }
+    const dl = Utilities.formatDate(new Date(Date.now() + days * 86400000), TZ_, 'yyyy-MM-dd');
+    sh.appendRow([code, today, kind, dur, dl, me, '', '', '', '', '']);
+    sh.getRange(sh.getLastRow(), 2, 1, 1).setNumberFormat('@'); sh.getRange(sh.getLastRow(), 5, 1, 1).setNumberFormat('@');
+    sh.getRange(sh.getLastRow(), 2).setValue(today); sh.getRange(sh.getLastRow(), 5).setValue(dl);
+    return duelPublic_({ code: code, created: today, kind: kind, dur: dur, deadline: dl, host: me, guest: '', hostRes: null, guestRes: null }, schools);
+  } finally { lock.releaseLock(); }
+}
+function duelFind_(all, code) {
+  const c = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const x = all.filter(function (d) { return d.code === c; })[0];
+  if (!x) throw new Error('그런 대결 코드가 없어요. 코드를 다시 확인해 주세요.');
+  return x;
+}
+function duelView_(code) { const schools = loadSchools_(); return duelPublic_(duelFind_(duelRead_(duelsSheet_()), code), schools); }
+function duelJoin_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = duelsSheet_(), x = duelFind_(duelRead_(sh), p.code);
+    if (x.host === me) throw new Error('우리 학교가 만든 도전장이에요. 상대 학교 선생님께 코드를 보내 주세요.');
+    if (x.guest && x.guest !== me) throw new Error('이미 다른 학교가 받은 도전장이에요.');
+    if (today_() > x.deadline) throw new Error('기한이 지난 도전장이에요.');
+    if (!x.guest) { sh.getRange(x.row, 7).setValue(me); x.guest = me; }
+    return duelPublic_(x, schools);
+  } finally { lock.releaseLock(); }
+}
+function duelCancel_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = duelsSheet_(), x = duelFind_(duelRead_(sh), p.code);
+    if (x.host !== me) throw new Error('도전장을 만든 학교만 취소할 수 있어요.');
+    if (x.guest) throw new Error('상대 학교가 이미 받은 도전장은 취소할 수 없어요.');
+    if (x.hostRes) throw new Error('기록을 걸어 둔 도전장은 취소할 수 없어요.');
+    sh.deleteRow(x.row); return { ok: true };
+  } finally { lock.releaseLock(); }
+}
+function duelMine_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const all = duelRead_(duelsSheet_()).filter(function (x) { return x.host === me || x.guest === me; });
+  all.sort(function (a, b) { return a.created < b.created ? 1 : a.created > b.created ? -1 : 0; });
+  return { me: me, list: all.slice(0, 30).map(function (x) { const o = duelPublic_(x, schools); o.side = x.host === me ? 'host' : 'guest'; return o; }) };
+}
+function duelSubmit_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = duelsSheet_(), x = duelFind_(duelRead_(sh), p.code), today = today_();
+    const side = x.host === me ? 'host' : x.guest === me ? 'guest' : '';
+    if (!side) throw new Error('우리 학교가 참여한 대결이 아니에요.');
+    if (!x.guest && side !== 'host') throw new Error('상대 학교가 아직 도전장을 받지 않았어요.');   // 만든 학교는 먼저 뛰어 기록을 걸어 둘 수 있음 (16판)
+    if (today > x.deadline) throw new Error('기한이 지난 대결이에요.');
+    if (x[side + 'Res']) throw new Error('이 대결 결과는 이미 보냈어요.');
+    const r = p.res || {};
+    let res;
+    if (x.kind === 'bak') {
+      const players = Math.round(Number(r.players)), goal = Math.round(Number(r.goal)), sum = Math.round(Number(r.sum)), ms = Math.round(Number(r.ms));
+      if (!(players >= 1 && players <= 60)) throw new Error('뛴 학생 수가 올바르지 않아요.');
+      if (Math.round(Number(r.per)) !== x.dur || goal !== Math.max(10, players * x.dur)) throw new Error('대결 종목은 들어온 인원 × ' + x.dur + '회 박이에요. 같은 목표로 깬 판만 보낼 수 있어요.');
+      if (Math.round(Number(r.limit)) !== 180) throw new Error('박 터트리기 대결은 시간 제한 3분으로 뛰어요.');
+      const ok = r.ok === true && ms > 0 && ms <= 185000;
+      if (!(sum >= 0 && sum <= players * 800)) throw new Error('합계가 너무 커요.');
+      const sec = ok ? Math.round(ms / 100) / 10 : null;
+      res = { ok: ok, sec: sec, sum: sum, goal: goal, players: players, pct: Math.min(100, Math.round(sum / goal * 1000) / 10), avg: ok ? sec : null, at: today, mode: cleanText_(r.mode, 20) };
+    } else if (x.kind === 'run') {
+      const players = Math.round(Number(r.players)), total = Math.round(Number(r.total));
+      if (!(players >= 1 && players <= 60)) throw new Error('뛴 학생 수가 올바르지 않아요.');
+      if (Math.round(Number(r.dur)) !== x.dur) throw new Error('대결 종목은 ' + (x.dur / 60) + '분 한 판이에요. 같은 시간으로 뛴 판만 보낼 수 있어요.');
+      if (!(total >= 0 && total <= players * x.dur * 4)) throw new Error('합계가 너무 커요.');
+      res = { total: total, players: players, avg: Math.round(total / players * 10) / 10, at: today, mode: cleanText_(r.mode, 20) };
+    } else {
+      const date = String(r.date || '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < x.created || date > today || date > x.deadline) throw new Error('도전장 기간 안의 날짜(오늘까지)를 골라 주세요.');
+      const members = Object.keys(schools).filter(function (k) { return schools[k].canon === me; });
+      const v = dailySheet_().getDataRange().getValues();
+      let cam = 0, parts = 0;
+      for (let i = 1; i < v.length; i++) {
+        const ds = v[i][1] instanceof Date ? Utilities.formatDate(v[i][1], TZ_, 'yyyy-MM-dd') : String(v[i][1]);
+        if (ds === date && members.indexOf(String(v[i][0])) >= 0) { cam += Number(v[i][4]) || 0; parts += Number(v[i][3]) || 0; }
+      }
+      if (!cam) throw new Error(date + ' 에 카메라로 인증된 기록이 아직 현황판에 없어요. 기록을 넣은 뒤 잠시 기다렸다가 다시 보내 주세요.');
+      const reg = (schools[me] && schools[me].registered) || parts;
+      res = { date: date, total: cam, players: parts, registered: reg, avg: Math.round(cam / Math.max(1, reg) * 10) / 10, at: today };
+    }
+    sh.getRange(x.row, side === 'host' ? 8 : 9).setValue(JSON.stringify(res));
+    sh.getRange(x.row, side === 'host' ? 10 : 11).setValue(new Date());
+    x[side + 'Res'] = res;
+    return duelPublic_(x, schools);
+  } finally { lock.releaseLock(); }
+}
+// 현황판: 최근 대결 (상대가 받은 것만, 20개)
+function duelList_() {
+  const cache = CacheService.getScriptCache(), hit = cache.get('duels');
+  if (hit) return JSON.parse(hit);
+  const schools = loadSchools_();
+  const all = duelRead_(duelsSheet_()).filter(function (x) { return x.guest && !(schools[x.host] || {}).hidden && !(schools[x.guest] || {}).hidden; });
+  all.sort(function (a, b) { return a.created < b.created ? 1 : a.created > b.created ? -1 : 0; });
+  const out = { list: all.slice(0, 20).map(function (x) { return duelPublic_(x, schools); }) };
+  cache.put('duels', JSON.stringify(out), 60);
+  return out;
+}
+
+/************ 파이어베이스 거울 (20판) ************
+ * 수집기가 학교 키를 확인한 뒤 결과만 파이어베이스(Realtime Database)에 씀 — 학생 이름은 올리지 않음
+ *  lm/{방}/info : 실시간 방 정보 (방에 들어온 두 학교 화면만 방 주소를 앎) · lm/{방}/a|b : 두 학교 화면이 직접 쓰는 합계 (규칙: 그 학교 화면 익명 uid만)
+ *  board/open/v : 열린 도전장이 바뀐 때 · board/sch/{학교 채널}/v : 그 학교가 낀 도전장이 바뀐 때 (화면은 이 신호를 듣고 postList 를 다시 부름)
+ * 스크립트 속성 FB_URL(데이터베이스 주소) · FB_SECRET(데이터베이스 비밀번호)이 없으면 아무것도 하지 않음
+ */
+function fbCfg_() {
+  const P = PropertiesService.getScriptProperties();
+  const u = String(P.getProperty('FB_URL') || '').trim().replace(/\/+$/, ''), k = String(P.getProperty('FB_SECRET') || '').trim();
+  return /^https:\/\/[a-z0-9.-]+$/i.test(u) && k ? { url: u, secret: k } : null;
+}
+function fbPatch_(obj) {
+  const c = fbCfg_(); if (!c || !obj || !Object.keys(obj).length) return false;
+  try { return UrlFetchApp.fetch(c.url + '/.json?auth=' + encodeURIComponent(c.secret), { method: 'patch', contentType: 'application/json', payload: JSON.stringify(obj), muteHttpExceptions: true }).getResponseCode() < 300; }
+  catch (e) { return false; }
+}
+function fbGet_(path) {
+  const c = fbCfg_(); if (!c) return null;
+  try { const r = UrlFetchApp.fetch(c.url + '/' + path + '.json?auth=' + encodeURIComponent(c.secret), { muteHttpExceptions: true }); return r.getResponseCode() < 300 ? JSON.parse(r.getContentText()) : null; }
+  catch (e) { return null; }
+}
+// 학교마다 바뀌지 않는 긴 채널 이름 (비밀번호로 만든 서명이라 다른 학교가 짐작할 수 없음)
+function fbChan_(canon) {
+  const c = fbCfg_(); if (!c || !canon) return '';
+  return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature('board:' + canon, c.secret)).replace(/=+$/, '');
+}
+// 편집기에서 한 번 실행: 외부 연결 권한 허용 + 파이어베이스에 쓰고 읽어 보기 (실행 로그에 결과)
+function fbTest() {
+  const c = fbCfg_(); if (!c) { Logger.log('FB_URL · FB_SECRET 스크립트 속성이 비었거나 주소 모양이 달라요.'); return; }
+  const t = Date.now(), ok = fbPatch_({ 'ping/at': t }), back = fbGet_('ping/at');
+  Logger.log(ok && Number(back) === t ? '파이어베이스 연결 성공!' : '연결 실패 — FB_URL 주소와 FB_SECRET(데이터베이스 비밀번호)을 다시 확인해 주세요. (쓰기 ' + ok + ', 읽기 ' + back + ')');
+}
+function fbBoard_(schs) {
+  if (!fbCfg_()) return;
+  const o = { 'board/open/v': Date.now() };
+  (schs || []).forEach(function (q) { const ch = q && fbChan_(q); if (ch) o['board/sch/' + ch + '/v'] = Date.now(); });
+  fbPatch_(o);
+}
+
+/************ 실시간 학교 함께 뛰기 (18판) ************
+ * 두 학교 선생님 화면(점프 Live·Lite)이 같은 시각에 시작하고, 뛰는 동안 몇 초마다 우리 학교 합계를 올리고 상대 합계를 받아 감.
+ * kind: 'vs' = 실시간 대결 (1·2·3분 한 판, 1인당 평균) · 'coop' = 두 학교 함께 박 깨기 (두 학교 들어온 인원 × 1인당 per 회, 3분 안에)
+ * rv: 상대 숫자 보이기 — 'live' 바로바로 · 'i10'/'i20' 중간에 한 번씩 · 'end' 끝나고 공개 (방을 연 학교가 정함, 함께 박 깨기는 늘 바로바로)
+ * 자료는 시트에 남기지 않고 캐시(6시간)에만 — 결과는 두 학교 화면에만 보이고 현황판에는 올리지 않음
+ */
+const LM_TTL_ = 21600;
+function lmGet_(code) { const v = CacheService.getScriptCache().get('LM_' + code); return v ? JSON.parse(v) : null; }
+function lmPut_(x) { CacheService.getScriptCache().put('LM_' + x.code, JSON.stringify(x), LM_TTL_); }
+function lmCode_(c) { const code = String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6); if (code.length !== 6) throw new Error('방 코드 6자리를 넣어 주세요.'); return code; }
+function lmPublic_(x, me) {
+  const schools = loadSchools_();
+  const side = function (pid, d) { if (!pid) return null; const s = schools[pid] || {}; return { label: s.label || '익명 학교', named: !!s.named, sum: d.sum || 0, players: d.players || 0, fin: !!d.fin, t: d.t || 0 }; };
+  const mine = me === x.host ? 'host' : me === x.guest ? 'guest' : '';
+  return { code: x.code, kind: x.kind, dur: x.dur, per: x.per, rv: x.rv, start: x.start || 0, id: x.id || '', now: Date.now(), side: mine, post: x.post || '', fb: mine && x.fb && fbCfg_() ? x.fb : '',
+    host: side(x.host, x.h || {}), guest: side(x.guest, x.g || {}), round: x.round || 0, left: x.left || '', broke: x.broke || 0 };
+}
+// 파이어베이스 방: 새 방 주소 (32자) + 6시간 지난 방 치우기
+function lmFbNew_(x) {
+  if (!fbCfg_()) return;
+  x.fb = Utilities.getUuid().replace(/-/g, '');
+  const idx = fbGet_('lmIdx') || {}, o = {}; o['lmIdx/' + x.fb] = Date.now();
+  Object.keys(idx).forEach(function (k) { if (Date.now() - Number(idx[k]) > LM_TTL_ * 1000) { o['lm/' + k] = null; o['lmIdx/' + k] = null; } });
+  fbPatch_(o);
+}
+// 두 학교 화면의 익명 uid (자기 칸에만 쓰게 하는 규칙에 씀)
+function lmUid_(x, me, p) {
+  const u = String(p.uid || ''); if (!/^[A-Za-z0-9]{10,128}$/.test(u)) return false;
+  if (x.host === me && x.au !== u) { x.au = u; return true; }
+  if (x.guest === me && x.bu !== u) { x.bu = u; return true; }
+  return false;
+}
+function lmFbInfo_(x, o) {
+  if (!x.fb || !fbCfg_()) return o || {};
+  const schools = loadSchools_(), lab = function (pid) { if (!pid) return null; const s = schools[pid] || {}; return { label: s.label || '익명 학교', named: !!s.named }; };
+  o = o || {};
+  o['lm/' + x.fb + '/info'] = { code: x.code, kind: x.kind, dur: x.dur, per: x.per, rv: x.rv, start: x.start || 0, id: x.id || '', round: x.round || 0, left: x.left || '', post: x.post || '',
+    host: lab(x.host), guest: lab(x.guest), aUid: x.au || '', bUid: x.bu || '', at: Date.now() };
+  return o;
+}
+function lmFbSync_(x, o) { if (x.fb) fbPatch_(lmFbInfo_(x, o)); }
+// 파이어베이스를 못 쓰는 화면(예전 방식)을 위해: 상대가 파이어베이스에 쓴 합계를 캐시 쪽에 합침
+function lmFbMerge_(x) {
+  if (!x.fb || !x.start || !fbCfg_()) return;
+  const d = fbGet_('lm/' + x.fb); if (!d) return;
+  [['a', 'h'], ['b', 'g']].forEach(function (q) { const v = d[q[0]], c = x[q[1]] || {}; if (v && (Number(v.t) || 0) > (c.t || 0)) x[q[1]] = { sum: Number(v.sum) || 0, players: Number(v.players) || 0, fin: !!v.fin, t: Number(v.t) || 0 }; });
+  [d.a, d.b].forEach(function (v) { const br = v && Number(v.broke) || 0; if (x.kind === 'coop' && br > 0 && (!x.broke || br < x.broke)) x.broke = br; });
+}
+function lmOpen_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const kind = p.kind === 'coop' ? 'coop' : 'vs';
+  const dur = kind === 'coop' ? 180 : ([60, 120, 180].indexOf(Number(p.dur)) >= 0 ? Number(p.dur) : 60);
+  const per = kind === 'coop' ? ([30, 50, 100].indexOf(Number(p.per)) >= 0 ? Number(p.per) : 50) : 0;
+  const rv = kind === 'coop' ? 'live' : (['live', 'i10', 'i20', 'end'].indexOf(p.rv) >= 0 ? p.rv : 'live');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    let code = '';
+    for (let t = 0; t < 30 && (!code || lmGet_(code)); t++) { code = ''; for (let i = 0; i < 6; i++) code += DUEL_CH_.charAt(Math.floor(Math.random() * DUEL_CH_.length)); }
+    const x = { code: code, kind: kind, dur: dur, per: per, rv: rv, host: me, guest: '', start: 0, id: '', h: {}, g: {}, round: 0, made: Date.now() };
+    lmFbNew_(x); lmUid_(x, me, p);
+    lmPut_(x); lmFbSync_(x);
+    return lmPublic_(x, me);
+  } finally { lock.releaseLock(); }
+}
+function lmJoin_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), code = lmCode_(p.code);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const x = lmGet_(code); if (!x) throw new Error('없거나 끝난 방이에요. 코드를 다시 확인해 주세요.');
+    if (x.host === me) { if (lmUid_(x, me, p)) { lmPut_(x); lmFbSync_(x); } return lmPublic_(x, me); }   // 연 학교가 다시 들어옴
+    if (x.guest && x.guest !== me) throw new Error('이미 다른 학교가 들어온 방이에요.');
+    x.guest = me; x.left = ''; lmUid_(x, me, p); lmPut_(x); lmFbSync_(x);
+    return lmPublic_(x, me);
+  } finally { lock.releaseLock(); }
+}
+// 연 학교가 '같이 시작' → 20초 뒤 두 화면이 함께 시작 (학생 기기 카운트다운 5초 포함). 같은 방에서 여러 판 가능
+function lmStart_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), code = lmCode_(p.code);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const x = lmGet_(code); if (!x) throw new Error('없거나 끝난 방이에요.');
+    if (x.host !== me) throw new Error('방을 연 학교 선생님이 시작해요.');
+    if (!x.guest) throw new Error('상대 학교가 아직 들어오지 않았어요.');
+    if (x.start && Date.now() < x.start + x.dur * 1000 + 20000) throw new Error('지금 판이 아직 끝나지 않았어요.');
+    x.round = (x.round || 0) + 1; x.start = Date.now() + 20000; x.id = 'm' + x.code + x.round;
+    x.h = {}; x.g = {}; x.broke = 0;
+    if (p.dur && x.kind === 'vs' && [60, 120, 180].indexOf(Number(p.dur)) >= 0) x.dur = Number(p.dur);
+    if (p.rv && x.kind === 'vs' && ['live', 'i10', 'i20', 'end'].indexOf(p.rv) >= 0) x.rv = p.rv;
+    lmUid_(x, me, p); lmPut_(x);
+    if (x.fb) { const o = {}; o['lm/' + x.fb + '/a'] = null; o['lm/' + x.fb + '/b'] = null; lmFbSync_(x, o); }
+    return lmPublic_(x, me);
+  } finally { lock.releaseLock(); }
+}
+// 뛰는 동안 우리 학교 합계 올리기 (fin: 이 판이 끝나 마지막 숫자)
+function lmPush_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), code = lmCode_(p.code);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const x = lmGet_(code); if (!x) throw new Error('없거나 끝난 방이에요.');
+    const k = x.host === me ? 'h' : x.guest === me ? 'g' : ''; if (!k) throw new Error('이 방에 들어온 학교가 아니에요.');
+    lmFbMerge_(x);
+    if (p.id !== x.id) return lmPublic_(x, me);   // 지난 판 숫자는 받지 않음
+    const players = Math.round(Number(p.players)) || 0, sum = Math.round(Number(p.sum)) || 0;
+    if (players < 0 || players > 60 || sum < 0 || sum > Math.max(1, players) * x.dur * 4) throw new Error('합계가 올바르지 않아요.');
+    const d = x[k] || {}; if (d.fin) return lmPublic_(x, me);
+    x[k] = { sum: Math.max(sum, d.sum || 0), players: Math.max(players, d.players || 0), fin: !!p.fin, t: Date.now() };
+    const br = Math.round(Number(p.broke)) || 0;   // 함께 박 깨기: 박이 깨진 때(시작부터 ms) — 먼저 알린 쪽 값으로 두 화면이 같은 시간을 보여 줌
+    if (x.kind === 'coop' && br > 0 && br <= x.dur * 1000 + 5000 && !x.broke) x.broke = br;
+    lmPut_(x);
+    if (x.fb && fbCfg_()) { const o = {}, v = x[k]; o['lm/' + x.fb + '/' + (k === 'h' ? 'a' : 'b')] = { sum: v.sum, players: v.players, fin: v.fin, broke: x.kind === 'coop' && br > 0 ? br : 0, t: v.t }; fbPatch_(o); }
+    return lmPublic_(x, me);
+  } finally { lock.releaseLock(); }
+}
+function lmState_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), code = lmCode_(p.code);
+  const x = lmGet_(code); if (!x) throw new Error('없거나 끝난 방이에요.');
+  if (lmUid_(x, me, p)) { lmPut_(x); lmFbSync_(x); }
+  if (!p.uid) lmFbMerge_(x);   // 예전 방식 화면만 (파이어베이스 화면은 직접 들음)
+  return lmPublic_(x, me);
+}
+function lmLeave_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), code = lmCode_(p.code);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const x = lmGet_(code); if (!x) return { ok: true };
+    if (x.host === me) { CacheService.getScriptCache().remove('LM_' + code); if (x.fb) { const o = {}; o['lm/' + x.fb] = null; o['lmIdx/' + x.fb] = null; fbPatch_(o); } return { ok: true }; }
+    if (x.guest === me) { x.guest = ''; x.left = 'guest'; x.g = {}; x.bu = ''; lmPut_(x); if (x.fb) { const o = {}; o['lm/' + x.fb + '/b'] = null; lmFbSync_(x, o); } }
+    return { ok: true };
+  } finally { lock.releaseLock(); }
+}
+
+/************ 도전장 게시판 (19판) ************
+ * 열린 도전장: 한 학교가 종목·학년·인원·기한(·실시간이면 가능한 요일·시각)을 올리면 아무 학교나 '받기'
+ *  - 각자 편한 때 뛰는 종목(run·bak·day): 받으면 바로 도전장 대결(Duels)로 이어짐
+ *  - 실시간 종목(lvs 실시간 대결 · lcoop 함께 박 깨기): 받는 학교가 겹치는 시간 하나를 제안 → 버튼으로 주고받아 약속
+ *    약속한 때 점프 Live의 '학교와 함께'가 lmForPost 로 이 두 학교 방을 바로 엶
+ * 글은 정해진 문구(say 번호)와 버튼(t)으로만 주고받음 — 자유 글 없음. 운영자는 Hidden 칸에 1을 넣어 숨김
+ * slots: '요일-시' (요일 1=월~5=금, 시 9·10·11·13·14) · 약속 시간: 'YYYY-MM-DD|시'
+ */
+const SH_POSTS = 'Posts';
+const POST_HEADER_ = ['Id', 'Created', 'Host', 'Kind', 'Dur', 'Per', 'Rv', 'Grade', 'Players', 'Deadline', 'Slots', 'Say', 'Status', 'Guest', 'Duel', 'Lm', 'Thread', 'Promise', 'Hidden'];
+const POST_KINDS_ = ['run', 'bak', 'day', 'lvs', 'lcoop'];
+const POST_HOURS_ = [9, 10, 11, 13, 14];
+const POST_REPLIES_ = ['propose', 'ok', 'ready', 'late', 'cant', 'thanks'];
+const POST_OPEN_MAX_ = 3;
+function postsSheet_() { return sheet_(SH_POSTS, POST_HEADER_); }
+function postRt_(k) { return k === 'lvs' || k === 'lcoop'; }
+function postRead_(sh) {
+  const v = sh.getDataRange().getValues(), out = [];
+  const j = function (x, d) { try { return x ? JSON.parse(x) : d; } catch (e) { return d; } };
+  const ds = function (x) { return x instanceof Date ? Utilities.formatDate(x, TZ_, 'yyyy-MM-dd') : String(x || ''); };
+  for (let i = 1; i < v.length; i++) {
+    const r = v[i]; if (!r[0]) continue;
+    out.push({ row: i + 1, id: String(r[0]), created: Number(r[1]) || 0, host: String(r[2]), kind: String(r[3]), dur: Number(r[4]) || 0, per: Number(r[5]) || 0, rv: String(r[6] || ''),
+      grade: String(r[7] || ''), players: Number(r[8]) || 0, deadline: ds(r[9]), slots: j(r[10], []), say: Number(r[11]) || 0, status: String(r[12] || 'open'),
+      guest: String(r[13] || ''), duel: String(r[14] || ''), lm: String(r[15] || ''), thread: j(r[16], []), promise: String(r[17] || ''), hidden: !!r[18] });
+  }
+  return out;
+}
+function postWrite_(sh, x) {
+  sh.getRange(x.row, 13, 1, 6).setValues([[x.status, x.guest, x.duel, x.lm, JSON.stringify(x.thread || []), x.promise || '']]);
+}
+function postFind_(all, id) { const x = all.filter(function (p) { return p.id === String(id || ''); })[0]; if (!x || x.hidden) throw new Error('없거나 내려간 도전장이에요.'); return x; }
+function postDow_(date) { return Number(Utilities.formatDate(new Date(date + 'T12:00:00+09:00'), TZ_, 'u')); }   // 1=월 … 7=일
+// 약속 시간이 이 도전장 가능 시간 안이고, 아직 지나지 않았고, 기한(+7일 여유) 안인지
+function postSlotOk_(x, slot) {
+  const m = /^(\d{4}-\d{2}-\d{2})\|(\d{1,2})$/.exec(String(slot || '')); if (!m) return false;
+  const d = m[1], h = Number(m[2]), dow = postDow_(d);
+  if (POST_HOURS_.indexOf(h) < 0 || dow > 5) return false;
+  if ((x.slots || []).indexOf(dow + '-' + h) < 0) return false;
+  const nowH = Number(Utilities.formatDate(new Date(), TZ_, 'H')), today = today_();
+  if (d < today || (d === today && h <= nowH)) return false;
+  const last = Utilities.formatDate(new Date(new Date(x.deadline + 'T12:00:00+09:00').getTime() + 7 * 86400000), TZ_, 'yyyy-MM-dd');
+  return d <= last;
+}
+function postPublic_(x, schools, me) {
+  const lab = function (pid) { if (!pid) return null; const s = schools[pid] || {}; return { label: s.label || '익명 학교', named: !!s.named }; };
+  const side = x.host === me ? 'host' : x.guest === me ? 'guest' : '';
+  const o = { id: x.id, kind: x.kind, dur: x.dur, per: x.per, rv: x.rv, grade: x.grade, players: x.players, deadline: x.deadline, slots: x.slots, say: x.say,
+    status: x.status, host: lab(x.host), guest: lab(x.guest), side: side, promise: x.promise, created: x.created };
+  if (side) { o.thread = x.thread || []; o.duel = x.duel; }
+  return o;
+}
+function postCreate_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const kind = POST_KINDS_.indexOf(p.kind) >= 0 ? p.kind : 'run';
+  const dur = kind === 'run' || kind === 'lvs' ? ([60, 120, 180].indexOf(Number(p.dur)) >= 0 ? Number(p.dur) : 60) : kind === 'bak' || kind === 'lcoop' ? 180 : 0;
+  const per = kind === 'bak' || kind === 'lcoop' ? ([30, 50, 100].indexOf(Number(p.per)) >= 0 ? Number(p.per) : 50) : 0;
+  const rv = kind === 'lvs' ? (['live', 'i10', 'i20', 'end'].indexOf(p.rv) >= 0 ? p.rv : 'live') : '';
+  const days = [3, 5, 7, 14].indexOf(Number(p.days)) >= 0 ? Number(p.days) : 7;
+  const slots = postRt_(kind) ? (Array.isArray(p.slots) ? p.slots : []).map(String).filter(function (s) { const m = /^([1-5])-(\d{1,2})$/.exec(s); return m && POST_HOURS_.indexOf(Number(m[2])) >= 0; }).slice(0, 25) : [];
+  if (postRt_(kind) && !slots.length) throw new Error('실시간 종목은 우리 학교가 뛸 수 있는 시간을 하나 이상 골라 주세요.');
+  const grade = cleanText_(p.grade, 6), players = Math.max(1, Math.min(60, Math.round(Number(p.players)) || 0)), say = Math.max(0, Math.min(9, Math.round(Number(p.say)) || 0));
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = postsSheet_(), all = postRead_(sh), today = today_();
+    if (all.filter(function (x) { return x.host === me && x.status === 'open' && x.deadline >= today && !x.hidden; }).length >= POST_OPEN_MAX_) throw new Error('열린 도전장은 ' + POST_OPEN_MAX_ + '개까지 걸어 둘 수 있어요. 하나를 내린 뒤 올려 주세요.');
+    const id = 'P' + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase();
+    const dl = Utilities.formatDate(new Date(Date.now() + days * 86400000), TZ_, 'yyyy-MM-dd');
+    sh.appendRow([id, Date.now(), me, kind, dur, per, rv, grade, players, dl, JSON.stringify(slots), say, 'open', '', '', '', '[]', '', '']);
+    sh.getRange(sh.getLastRow(), 10).setNumberFormat('@'); sh.getRange(sh.getLastRow(), 10).setValue(dl);
+    fbBoard_([me]);
+    return postPublic_({ id: id, created: Date.now(), host: me, kind: kind, dur: dur, per: per, rv: rv, grade: grade, players: players, deadline: dl, slots: slots, say: say, status: 'open', guest: '', thread: [], promise: '' }, schools, me);
+  } finally { lock.releaseLock(); }
+}
+function postList_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), today = today_();
+  const all = postRead_(postsSheet_()).filter(function (x) { return !x.hidden && !(schools[x.host] || {}).hidden; });
+  const open = all.filter(function (x) { return x.status === 'open' && x.deadline >= today && x.host !== me; })
+    .sort(function (a, b) { return b.created - a.created; }).slice(0, 40).map(function (x) { return postPublic_(x, schools, me); });
+  const old = Utilities.formatDate(new Date(Date.now() - 14 * 86400000), TZ_, 'yyyy-MM-dd');
+  const mine = all.filter(function (x) { return (x.host === me || x.guest === me) && x.status !== 'closed' && (x.deadline >= old || (x.promise && x.promise.slice(0, 10) >= old)); })
+    .sort(function (a, b) { return b.created - a.created; }).slice(0, 30).map(function (x) { return postPublic_(x, schools, me); });
+  return { me: me, today: today, hour: Number(Utilities.formatDate(new Date(), TZ_, 'H')), open: open, mine: mine, chan: fbChan_(me) };
+}
+function postTake_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = postsSheet_(), x = postFind_(postRead_(sh), p.id), today = today_();
+    if (x.host === me) throw new Error('우리 학교가 올린 도전장이에요.');
+    if (x.status !== 'open' || x.deadline < today) throw new Error('이미 다른 학교가 받았거나 기한이 지난 도전장이에요.');
+    x.guest = me; x.status = 'taken';
+    if (postRt_(x.kind)) {
+      if (!postSlotOk_(x, p.slot)) throw new Error('이 도전장의 가능한 시간 중에서 골라 주세요.');
+      const gs = (Array.isArray(p.myslots) ? p.myslots : []).map(String).filter(function (q) { return /^[1-5]-(9|10|11|13|14)$/.test(q); }).slice(0, 25);   // 받은 학교 가능 시간 (다른 시간 제안할 때 겹치는 시간 찾기)
+      x.thread = [{ by: 'g', t: 'propose', s: String(p.slot), gs: gs, at: Date.now() }];
+    } else {
+      // 각자 편한 때 뛰는 종목: 바로 도전장 대결로 (상대가 이미 받은 상태)
+      const dsh = duelsSheet_(), used = {}; duelRead_(dsh).forEach(function (d) { used[d.code] = 1; });
+      let code = ''; for (let t = 0; t < 50 && (!code || used[code]); t++) { code = ''; for (let i = 0; i < 6; i++) code += DUEL_CH_.charAt(Math.floor(Math.random() * DUEL_CH_.length)); }
+      dsh.appendRow([code, today, x.kind, x.kind === 'bak' ? x.per : x.dur, x.deadline, x.host, me, '', '', '', '']);
+      dsh.getRange(dsh.getLastRow(), 2, 1, 1).setNumberFormat('@'); dsh.getRange(dsh.getLastRow(), 5, 1, 1).setNumberFormat('@');
+      dsh.getRange(dsh.getLastRow(), 2).setValue(today); dsh.getRange(dsh.getLastRow(), 5).setValue(x.deadline);
+      x.duel = code; x.thread = [{ by: 'g', t: 'take', at: Date.now() }];
+      CacheService.getScriptCache().remove('duels');
+    }
+    postWrite_(sh, x); fbBoard_([x.host, x.guest]);
+    return postPublic_(x, schools, me);
+  } finally { lock.releaseLock(); }
+}
+function postReply_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools), t = String(p.t || '');
+  if (POST_REPLIES_.indexOf(t) < 0) throw new Error('알 수 없는 답이에요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = postsSheet_(), x = postFind_(postRead_(sh), p.id);
+    const by = x.host === me ? 'h' : x.guest === me ? 'g' : ''; if (!by) throw new Error('우리 학교가 참여한 도전장이 아니에요.');
+    if (x.status !== 'taken') throw new Error('지금은 답할 수 없는 도전장이에요.');
+    const th = x.thread || [], e = { by: by, t: t, at: Date.now() };
+    if (t === 'propose') { if (!postRt_(x.kind) || !postSlotOk_(x, p.slot)) throw new Error('이 도전장의 가능한 시간 중에서 골라 주세요.'); e.s = String(p.slot); x.promise = ''; }
+    if (t === 'ok') {
+      const last = th.filter(function (m) { return m.t === 'propose'; }).pop();
+      if (!last || last.by === by) throw new Error('상대 학교가 제안한 시간이 없어요.');
+      if (!postSlotOk_(x, last.s)) throw new Error('제안된 시간이 지났어요. 다른 시간을 제안해 주세요.');
+      e.s = last.s; x.promise = last.s;
+    }
+    if (t === 'cant') {   // 이번엔 어려워요 — 기한이 남았으면 다시 열린 도전장으로
+      const was = x.guest;
+      x.guest = ''; x.thread = []; x.promise = ''; x.lm = ''; x.status = x.deadline >= today_() && !x.duel ? 'open' : 'closed';
+      postWrite_(sh, x); fbBoard_([x.host, was]); return postPublic_(x, schools, me);
+    }
+    th.push(e); x.thread = th.slice(-40);
+    postWrite_(sh, x); fbBoard_([x.host, x.guest]);
+    return postPublic_(x, schools, me);
+  } finally { lock.releaseLock(); }
+}
+function postCancel_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = postsSheet_(), x = postFind_(postRead_(sh), p.id);
+    if (x.host !== me) throw new Error('도전장을 올린 학교만 내릴 수 있어요.');
+    if (x.status !== 'open') throw new Error('다른 학교가 이미 받은 도전장은 내릴 수 없어요. 대화에서 \'이번엔 어려워요\'를 눌러 주세요.');
+    x.status = 'closed'; postWrite_(sh, x); fbBoard_([me]); return { ok: true };
+  } finally { lock.releaseLock(); }
+}
+// 약속한 실시간 대결: 두 학교 방(18판 LM)을 바로 열거나 이어 줌 — 도전장을 올린 학교가 '같이 시작'
+function lmForPost_(p) {
+  const schools = loadSchools_(), me = duelSide_(p.key, schools);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = postsSheet_(), x = postFind_(postRead_(sh), p.id);
+    if (x.host !== me && x.guest !== me) throw new Error('우리 학교가 참여한 도전장이 아니에요.');
+    if (!postRt_(x.kind) || x.status !== 'taken' || !x.promise) throw new Error('아직 약속이 잡히지 않은 대결이에요.');
+    let st = x.lm ? lmGet_(x.lm) : null;
+    if (!st) {
+      let code = ''; for (let t = 0; t < 30 && (!code || lmGet_(code)); t++) { code = ''; for (let i = 0; i < 6; i++) code += DUEL_CH_.charAt(Math.floor(Math.random() * DUEL_CH_.length)); }
+      st = { code: code, kind: x.kind === 'lcoop' ? 'coop' : 'vs', dur: x.kind === 'lcoop' ? 180 : x.dur, per: x.kind === 'lcoop' ? x.per : 0, rv: x.kind === 'lcoop' ? 'live' : (x.rv || 'live'),
+        host: x.host, guest: x.guest, start: 0, id: '', h: {}, g: {}, round: 0, made: Date.now(), post: x.id };
+      lmFbNew_(st); lmUid_(st, me, p);
+      lmPut_(st); lmFbSync_(st); x.lm = code; postWrite_(sh, x);
+    } else if (lmUid_(st, me, p)) { lmPut_(st); lmFbSync_(st); }
+    return lmPublic_(st, me);
+  } finally { lock.releaseLock(); }
+}
+// 학생 화면: 우리 학교 약속 잡힌 대결 · 진행 중인 도전 · 기다리는 도전장 (학교 공개 번호로, 키 없이)
+function postsForStudents_(pid) {
+  const schools = loadSchools_(), s = schools[String(pid || '')]; if (!s || s.hidden) return { list: [] };
+  const me = s.canon, today = today_();
+  const lab = function (q) { const t = schools[q] || {}; return t.label || '익명 학교'; };
+  const L = [];
+  postRead_(postsSheet_()).forEach(function (x) {
+    if (x.hidden || (x.host !== me && x.guest !== me)) return;
+    const other = x.host === me ? x.guest : x.host;
+    if (x.status === 'taken' && postRt_(x.kind) && x.promise && x.promise.slice(0, 10) >= today) L.push({ t: 'promise', other: lab(other), kind: x.kind, dur: x.dur, per: x.per, when: x.promise });
+    else if (x.status === 'taken' && !postRt_(x.kind) && x.deadline >= today) L.push({ t: 'playing', other: lab(other), kind: x.kind, dur: x.dur, per: x.per, deadline: x.deadline });
+    else if (x.status === 'taken' && postRt_(x.kind) && !x.promise && x.deadline >= today) L.push({ t: 'arranging', other: lab(other), kind: x.kind, dur: x.dur, per: x.per });
+    else if (x.status === 'open' && x.host === me && x.deadline >= today) L.push({ t: 'waiting', kind: x.kind, dur: x.dur, per: x.per, deadline: x.deadline });
+  });
+  L.sort(function (a, b) { const o = { promise: 0, playing: 1, arranging: 2, waiting: 3 }; return o[a.t] - o[b.t] || String(a.when || a.deadline || '').localeCompare(String(b.when || b.deadline || '')); });
+  return { list: L.slice(0, 3) };
 }

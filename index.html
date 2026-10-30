@@ -664,7 +664,7 @@
 .pick-row .pick{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 12px 12px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;text-align:center;box-shadow:none}
 .pick-row .pick:hover{border-color:var(--coral);background:var(--coral-tint)}
 .pick-row .pick b{font-size:16px} .pick-row .pick small{font-size:12.5px;color:var(--muted);font-weight:500}
-.pick-row .pick.hot{border:2px solid #FFB3A8;background:#FFF0EE}
+.pick-row .pick .new{font-size:11px;font-weight:800;background:var(--coral);color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:2px}
 .me-remember{display:flex;align-items:center;gap:8px;margin:-4px 0 12px;font-size:14px;font-weight:600;color:var(--ink2,#4a5260);cursor:pointer;width:fit-content}
 .pbx{display:flex;flex-direction:column;gap:2px;margin-top:10px;padding:12px 16px;border-radius:14px;background:linear-gradient(90deg,#FFF0EE,#FFF5E6);border:1px solid #FFD3CC}
 .pbx b{font-size:18px;color:#E2513F} .pbx span{font-size:14px;color:#3B4252}
@@ -1270,9 +1270,9 @@ document.addEventListener('DOMContentLoaded', function(){
             <svg viewBox="0 0 120 64" width="96" height="52" aria-hidden="true"><rect x="22" y="6" width="76" height="52" rx="8" fill="#2a3140"/><rect x="27" y="11" width="66" height="42" rx="4" fill="#3a4253"/><line x1="60" y1="13" x2="60" y2="51" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-dasharray="4 3"/><circle cx="44" cy="24" r="5" fill="#FF8A7D"/><rect x="39" y="31" width="10" height="14" rx="4" fill="#FF8A7D"/><circle cx="76" cy="24" r="5" fill="#5CCFC1"/><rect x="71" y="31" width="10" height="14" rx="4" fill="#5CCFC1"/></svg>
             <b>한 대로 둘이</b><small>기기 1대 · 화면 왼쪽·오른쪽</small>
           </button>
-          <button type="button" id="duelBtn" class="pick hot" data-tip="나와 친구가 각자 자기 기기(휴대폰·태블릿)로 카메라 판정기를 켜고 겨뤄요. 한 사람이 방을 만들면 방 번호 4자리가 생기고, 친구는 그 번호로 들어와요. 1대1·2대2·다 같이 중에서 골라요.">
+          <button type="button" id="duelBtn" class="pick" data-tip="나와 친구가 각자 자기 기기(휴대폰·태블릿)로 카메라 판정기를 켜고 겨뤄요. 한 사람이 방을 만들면 방 번호 4자리가 생기고, 친구는 그 번호로 들어와요. 1대1·2대2·다 같이 중에서 골라요.">
             <svg viewBox="0 0 120 64" width="96" height="52" aria-hidden="true"><rect x="12" y="6" width="32" height="52" rx="6" fill="#2a3140"/><rect x="16" y="12" width="24" height="38" rx="3" fill="#FF8A7D"/><circle cx="28" cy="25" r="4" fill="#fff"/><rect x="24" y="31" width="8" height="11" rx="3" fill="#fff"/><text x="60" y="38" text-anchor="middle" font-size="13" font-weight="900" fill="#7A8190">VS</text><rect x="76" y="6" width="32" height="52" rx="6" fill="#2a3140"/><rect x="80" y="12" width="24" height="38" rx="3" fill="#5CCFC1"/><circle cx="92" cy="25" r="4" fill="#fff"/><rect x="88" y="31" width="8" height="11" rx="3" fill="#fff"/></svg>
-            <b>각자 기기로 대결</b><small>기기 2~4대 · 방 번호로 1대1·2대2</small>
+            <b>각자 기기로 대결<span class="new">새로</span></b><small>기기 2~4대 · 방 번호로 1대1·2대2</small>
           </button>
         </div>
         <p id="bleHint" class="hint form-hint" style="display:none; margin:8px 0 0;">JUMPITNOW 줄넘기가 있으면 <b>스마트 줄넘기로 뛰기</b>를 눌러 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬에서 돼요)</p>

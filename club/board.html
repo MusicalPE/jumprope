@@ -171,6 +171,12 @@
     .tag-me { display: block; width: fit-content; margin: 2px 0 0; }
     td.num .sub { display: block; margin-left: 0; }
   }
+  /* 좁은 화면(휴대폰·세로 태블릿): 지구 대장정·숫자 → 클럽 순위 → 학생 순위 → 한 번에 최고 연속 → 며칠 연속 → 클럽 대결 */
+  @media (max-width: 999.98px) {
+    #body { display: flex; flex-direction: column; }
+    #body > .bw-l, #body > .bw-r { display: contents; }
+    .o-sch { order: 1; } .o-stu { order: 2; } .o-best { order: 3; } .o-run { order: 4; } .o-duel { order: 5; } .o-end { order: 6; }
+  }
   /* 넓은 화면(PC·노트북·가로 태블릿): 두 칸 — 왼쪽 로고·지구 대장정·숫자, 오른쪽 순위들(클럽·학생·연속) */
   @media (min-width: 1000px) {
     .container { max-width: 1560px; }
@@ -188,7 +194,25 @@
     .bw .hero-slogan { grid-column: 2; letter-spacing: .12em; }
     .bw .hero-slogan span { margin: 0 .6em; }
   }
-  td.nm { white-space: nowrap; }   /* 이름·학년은 한 줄로 (좁은 화면에서는 클럽 칸이 줄바꿈) */
+  td.nm { white-space: nowrap; }
+  .champ { display: inline-flex; vertical-align: -9px; margin-left: 6px; cursor: pointer; border-radius: 50%; filter: drop-shadow(0 1px 2px rgba(120,40,10,.18)); }
+  .champ:hover, .champ:focus-visible { outline: 2px solid #F6C445; outline-offset: 1px; }
+  .duel-news { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .duel-news li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); font-size: .95em; }
+  .duel-news .mine { color: var(--coral-dark); }
+  .duel-news .dn-x { color: var(--ink-2); }
+  .duel-news .dn-k { color: var(--ink-2); font-size: .88em; }
+  .duel-news .dn-d { margin-left: auto; color: var(--ink-2); font-size: .82em; }
+  .duel-news li.dn-empty { visibility: hidden; }
+  .dn-pager { display: flex; justify-content: center; gap: 6px; margin: 0 0 10px; }
+  .dn-pager button { min-width: 34px; height: 34px; padding: 0 8px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--ink-2); font: inherit; font-weight: 700; cursor: pointer; }
+  .dn-pager button.on { background: var(--coral-dark); border-color: var(--coral-dark); color: #fff; }
+  .dn-pager button:disabled { opacity: .35; cursor: default; }
+  .champ-pop { position: fixed; z-index: 1000; background: var(--surface, #fff); border: 1px solid var(--line, #E5E7EB); border-radius: 14px; box-shadow: 0 10px 30px rgba(31,36,48,.18); padding: 12px 16px; min-width: 200px; max-width: 280px; }
+  .champ-pop .cp-head { display: flex; gap: 10px; align-items: center; }
+  .champ-pop .cp-head b { display: block; font-size: 1.05em; } .champ-pop .cp-head span { font-size: .85em; color: var(--ink-2, #6B7280); }
+  .champ-pop ul { list-style: none; margin: 10px 0 0; padding: 8px 0 0; border-top: 1px dashed var(--line, #E5E7EB); }
+  .champ-pop li { font-weight: 700; padding: 2px 0; } .champ-pop li.r1 { color: #A8740F; } .champ-pop li.r2 { color: #5F6B76; } .champ-pop li.r3 { color: #8A4B1F; }   /* 이름·학년은 한 줄로 (좁은 화면에서는 클럽 칸이 줄바꿈) */
   .sch { white-space: nowrap; } .sch-s { display: none; }
   @media (max-width: 560px) { .sch-f { display: none; } .sch-s { display: inline; } }
 </style>
@@ -223,8 +247,8 @@
 
 <script>
 // 학생 순위표의 클럽 이름은 짧게 (전주송원초등학교 → 전주송원초) — 클럽 순위표는 정식 이름 그대로
-// 지역 두 글자와 클럽 이름 사이는 띄어 씀 (전주송원초등학교 → 전주 송원초등학교). 지역이 안 붙은 이름(송원초등학교)은 그대로
-function schName(v){ const t = String(v == null ? '' : v).trim(); const m = /^([가-힣]{2})([가-힣]+?)(초등학교|초|중학교|중)$/.exec(t); return m && t.indexOf(' ') < 0 ? m[1] + ' ' + m[2] + m[3] : t; }
+// 지역 두 글자와 클럽 이름 사이는 띄어 씀 (전주송원초등학교 → 전주 송원초등학교, 완주봉동초양화분교 → 완주 봉동초양화분교). 지역이 안 붙은 이름(송원초등학교)은 그대로
+function schName(v){ const t = String(v == null ? '' : v).trim(); const m = /^([가-힣]{2})([가-힣]+?)(초등학교|초|중학교|중|분교장|분교)$/.exec(t); return m && t.indexOf(' ') < 0 ? m[1] + ' ' + m[2] + m[3] : t; }
 function shortSch(v){ return schName(v).replace(/초등학교$/, '초'); }
 // 클럽 순위표: 넓은 화면은 정식 이름, 휴대폰은 짧은 이름 — 둘 다 한 줄로
 function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }; const f = schName(v), sh = shortSch(v); return f === sh ? '<span class="sch">' + esc(f) + '</span>' : '<span class="sch sch-f">' + esc(f) + '</span><span class="sch sch-s">' + esc(sh) + '</span>'; }
@@ -355,7 +379,9 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     $('body').innerHTML = '<div class="loading">현황판을 불러오는 중…</div>';
     fetch(collector + '?api=board' + (month ? '&month=' + encodeURIComponent(month) : '') + (grade ? '&grade=' + encodeURIComponent(grade) : ''), { cache: 'no-store' })
       .then(function(r){ if (!r.ok) throw new Error('응답 오류 ' + r.status); return r.json(); })
-      .then(function(j){ if (!j.ok) throw new Error(j.error || '불러오기 실패'); data = j.result; if (data.alias && data.alias[me]) me = data.alias[me]; draw(); })
+      .then(function(j){ if (!j.ok) throw new Error(j.error || '불러오기 실패'); data = j.result; if (data.alias && data.alias[me]) me = data.alias[me]; draw();
+        duelLoad();
+        if (!CHD) champLoad().then(function(d){ CHD = d; if (Object.keys(d).some(function(c){ return Object.keys(d[c]).length; })) draw(); }); })
       .catch(function(err){ $('body').innerHTML = '<div class="err">현황판을 불러오지 못했어요: ' + esc(err.message || err) + '</div>'; });
   }
 
@@ -377,17 +403,108 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     return list.map(function(x, i){ r = (i > 0 && list[i - 1][field] === x[field]) ? r : i + 1; return Object.assign({ _r: x.rank && typeof x.rank === 'number' ? x.rank : r }, x); });
   }
   const gradeSub = function(x){ return x.g ? '<span class="sub">' + esc(x.g) + '학년</span>' : ''; };
+const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L 26.2 94.5 L 31.8 71.3 L 44.5 51.0 L 63.0 35.9" fill="none" stroke="__C__" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 0 C 8.0 -5.7, 6.4 -15.2, 0 -19.0 C -6.4 -15.2, -8.0 -5.7, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(53.9,157.9) rotate(-98.7)"/><path d="M0 0 C 7.2 -5.1, 5.7 -13.7, 0 -17.1 C -5.7 -13.7, -7.2 -5.1, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(53.9,157.9) rotate(-22.7)"/><path d="M0 0 C 7.6 -5.4, 6.0 -14.4, 0 -18.0 C -6.0 -14.4, -7.6 -5.4, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(37.8,140.1) rotate(-80.1)"/><path d="M0 0 C 6.8 -4.9, 5.4 -13.0, 0 -16.2 C -5.4 -13.0, -6.8 -4.9, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(37.8,140.1) rotate(-4.1)"/><path d="M0 0 C 7.1 -5.1, 5.7 -13.6, 0 -17.0 C -5.7 -13.6, -7.1 -5.1, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(28.3,118.3) rotate(-61.6)"/><path d="M0 0 C 6.4 -4.6, 5.1 -12.2, 0 -15.3 C -5.1 -12.2, -6.4 -4.6, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(28.3,118.3) rotate(14.4)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(26.2,94.5) rotate(-43.0)"/><path d="M0 0 C 6.0 -4.3, 4.8 -11.5, 0 -14.4 C -4.8 -11.5, -6.0 -4.3, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(26.2,94.5) rotate(33.0)"/><path d="M0 0 C 6.3 -4.5, 5.0 -12.0, 0 -15.0 C -5.0 -12.0, -6.3 -4.5, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(31.8,71.3) rotate(-24.4)"/><path d="M0 0 C 5.7 -4.0, 4.5 -10.8, 0 -13.5 C -4.5 -10.8, -5.7 -4.0, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(31.8,71.3) rotate(51.6)"/><path d="M0 0 C 5.9 -4.2, 4.7 -11.2, 0 -14.0 C -4.7 -11.2, -5.9 -4.2, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(44.5,51.0) rotate(-5.9)"/><path d="M0 0 C 5.3 -3.8, 4.2 -10.1, 0 -12.6 C -4.2 -10.1, -5.3 -3.8, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(44.5,51.0) rotate(70.1)"/><path d="M0 0 C 5.5 -3.9, 4.4 -10.4, 0 -13.0 C -4.4 -10.4, -5.5 -3.9, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(12.7)"/><path d="M0 0 C 4.9 -3.5, 3.9 -9.4, 0 -11.7 C -3.9 -9.4, -4.9 -3.5, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(88.7)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(63.0,35.9) rotate(50.7)"/><path d="M 125.3 169.5 L 146.1 157.9 L 162.2 140.1 L 171.7 118.3 L 173.8 94.5 L 168.2 71.3 L 155.5 51.0 L 137.0 35.9" fill="none" stroke="__C__" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 0 C 8.0 -5.7, 6.4 -15.2, 0 -19.0 C -6.4 -15.2, -8.0 -5.7, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(146.1,157.9) rotate(22.7)"/><path d="M0 0 C 7.2 -5.1, 5.7 -13.7, 0 -17.1 C -5.7 -13.7, -7.2 -5.1, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(146.1,157.9) rotate(98.7)"/><path d="M0 0 C 7.6 -5.4, 6.0 -14.4, 0 -18.0 C -6.0 -14.4, -7.6 -5.4, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(162.2,140.1) rotate(4.1)"/><path d="M0 0 C 6.8 -4.9, 5.4 -13.0, 0 -16.2 C -5.4 -13.0, -6.8 -4.9, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(162.2,140.1) rotate(80.1)"/><path d="M0 0 C 7.1 -5.1, 5.7 -13.6, 0 -17.0 C -5.7 -13.6, -7.1 -5.1, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(171.7,118.3) rotate(-14.4)"/><path d="M0 0 C 6.4 -4.6, 5.1 -12.2, 0 -15.3 C -5.1 -12.2, -6.4 -4.6, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(171.7,118.3) rotate(61.6)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(173.8,94.5) rotate(-33.0)"/><path d="M0 0 C 6.0 -4.3, 4.8 -11.5, 0 -14.4 C -4.8 -11.5, -6.0 -4.3, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(173.8,94.5) rotate(43.0)"/><path d="M0 0 C 6.3 -4.5, 5.0 -12.0, 0 -15.0 C -5.0 -12.0, -6.3 -4.5, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(168.2,71.3) rotate(-51.6)"/><path d="M0 0 C 5.7 -4.0, 4.5 -10.8, 0 -13.5 C -4.5 -10.8, -5.7 -4.0, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(168.2,71.3) rotate(24.4)"/><path d="M0 0 C 5.9 -4.2, 4.7 -11.2, 0 -14.0 C -4.7 -11.2, -5.9 -4.2, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(155.5,51.0) rotate(-70.1)"/><path d="M0 0 C 5.3 -3.8, 4.2 -10.1, 0 -12.6 C -4.2 -10.1, -5.3 -3.8, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(155.5,51.0) rotate(5.9)"/><path d="M0 0 C 5.5 -3.9, 4.4 -10.4, 0 -13.0 C -4.4 -10.4, -5.5 -3.9, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-88.7)"/><path d="M0 0 C 4.9 -3.5, 3.9 -9.4, 0 -11.7 C -3.9 -9.4, -4.9 -3.5, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-12.7)"/><path d="M0 0 C 6.7 -4.8, 5.4 -12.8, 0 -16.0 C -5.4 -12.8, -6.7 -4.8, 0 0 Z" fill="__L__" stroke="__C__" stroke-width="1.6" stroke-linejoin="round" transform="translate(137.0,35.9) rotate(-50.7)"/>';
+  // 지난 달 전국 1~3등 배지: 상장의 월계관과 같은 그림 · 1등 금, 2등 은, 3등 동 · 같은 등수를 여러 번 했으면 가운데에 그 횟수
+  const MEDAL = { 1: ['#C9921A', '#FFE9A8', '#F6C445', '#F26A3D'], 2: ['#7D8791', '#E9EDF1', '#BCC5CE', '#6B7682'], 3: ['#9A5A28', '#F6DCC4', '#D08A4E', '#A0522D'] };
+  function champSvg(rank, n, size){ const M = MEDAL[rank] || MEDAL[1], C = M[0], L = M[1]; size = size || 30;
+    let s = '<svg class="laurel" viewBox="0 -2 200 202" width="' + size + '" height="' + size + '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + LAUREL_W.split('__C__').join(C).split('__L__').join(L);
+    let p = ''; for (let i = 0; i < 10; i++){ const rr = i % 2 ? 44 * 0.45 : 44, a = (-90 + 36 * i) * Math.PI / 180; p += (100 + rr * Math.cos(a)).toFixed(1) + ',' + (98 + rr * Math.sin(a)).toFixed(1) + ' '; }
+    s += '<polygon points="' + p + '" fill="' + M[2] + '"/>';
+    if (n > 1) s += '<circle cx="100" cy="100" r="40" fill="' + M[3] + '"/><text x="100" y="124" text-anchor="middle" font-family="Pretendard, sans-serif" font-weight="900" font-size="68" fill="#fff">' + n + '</text>';
+    return s + '<path d="M60 176 C 80 160, 120 160, 140 176" fill="none" stroke="' + M[3] + '" stroke-width="5" stroke-linecap="round"/><g stroke="' + C + '" stroke-width="8" stroke-linecap="round"><path d="M60 176 L48 186"/><path d="M140 176 L152 186"/></g></svg>'; }
+  // 기록실(최근 12개월) 달마다 1~3등: CHD[분류][누구] = [{ m: '2026-09', r: 1 }, …]
+  //  학생은 클럽 공개 번호 + 가린 이름 + 학년으로 알아봄 (연속·최고 연속 목록에는 학생 키가 없어서 모두 같은 방식으로)
+  let CHD = null, chP = null;
+  const pkey = function(x){ return (x.pid || '') + '|' + (x.n || '') + '|' + (x.g || ''); };
+  const CAT = { stu: '전국 학생 순위', run: '며칠 연속 뛰었나', best: '한 번에 최고 연속', total: '클럽 순위 · 합계', avg: '클럽 순위 · 1인당 평균', rate: '클럽 순위 · 참여율' };
+  function champLoad(){
+    if (chP) return chP;
+    const out = { stu: {}, run: {}, best: {}, total: {}, avg: {}, rate: {} };
+    const put = function(cat, id, m, r){ if (!id || !(r >= 1 && r <= 3)) return; (out[cat][id] = out[cat][id] || []).push({ m: m, r: r }); };
+    // 반마다 따로 설치해 한 클럽으로 합친 경우: 지난 달 기록의 클럽 번호를 지금 쓰는 번호로 맞춤
+    let al = (data && data.alias) || {};
+    const cn = function(p){ let q = p, i = 0; while (al[q] && al[q] !== q && i++ < 5) q = al[q]; return q; };
+    const ck = function(x){ return pkey(Object.assign({}, x, { pid: cn(x.pid) })); };
+    const add = function(mm){ if (!mm || !mm.month) return; const m = mm.month;
+      (mm.students || []).forEach(function(x){ put('stu', ck(x), m, x.rank); });
+      (mm.streaks50 || []).forEach(function(x){ put('run', ck(x), m, x.rank); });
+      (mm.best50 || []).forEach(function(x){ put('best', ck(x), m, x.rank); });
+      ['total', 'avg', 'rate'].forEach(function(k){ ((mm.schools || {})[k] || []).forEach(function(x){ put(k, cn(x.pid), m, x.rank); }); }); };
+    chP = fetch(collector + '?api=hall', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(j){
+      if (!j.ok) return out; const res = j.result; al = Object.assign({}, res.alias || {}, al); add(res.month);
+      const rest = (res.list || []).filter(function(m){ return !(res.month && res.month.month === m); });
+      return Promise.all(rest.map(function(m){ return fetch(collector + '?api=hall&month=' + encodeURIComponent(m), { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(j){ if (j.ok) add(j.result.month); }).catch(function(){}); })).then(function(){ return out; });
+    }).catch(function(){ return out; });
+    return chP;
+  }
+  // 보고 있는 달보다 앞선 달만
+  function champList(cat, id){ if (!CHD || !id || !data || !CHD[cat]) return []; return (CHD[cat][id] || []).filter(function(o){ return o.m < data.month; }).sort(function(a, b){ return a.m < b.m ? -1 : 1; }); }
+  function champTop(list){ const r = Math.min.apply(null, list.map(function(o){ return o.r; })); return { r: r, n: list.filter(function(o){ return o.r === r; }).length }; }
+  const champ = function(cat, x, isSchool){ const id = isSchool ? x.pid : pkey(x), L = champList(cat, id); if (!L.length) return '';
+    const t = champTop(L), nm = isSchool ? x.label : x.n;
+    return '<span class="champ" role="button" tabindex="0" data-cc="' + cat + '" data-ci="' + esc(id) + '" data-cn="' + esc(nm) + '" title="눌러서 언제 몇 등이었는지 보기">' + champSvg(t.r, t.n) + '</span>'; };
+  const champS = function(x){ return champ('stu', x); };
+  // 배지를 누르면 언제 몇 등이었는지 작은 창으로
+  function champPop(el){
+    let pop = document.getElementById('champPop'); if (pop) pop.remove();
+    const cat = el.dataset.cc, L = champList(cat, el.dataset.ci); if (!L.length) return;
+    const t = champTop(L), cnt = [1, 2, 3].map(function(r){ const c = L.filter(function(o){ return o.r === r; }).length; return c ? r + '등 ' + c + '번' : ''; }).filter(Boolean).join(' · ');
+    pop = document.createElement('div'); pop.id = 'champPop'; pop.className = 'champ-pop';
+    pop.innerHTML = '<div class="cp-head">' + champSvg(t.r, t.n, 44) + '<div><b>' + esc(el.dataset.cn) + '</b><span>' + CAT[cat] + ' · ' + cnt + '</span></div></div>' +
+      '<ul>' + L.map(function(o){ return '<li class="r' + o.r + '">' + mLabel(o.m) + ' 전국 ' + o.r + '위</li>'; }).join('') + '</ul>';
+    document.body.appendChild(pop);
+    const r = el.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    pop.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
+    pop.style.top = (r.bottom + 8 + h > innerHeight ? Math.max(8, r.top - h - 8) : r.bottom + 8) + 'px';
+  }
+  document.addEventListener('click', function(e){ const c = e.target.closest && e.target.closest('.champ'); if (c) { e.stopPropagation(); e.preventDefault(); champPop(c); return; } const p = document.getElementById('champPop'); if (p && !e.target.closest('#champPop')) p.remove(); }, true);
+  document.addEventListener('keydown', function(e){ const c = e.target.closest && e.target.closest('.champ'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); champPop(c); } });
+  window.addEventListener('scroll', function(){ const p = document.getElementById('champPop'); if (p) p.remove(); }, true);
+  // 클럽 대결(도전장): 최근 대결 — 상대가 받은 것만 (수집기 15판)
+  let DUELS = null;
+  function duelLoad(){
+    const put = function(){ const el = $('duelCard'); if (el && DUELS) el.innerHTML = duelHtml(DUELS); };
+    if (DUELS) return put();
+    fetch(collector + '?api=duels', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(j){ if (j.ok && j.result && j.result.list) { DUELS = j.result.list; put(); } }).catch(function(){});
+  }
+  // 클럽 대결은 결과(점수·승패)를 띄우지 않고, 두 클럽이 겨뤘다는 소식만 가볍게 — 결과는 두 클럽 관리자 메뉴에서만
+  // 대결이 많아져도 카드가 길어지지 않게 한 쪽에 DUEL_PER 개씩, 지난 대결은 2·3쪽으로 넘겨 봐요
+  const DUEL_PER = 5;
+  let duelPage = 1;
+  function duelHtml(L){
+    L = L.filter(function(d){ return d.host && d.guest && (d.status === 'playing' || d.status === 'done'); });
+    if (!L.length) return '';
+    const pages = Math.ceil(L.length / DUEL_PER);
+    duelPage = Math.min(Math.max(1, duelPage), pages);
+    const kind = function(d){ return d.kind === 'day' ? '하루 카메라 기록' : d.kind === 'bak' ? '박 터트리기' : (d.dur / 60) + '분 한 판'; };
+    const md = function(x){ return x ? Number(x.slice(5, 7)) + '/' + Number(x.slice(8, 10)) : ''; };
+    const nm = function(x){ return '<b class="' + (x.named ? '' : 'anon') + (x.pid === me ? ' mine' : '') + '">' + schHtml(x.label) + '</b>'; };
+    const rows = L.slice((duelPage - 1) * DUEL_PER, duelPage * DUEL_PER).map(function(d){
+      return '<li>' + nm(d.host) + '<span class="dn-x">×</span>' + nm(d.guest) + '<span class="dn-k">' + kind(d) + ' · ' + (d.status === 'done' ? '함께 뛰었어요' : '겨루는 중') + '</span><span class="dn-d">' + md(d.created) + '</span></li>';
+    });
+    for (let i = rows.length; pages > 1 && i < DUEL_PER; i++) rows.push(rows[0].replace('<li>', '<li class="dn-empty" aria-hidden="true">'));   // 마지막 쪽도 같은 높이로
+    let pager = '';
+    if (pages > 1) {
+      pager = '<div class="dn-pager"><button type="button" data-dpage="' + (duelPage - 1) + '"' + (duelPage === 1 ? ' disabled' : '') + ' aria-label="앞 쪽">‹</button>';
+      for (let i = 1; i <= pages; i++) pager += '<button type="button" data-dpage="' + i + '"' + (i === duelPage ? ' class="on" aria-current="page"' : '') + '>' + i + '</button>';
+      pager += '<button type="button" data-dpage="' + (duelPage + 1) + '"' + (duelPage === pages ? ' disabled' : '') + ' aria-label="다음 쪽">›</button></div>';
+    }
+    return '<div class="card"><div class="card-head"><div><h2>클럽 대결 소식</h2><span class="hint">도전장을 주고받고 같은 종목으로 함께 뛴 클럽들이에요</span></div></div>' +
+      '<ul class="duel-news">' + rows.join('') + '</ul>' + pager +
+      '<p class="hint" style="margin-bottom:0;">결과는 두 클럽의 관리자 메뉴 → 클럽 대결에서만 볼 수 있어요. 도전장도 거기서 만들거나 받아요.</p></div>';
+  }
+  document.addEventListener('click', function(e){ const b = e.target.closest && e.target.closest('[data-dpage]'); if (!b || b.disabled) return; duelPage = +b.dataset.dpage; const el = $('duelCard'); if (el && DUELS) el.innerHTML = duelHtml(DUELS); });
   const STU_HEAD = '<tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">횟수</th><th class="num hide-sm">📷</th></tr>';
-  const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
+  const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champS(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   const RUN_HEAD = '<tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">연속</th><th class="num hide-sm">횟수</th></tr>';
-  const runRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>'; };
+  const runRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champ('run', x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>'; };
   const IN_HEAD = '<tr><th>클럽 안 순위</th><th>이름</th><th class="num">횟수</th><th class="num">전국</th><th class="num hide-sm">뛴 날</th><th class="num hide-sm">📷</th></tr>';
-  const inRow = function(x){ return '<tr><td>' + rankHtml(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + (x.nr ? n(x.nr) + '등' : '–') + '</td><td class="num mono hide-sm">' + x.days + '일</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
+  const inRow = function(x){ return '<tr><td>' + rankHtml(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champS(x) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + (x.nr ? n(x.nr) + '등' : '–') + '</td><td class="num mono hide-sm">' + x.days + '일</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   // 등수 칸: 50등 밖(전국 1,030등 등)도 숫자로
   const rankCell = function(r){ return r > 99 ? '<span class="rank wide">' + n(r) + '</span>' : rankHtml(r); };
   const SHOW_BEST = 5;   // 왼쪽 칸이라 5등까지만 바로 보이고 나머지는 팝업
   const BEST_HEAD = '<tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">최고 연속</th></tr>';
-  const bestRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm"><b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + n(x.best) + '회</b></td></tr>'; };
+  const bestRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champ('best', x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + n(x.best) + '회</b></td></tr>'; };
   const table = function(head, rows, row, cls){ return '<table' + (cls ? ' class="' + cls + '"' : '') + '><thead>' + head + '</thead><tbody>' + rows.map(row).join('') + '</tbody></table>'; };
 
   // 이름 찾기: 이름은 가운데가 * 로 가려져 있어서, 찾는 이름도 똑같이 가려서 맞춰 봐요 (김하늘 → 김*늘)
@@ -502,7 +619,7 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     // 한 번에 최고 연속 (수집기 13판 이상): 스마트 줄넘기·카메라 판정기로 잰 기록만 — 줄이 걸리지 않고 이어 뛴 가장 많은 수
     if (Array.isArray(data.ropeBest)) {
       const rb = ranked(data.ropeBest, 'best');
-      html += '<div class="card"><div class="card-head"><div><h2>⚡ 한 번에 최고 연속</h2><span class="hint">걸리지 않고 이어 뛴 가장 많은 수 · 스마트 줄넘기나 카메라 판정기로 뛴 기록만</span></div></div>';
+      html += '<div class="card o-best"><div class="card-head"><div><h2>⚡ 한 번에 최고 연속</h2><span class="hint">걸리지 않고 이어 뛴 가장 많은 수 · 스마트 줄넘기나 카메라 판정기로 뛴 기록만</span></div></div>';
       if (!rb.length) html += '<div class="empty"><span style="display:inline-block">스마트 줄넘기나 카메라 판정기로 뛰면 여기에 올라와요.</span><br><span style="display:inline-block">클럽 껍데기 5판부터 기록돼요.</span></div>';
       else {
         html += '<div class="table-wrap">' + table(BEST_HEAD, rb.slice(0, SHOW_BEST), bestRow) + '</div>';
@@ -529,7 +646,7 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
       if (!mine && data.v) { const d = schoolData(me); mine = d && d.school; }
     }
     const nSchools = data.schoolsTotal || (data.summary && data.summary.schools) || schools.length;
-    html += '<div class="card"><div class="card-head"><div><h2>클럽 순위</h2><span class="hint">클럽 줄을 누르면 그 클럽 안 학생 순위가 보여요</span></div>' +
+    html += '<div class="card o-sch"><div class="card-head"><div><h2>클럽 순위</h2><span class="hint">클럽 줄을 누르면 그 클럽 안 학생 순위가 보여요</span></div>' +
       '<div class="seg" id="sortSeg"><button data-k="total"' + (sortBy === 'total' ? ' class="on"' : '') + '>합계</button><button data-k="avg"' + (sortBy === 'avg' ? ' class="on"' : '') + '>1인당 평균</button><button data-k="rate"' + (sortBy === 'rate' ? ' class="on"' : '') + '>참여율</button></div></div>';
     if (!schools.length) html += '<div class="empty"><span style="display:inline-block">' + mLabel(data.month) + ' 기록이 아직 없어요.</span><br><span style="display:inline-block">첫 기록의 주인공이 되어 보세요!</span></div>';
     else {
@@ -537,7 +654,7 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
         const isMe = sc.pid === me;
         let h = '<tr class="school' + (isMe ? ' me' : '') + (tail ? ' tail' : '') + '" data-pid="' + esc(sc.pid) + '">' +
           '<td>' + rankHtml(sc.rank[key]) + '</td>' +
-          '<td><span class="' + (sc.named ? '' : 'anon') + '">' + schHtml(sc.label) + '</span>' + (isMe ? '<span class="tag-me">우리 클럽</span>' : '') + '</td>' +
+          '<td><span class="' + (sc.named ? '' : 'anon') + '">' + schHtml(sc.label) + '</span>' + champ(key, sc, true) + (isMe ? '<span class="tag-me">우리 클럽</span>' : '') + '</td>' +
           '<td class="num mono">' + n(sc.total) + '</td>' +
           (sc.noReg ? '<td class="num mono">–</td><td class="num mono">–</td>' :
           '<td class="num mono">' + n(sc.avg) + '</td>' +
@@ -558,7 +675,7 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
 
     // 전국 학생 순위: 10등까지, 나머지는 팝업(10명씩, 50등까지)
     const st = ranked(data.students || [], 'c');
-    html += '<div class="card"><div class="card-head"><div><h2>전국 학생 순위</h2><span class="hint">' + mLabel(data.month) + ' 동안 뛴 횟수 합계</span></div></div>';
+    html += '<div class="card o-stu"><div class="card-head"><div><h2>전국 학생 순위</h2><span class="hint">' + mLabel(data.month) + ' 동안 뛴 횟수 합계</span></div></div>';
     if (!st.length) html += '<div class="empty">아직 기록이 없어요.</div>';
     else {
       html += '<div class="table-wrap">' + table(STU_HEAD, st.slice(0, SHOW_STU), stuRow) + '</div>';
@@ -568,7 +685,7 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     // 며칠 연속 뛰었나 (수집기 9판 이상)
     if (Array.isArray(data.streaks)) {
       const sk = ranked(data.streaks, 'run');
-      html += '<div class="card"><div class="card-head"><div><h2>🔥 며칠 연속 뛰었나</h2><span class="hint">이어서 뛴 날 수 - 이틀 이상부터</span></div></div>';
+      html += '<div class="card o-run"><div class="card-head"><div><h2>🔥 며칠 연속 뛰었나</h2><span class="hint">이어서 뛴 날 수 - 이틀 이상부터</span></div></div>';
       if (!sk.length) html += '<div class="empty"><span style="display:inline-block">아직 이틀 연속 뛴 친구가 없어요.</span><br><span style="display:inline-block">첫 주인공이 되어 보세요!</span></div>';
       else {
         html += '<div class="table-wrap">' + table(RUN_HEAD, sk.slice(0, SHOW_STU), runRow) + '</div>';
@@ -576,8 +693,9 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
       }
       html += '</div>';
     }
+    html += '<div id="duelCard" class="o-duel">' + (DUELS ? duelHtml(DUELS) : '') + '</div>';   // 클럽 대결은 맨 끝
     html += '</div>';
-    html += '<p class="hint" style="text-align:center;">집계는 몇 분마다 새로 고쳐져요 · 마지막 갱신 ' + new Date(data.updated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + '</p>';
+    html += '<p class="hint o-end" style="text-align:center;">집계는 몇 분마다 새로 고쳐져요 · 마지막 갱신 ' + new Date(data.updated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + '</p>';
     $('body').innerHTML = html;
     if ($('ejMapBtn')) $('ejMapBtn').onclick = showEarthMap;
     ejDraw();
