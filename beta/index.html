@@ -760,7 +760,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.8.4', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.8.5', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1265,6 +1265,7 @@ document.addEventListener('DOMContentLoaded', function(){
           <label id="mateWrap" style="display:none; flex-direction:row; align-items:center; gap:8px; margin:0; white-space:nowrap;">같이 뛸 친구 <select id="mateSelect" style="margin:0; width:auto; padding:10px 12px;"><option value="">선택</option></select></label>
           <button type="button" id="bleBtn" class="btn-outline" data-tip="스마트 줄넘기(JUMPITNOW)를 블루투스로 연결해요. 뛴 횟수가 줄넘기에서 바로 들어오고, 선생님이 확인하면 기록에 반영돼요. (안드로이드·크롬북·PC 크롬)" style="display:none; padding:10px 16px;">스마트 줄넘기로 뛰기</button>
         </div>
+        <p id="joinHint" class="pbx" style="display:none;"></p>
         <div id="pickRow" class="pick-row" style="display:none;">
           <button type="button" id="camera2Btn" class="pick" data-tip="태블릿·노트북 한 대로 두 사람이 나란히 뛰어요. 같이 뛸 친구를 고르면 판정기가 화면 왼쪽(나)·오른쪽(친구)을 따로 세고, 누가 이겼는지 보여 준 뒤 두 사람 기록을 각자 저장해요." style="display:none;">
             <svg viewBox="0 0 120 64" width="96" height="52" aria-hidden="true"><rect x="22" y="6" width="76" height="52" rx="8" fill="#2a3140"/><rect x="27" y="11" width="66" height="42" rx="4" fill="#3a4253"/><line x1="60" y1="13" x2="60" y2="51" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-dasharray="4 3"/><circle cx="44" cy="24" r="5" fill="#FF8A7D"/><rect x="39" y="31" width="10" height="14" rx="4" fill="#FF8A7D"/><circle cx="76" cy="24" r="5" fill="#5CCFC1"/><rect x="71" y="31" width="10" height="14" rx="4" fill="#5CCFC1"/></svg>
@@ -2035,6 +2036,13 @@ google.script.run.withSuccessHandler(function(c){
     document.getElementById('cameraBtn').style.display = '';
     document.getElementById('cameraHint').style.display = '';
     document.getElementById('pickRow').style.display = '';
+    if (JOIN) {   // 친구 판정기의 방 QR로 들어온 경우 (2.8.5)
+      const h = document.getElementById('joinHint'); h.style.display = '';
+      h.innerHTML = '<b>방 ' + JOIN + ' 에 들어가요</b><span>학년·반·이름과 줄넘기 종류를 고르고 아래 <b style="font-size:14px">방 ' + JOIN + ' 들어가기</b>를 눌러요.</span>';
+      document.querySelector('#duelBtn b').innerHTML = '방 ' + JOIN + ' 들어가기';
+      document.querySelector('#duelBtn small').textContent = '친구가 만든 방 · QR로 왔어요';
+      setTimeout(function(){ h.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 400);
+    }
     if (Math.min(screen.width, screen.height) >= 600) document.getElementById('camera2Btn').style.display = '';   // 한 대로 둘이는 태블릿·노트북처럼 화면이 넓은 기기에서만
   }
 }).getCameraSettings();
@@ -2076,6 +2084,8 @@ document.getElementById('camera2Btn').addEventListener('click', function(){
   }).withFailureHandler(function(e){ fail('오류: ' + String(e)); }).issueCameraToken(id, type);
 });
 
+const JOIN = /^\d{4}$/.test(APP.q.join || '') ? APP.q.join : '';   // 친구 판정기의 방 QR (…&join=방 번호)
+const HOME_Q = '&home=' + encodeURIComponent(location.origin + location.pathname);   // 판정기가 방 QR을 만들 때 쓰는 이 앱 주소
 /* ---- 각자 기기로 대결 (2.8.4): 판정기를 '방 만들기 · 들어가기' 창을 띄운 채로 엶 (학교 껍데기 6판부터, 1대1·2대2 인원 제한은 8판이 확실히) ---- */
 document.getElementById('duelBtn').addEventListener('click', function(){
   const id = document.getElementById('nameSelect').value;
@@ -2083,13 +2093,15 @@ document.getElementById('duelBtn').addEventListener('click', function(){
   const msg = document.getElementById('formMsg');
   if (APP.shell && APP.shell.shell && APP.shell.shell < 6) { msg.textContent = '각자 기기로 대결은 학교 껍데기 6판부터 쓸 수 있어요. 선생님께 말씀드려요.'; return; }
   if (!id) { msg.textContent = '학년/반/이름을 먼저 선택해주세요.'; return; }
+  if (!type && JOIN) { const ts = document.getElementById('typeSelect'), first = Array.prototype.find.call(ts.options, function(o){ return o.value; }); if (first) { ts.value = first.value; return this.click(); } }
   if (!type) { msg.textContent = '줄넘기 종류를 먼저 선택해주세요.'; return; }
   const win = window.open('', '_blank');
   msg.textContent = '판정기 준비 중...';
   google.script.run.withSuccessHandler(function(res){
     if (!res.ok) { if (win) win.close(); msg.textContent = res.message; return; }
-    const url = res.url + '&duel=1';
+    const url = res.url + '&duel=1' + (JOIN ? '&join=' + JOIN : '') + HOME_Q;
     if (win) { win.location.href = url; }
+    if (JOIN) msg.innerHTML = '판정기 창이 열렸어요. <b>카메라를 켜면</b> 방 ' + JOIN + ' 으로 바로 들어가요. 창이 안 열렸다면 <a href="' + url + '" target="_blank">여기</a>를 눌러 주세요.'; else
     msg.innerHTML = '판정기 창이 열렸어요. <b>방 만들기</b>를 누르고 방 번호를 친구에게 알려 주거나, 친구가 알려 준 번호로 <b>들어가기</b>를 눌러요. 창이 안 열렸다면 <a href="' + url + '" target="_blank">여기</a>를 눌러 주세요.';
   }).withFailureHandler(function(err){ if (win) win.close(); msg.textContent = '오류: ' + String(err); }).issueCameraToken(id, type);
 });
@@ -2105,6 +2117,7 @@ document.getElementById('cameraBtn').addEventListener('click', function(){
   msg.textContent = '판정기 준비 중...';
   google.script.run.withSuccessHandler(function(res){
     if (!res.ok) { if (win) win.close(); msg.textContent = res.message; return; }
+    res.url += HOME_Q;
     if (win) { win.location.href = res.url; }
     msg.innerHTML = '판정기 창이 열렸어요. 뛰고 나서 <b>"끝내고 기록하기"</b>를 누르면 자동으로 기록됩니다. 창이 안 열렸다면 <a href="' + res.url + '" target="_blank">여기</a>를 눌러 주세요.';
   }).withFailureHandler(function(err){ if (win) win.close(); msg.textContent = '오류: ' + String(err); }).issueCameraToken(id, type);
