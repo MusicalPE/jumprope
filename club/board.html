@@ -204,6 +204,9 @@
   .duel-news .dn-k { color: var(--ink-2); font-size: .88em; }
   .duel-news .dn-d { margin-left: auto; color: var(--ink-2); font-size: .82em; }
   .duel-news li.dn-empty { visibility: hidden; }
+  .dn-cnt { display: inline-block; margin-left: 8px; font-size: 13px; font-weight: 800; color: var(--coral-dark); background: rgba(242,106,61,.12); border-radius: 99px; padding: 2px 10px; vertical-align: 3px; }
+  .dn-none { border: 1px dashed var(--line); border-radius: 12px; padding: 18px; margin: 4px 0 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+  .dn-prev { border: 1px solid var(--coral); color: var(--coral-dark); background: rgba(242,106,61,.08); border-radius: 10px; padding: 8px 16px; font: inherit; font-weight: 800; cursor: pointer; }
   .dn-pager { display: flex; justify-content: center; gap: 6px; margin: 0 0 10px; }
   .dn-pager button { min-width: 34px; height: 34px; padding: 0 8px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--ink-2); font: inherit; font-weight: 700; cursor: pointer; }
   .dn-pager button.on { background: var(--coral-dark); border-color: var(--coral-dark); color: #fff; }
@@ -461,26 +464,45 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
   document.addEventListener('keydown', function(e){ const c = e.target.closest && e.target.closest('.champ'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); champPop(c); } });
   window.addEventListener('scroll', function(){ const p = document.getElementById('champPop'); if (p) p.remove(); }, true);
   // 클럽 대결(도전장): 최근 대결 — 상대가 받은 것만 (수집기 15판)
-  let DUELS = null;
+  // 달별 (수집기 21판): 고른 달에 끝난 대결(겨루는 중이면 만든 달). 예전 수집기는 최근 목록을 받아 여기서 달로 나눔
+  let DUELS = null; const DUELM = {};
+  const duelMon = function(d){ if (d.mon) return d.mon; const at = [d.host && d.host.res && d.host.res.at, d.guest && d.guest.res && d.guest.res.at].filter(Boolean).sort().pop();
+    return String((d.status === 'done' && at) || d.created || '').slice(0, 7); };
   function duelLoad(){
-    const put = function(){ const el = $('duelCard'); if (el && DUELS) el.innerHTML = duelHtml(DUELS); };
-    if (DUELS) return put();
-    fetch(collector + '?api=duels', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(j){ if (j.ok && j.result && j.result.list) { DUELS = j.result.list; put(); } }).catch(function(){});
+    const mo = data && data.month || '';
+    const put = function(){ DUELS = DUELM[mo]; const el = $('duelCard'); if (el && DUELS) el.innerHTML = duelHtml(DUELS); };
+    if (DUELM[mo]) return put();
+    fetch(collector + '?api=duels' + (mo ? '&month=' + encodeURIComponent(mo) : ''), { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(j){
+      if (!(j.ok && j.result && j.result.list)) return;
+      const R = j.result, L = R.list.filter(function(d){ return d.host && d.guest && (d.status === 'playing' || d.status === 'done'); });
+      let counts = R.counts;
+      if (!counts) { counts = {}; L.forEach(function(d){ const m = duelMon(d); counts[m] = (counts[m] || 0) + 1; }); }   // 예전 수집기
+      DUELM[mo] = { mo: mo, counts: counts, list: L.filter(function(d){ return !mo || duelMon(d) === mo; }) }; duelPage = 1; put(); }).catch(function(){});
   }
   // 클럽 대결은 결과(점수·승패)를 띄우지 않고, 두 클럽이 겨뤘다는 소식만 가볍게 — 결과는 두 클럽 관리자 메뉴에서만
   // 대결이 많아져도 카드가 길어지지 않게 한 쪽에 DUEL_PER 개씩, 지난 대결은 2·3쪽으로 넘겨 봐요
   const DUEL_PER = 5;
   let duelPage = 1;
-  function duelHtml(L){
-    L = L.filter(function(d){ return d.host && d.guest && (d.status === 'playing' || d.status === 'done'); });
-    if (!L.length) return '';
+  function duelHtml(D){
+    const L = D.list, mo = D.mo, ml = mo ? Number(mo.slice(5, 7)) + '월' : '';
+    const total = Object.keys(D.counts || {}).reduce(function(a, k){ return a + D.counts[k]; }, 0);
+    if (!total) return '';   // 대결이 아직 한 번도 없으면 칸을 숨김
+    const head = '<div class="card"><div class="card-head"><div><h2>클럽 대결 소식' + (L.length ? '<span class="dn-cnt">' + ml + ' · ' + L.length + '건</span>' : '') + '</h2><span class="hint">' + (ml ? ml + '에 ' : '') + '도전장을 주고받고 같은 종목으로 함께 뛴 클럽들이에요</span></div></div>';
+    const foot = '<p class="hint" style="margin-bottom:0;">결과는 두 클럽의 관리자 메뉴 → 클럽 대결에서만 볼 수 있어요. 도전장도 거기서 만들거나 받아요.</p></div>';
+    if (!L.length) {
+      const y = Number(mo.slice(0, 4)), m = Number(mo.slice(5, 7)), pv = (m === 1 ? y - 1 : y) + '-' + String(m === 1 ? 12 : m - 1).padStart(2, '0'), pc = (D.counts || {})[pv] || 0;
+      const cur = data && mo === data.current;
+      return head + '<div class="dn-none"><b>' + ml + (cur ? ' 대결은 아직 없어요' : '에는 대결이 없었어요') + '</b>' + (cur ? '<span class="hint">관리자 메뉴 → 클럽 대결의 도전장 게시판에서 첫 도전장을 올려 보세요</span>' : '') +
+        (pc ? '<button type="button" class="dn-prev" data-dmon="' + pv + '">지난 달(' + Number(pv.slice(5, 7)) + '월) 소식 ' + pc + '건 보기 ›</button>' : '') + '</div>' + foot;
+    }
     const pages = Math.ceil(L.length / DUEL_PER);
     duelPage = Math.min(Math.max(1, duelPage), pages);
     const kind = function(d){ return d.kind === 'day' ? '하루 카메라 기록' : d.kind === 'bak' ? '박 터트리기' : (d.dur / 60) + '분 한 판'; };
     const md = function(x){ return x ? Number(x.slice(5, 7)) + '/' + Number(x.slice(8, 10)) : ''; };
     const nm = function(x){ return '<b class="' + (x.named ? '' : 'anon') + (x.pid === me ? ' mine' : '') + '">' + schHtml(x.label) + '</b>'; };
+    const md2 = function(d){ const e = d.end || [d.host && d.host.res && d.host.res.at, d.guest && d.guest.res && d.guest.res.at].filter(Boolean).sort().pop(); return md(d.status === 'done' && e ? e : d.created); };
     const rows = L.slice((duelPage - 1) * DUEL_PER, duelPage * DUEL_PER).map(function(d){
-      return '<li>' + nm(d.host) + '<span class="dn-x">×</span>' + nm(d.guest) + '<span class="dn-k">' + kind(d) + ' · ' + (d.status === 'done' ? '함께 뛰었어요' : '겨루는 중') + '</span><span class="dn-d">' + md(d.created) + '</span></li>';
+      return '<li>' + nm(d.host) + '<span class="dn-x">×</span>' + nm(d.guest) + '<span class="dn-k">' + kind(d) + ' · ' + (d.status === 'done' ? '함께 뛰었어요' : '겨루는 중') + '</span><span class="dn-d">' + md2(d) + '</span></li>';
     });
     for (let i = rows.length; pages > 1 && i < DUEL_PER; i++) rows.push(rows[0].replace('<li>', '<li class="dn-empty" aria-hidden="true">'));   // 마지막 쪽도 같은 높이로
     let pager = '';
@@ -489,11 +511,12 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
       for (let i = 1; i <= pages; i++) pager += '<button type="button" data-dpage="' + i + '"' + (i === duelPage ? ' class="on" aria-current="page"' : '') + '>' + i + '</button>';
       pager += '<button type="button" data-dpage="' + (duelPage + 1) + '"' + (duelPage === pages ? ' disabled' : '') + ' aria-label="다음 쪽">›</button></div>';
     }
-    return '<div class="card"><div class="card-head"><div><h2>클럽 대결 소식</h2><span class="hint">도전장을 주고받고 같은 종목으로 함께 뛴 클럽들이에요</span></div></div>' +
-      '<ul class="duel-news">' + rows.join('') + '</ul>' + pager +
-      '<p class="hint" style="margin-bottom:0;">결과는 두 클럽의 관리자 메뉴 → 클럽 대결에서만 볼 수 있어요. 도전장도 거기서 만들거나 받아요.</p></div>';
+    return head + '<ul class="duel-news">' + rows.join('') + '</ul>' + pager + foot;
   }
-  document.addEventListener('click', function(e){ const b = e.target.closest && e.target.closest('[data-dpage]'); if (!b || b.disabled) return; duelPage = +b.dataset.dpage; const el = $('duelCard'); if (el && DUELS) el.innerHTML = duelHtml(DUELS); });
+  document.addEventListener('click', function(e){ const b = e.target.closest && e.target.closest('[data-dmon]'); if (!b) return;   // 지난 달 소식 보기 → 현황판 전체를 그 달로
+    const sel = $('monthSel'), v = b.dataset.dmon; openPid = me;
+    if (Array.prototype.some.call(sel.options, function(o){ return o.value === v; })) { sel.value = v; load(v); } else load(v); });
+  document.addEventListener('click', function(e){ const b = e.target.closest && e.target.closest('[data-dpage]'); if (!b || b.disabled) return; duelPage = +b.dataset.dpage; const el = $('duelCard'); if (el && DUELS) el.innerHTML = duelHtml(DUELS); });   // DUELS = 지금 고른 달
   const STU_HEAD = '<tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">횟수</th><th class="num hide-sm">📷</th></tr>';
   const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champS(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   const RUN_HEAD = '<tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">연속</th><th class="num hide-sm">횟수</th></tr>';
@@ -693,7 +716,7 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
       }
       html += '</div>';
     }
-    html += '<div id="duelCard" class="o-duel">' + (DUELS ? duelHtml(DUELS) : '') + '</div>';   // 클럽 대결은 맨 끝
+    DUELS = DUELM[data.month] || null; html += '<div id="duelCard" class="o-duel">' + (DUELS ? duelHtml(DUELS) : '') + '</div>';   // 클럽 대결은 맨 끝
     html += '</div>';
     html += '<p class="hint o-end" style="text-align:center;">집계는 몇 분마다 새로 고쳐져요 · 마지막 갱신 ' + new Date(data.updated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + '</p>';
     $('body').innerHTML = html;
