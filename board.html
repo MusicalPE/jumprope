@@ -186,6 +186,7 @@
     .bw-l { grid-column: 1; grid-row: 2; position: sticky; top: 16px; }   /* 오른쪽 순위를 내려 봐도 지구 대장정은 따라와요 */
     .bw-r { grid-column: 2; grid-row: 1 / span 2; }
     .bw > #body > .hint, .bw > #body > .loading, .bw > #body > .err { grid-column: 1 / -1; }
+    .bw > #body > .o-end { grid-column: 2; }   /* 왼쪽 지구 대장정은 따라 내려와서(sticky) 두 칸에 걸치면 글씨를 가림 → 오른쪽 칸 아래에만 */
     .bw .hero-mid #heroSub { word-break: keep-all; }
     .bw .hero-grid { grid-template-columns: 34% minmax(0,1fr); row-gap: 12px; }
     .bw .hero-grid .hero-logo { grid-row: 1 / span 3; }
