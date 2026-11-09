@@ -412,9 +412,10 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
   const MEDAL = { 1: ['#C9921A', '#FFE9A8', '#F6C445', '#F26A3D'], 2: ['#7D8791', '#E9EDF1', '#BCC5CE', '#6B7682'], 3: ['#9A5A28', '#F6DCC4', '#D08A4E', '#A0522D'] };
   function champSvg(rank, n, size){ const M = MEDAL[rank] || MEDAL[1], C = M[0], L = M[1]; size = size || 30;
     let s = '<svg class="laurel" viewBox="0 -2 200 202" width="' + size + '" height="' + size + '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + LAUREL_W.split('__C__').join(C).split('__L__').join(L);
-    let p = ''; for (let i = 0; i < 10; i++){ const rr = i % 2 ? 44 * 0.45 : 44, a = (-90 + 36 * i) * Math.PI / 180; p += (100 + rr * Math.cos(a)).toFixed(1) + ',' + (98 + rr * Math.sin(a)).toFixed(1) + ' '; }
+    const SR = n > 1 ? 56 : 44;   // 여러 번이면 별을 키우고 그 위에 횟수
+    let p = ''; for (let i = 0; i < 10; i++){ const rr = i % 2 ? SR * 0.45 : SR, a = (-90 + 36 * i) * Math.PI / 180; p += (100 + rr * Math.cos(a)).toFixed(1) + ',' + (98 + rr * Math.sin(a)).toFixed(1) + ' '; }
     s += '<polygon points="' + p + '" fill="' + M[2] + '"/>';
-    if (n > 1) s += '<circle cx="100" cy="100" r="40" fill="' + M[3] + '"/><text x="100" y="124" text-anchor="middle" font-family="Pretendard, sans-serif" font-weight="900" font-size="68" fill="#fff">' + n + '</text>';
+    if (n > 1) s += '<text x="100" y="122" text-anchor="middle" font-family="Pretendard, sans-serif" font-weight="900" font-size="64" fill="#fff" stroke="' + M[3] + '" stroke-width="10" stroke-linejoin="round" paint-order="stroke">' + n + '</text>';
     return s + '<path d="M60 176 C 80 160, 120 160, 140 176" fill="none" stroke="' + M[3] + '" stroke-width="5" stroke-linecap="round"/><g stroke="' + C + '" stroke-width="8" stroke-linecap="round"><path d="M60 176 L48 186"/><path d="M140 176 L152 186"/></g></svg>'; }
   // 기록실(최근 12개월) 달마다 1~3등: CHD[분류][누구] = [{ m: '2026-09', r: 1 }, …]
   //  학생은 학교 공개 번호 + 가린 이름 + 학년으로 알아봄 (연속·최고 연속 목록에는 학생 키가 없어서 모두 같은 방식으로)
