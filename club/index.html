@@ -4277,7 +4277,26 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
     const nat = this.value === 'nat';
     $('certClassRow').style.display = nat ? 'none' : ''; $('certMonthRow').style.display = nat ? '' : 'none';
     $('certPreview').innerHTML = ''; $('certMsg').textContent = '';
+    if (nat) loadMonths();
   });
+  // 순위 상장으로 바꾸면 기록실에 오른 달 목록을 바로 불러와 고를 수 있게 (예전엔 미리 보기를 눌러야 채워졌음)
+  let monthsP = null;
+  function loadMonths(){
+    if ($('certMonth').options.length && $('certMonth').value) return;
+    if (monthsP) return;
+    $('certMonth').innerHTML = '<option value="">불러오는 중…</option>';
+    monthsP = NAT.load().then(function(){
+      if (!NAT.collector || !NAT.cfg.key) { $('certMonth').innerHTML = '<option value="">현황판 참여 클럽만</option>'; return; }
+      return fetch(NAT.collector + '?api=hall', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(j){
+        const res = (j && j.ok && j.result) || {}, list = res.list || [];
+        if (!list.length) { $('certMonth').innerHTML = '<option value="">아직 오른 달이 없어요</option>'; return; }
+        const desc = list.slice().sort().reverse(), cur = (res.month && res.month.month) || desc[0];
+        $('certMonth').innerHTML = desc.map(function(x){ return '<option value="' + x + '">' + mLabel(x) + '</option>'; }).join('');
+        $('certMonth').value = cur;
+      });
+    }).catch(function(){ $('certMonth').innerHTML = '<option value="">불러오지 못했어요 (미리 보기를 눌러 주세요)</option>'; })
+      .then(function(){ monthsP = null; });
+  }
   $('certMonth').addEventListener('change', make);
   $('certMake').addEventListener('click', make);
   $('certPrint').addEventListener('click', function(){
