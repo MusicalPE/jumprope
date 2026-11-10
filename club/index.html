@@ -777,7 +777,10 @@ const APP = { version: '2.8.5', requiredShell: 1, channel: /\/beta\/?/.test(loca
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
-  try { if (s) localStorage.setItem('jrc_shell', s); else s = localStorage.getItem('jrc_shell') || ''; } catch (e) {}
+  // 미리보기(?demo 또는 ?s=demo): 지어낸 클럽으로 둘러봄 (../demo.js). 진짜 클럽 주소는 건드리지 않음
+  APP.demo = s === 'demo' || 'demo' in APP.q;
+  if (APP.demo) s = 'demo';
+  else try { if (s) localStorage.setItem('jrc_shell', s); else s = localStorage.getItem('jrc_shell') || ''; } catch (e) {}
   APP.shellUrl = s;
   APP.base = location.origin + location.pathname + '?s=' + encodeURIComponent(s);
 })();
@@ -785,6 +788,7 @@ new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 /* 클럽 껍데기(Shell.gs)에 요청 보내기 */
 /* 구글이 잠깐 404·429·5xx 로 답하거나 연결이 끊기면 1.5초 뒤 한 번 더 보냄 (껍데기 자체 오류는 다시 보내지 않음) */
 function rpc(fn, args, _retried){
+  if (APP.demo) return demoRpc(fn, args);
   return fetch(APP.shellUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args || [] }), redirect: 'follow' })
     .then(function(r){ if (!r.ok) { const e = new Error('클럽 시트 응답 오류 (' + r.status + ')'); e.retry = r.status === 404 || r.status === 429 || r.status >= 500; throw e; } return r.json(); },
           function(err){ err.retry = true; throw err; })
@@ -793,6 +797,12 @@ function rpc(fn, args, _retried){
       if (!err.retry || _retried) throw err;
       return new Promise(function(ok){ setTimeout(ok, 1500); }).then(function(){ return rpc(fn, args, true); });
     });
+}
+/* 미리보기: 클럽 껍데기를 이 창 안에서 돌림 (demo.js 를 처음 부를 때 불러옴) */
+let demoJs = null;
+function demoRpc(fn, args){
+  if (!demoJs) demoJs = new Promise(function(ok, fail){ const sc = document.createElement('script'); sc.src = (APP.club ? '../' : '') + 'demo.js?v=1'; sc.onload = ok; sc.onerror = function(){ fail(new Error('미리보기를 불러오지 못했어요.')); }; document.head.appendChild(sc); });
+  return demoJs.then(function(){ return window.JRDEMO.call(fn, args); });
 }
 /* 예전 화면 코드(google.script.run)가 그대로 돌아가도록 */
 function makeRunner(ok, fail){
@@ -1140,6 +1150,15 @@ function render(view){
   document.querySelectorAll('.je-slot').forEach(function(el){ if (!el.firstChild) el.innerHTML = jeLogo(+el.getAttribute('data-h') || 20); });
   document.querySelectorAll('.laurel-slot').forEach(function(el){ if (!el.firstChild) el.innerHTML = laurelSvg({ dark: true, size: 22, style: 'vertical-align:-5px;margin-right:4px' }); });
 }
+function demoNote(){
+  if (document.getElementById('demoNote')) return;
+  const bar = document.createElement('div');
+  bar.id = 'demoNote'; bar.setAttribute('role', 'note');
+  bar.style.cssText = 'background:#FFF4D6;color:#5C4510;font-size:13px;line-height:1.55;text-align:center;padding:9px max(16px,env(safe-area-inset-right,0px)) 9px max(16px,env(safe-area-inset-left,0px))';
+  bar.innerHTML = '<b style="color:#3F2F08">미리보기</b> · 지어낸 클럽의 기록이에요. 선생님 비밀번호와 회원 비밀번호는 아무거나 넣으면 들어가요. 이 탭을 닫으면 처음으로 돌아가요. ' +
+    '<a href="' + TEMPLATE_URL + '" target="_blank" rel="noopener" style="color:#C2410C;font-weight:700;white-space:nowrap">우리 클럽 시트 만들기</a>';
+  document.body.insertBefore(bar, document.body.firstChild);
+}
 function showSetup(msg){
   document.getElementById('app').innerHTML =
     '<div class="boot-wrap"><div class="card"><div class="boot-hero"><h1>Jump Us! 점퍼스 · 클럽 줄넘기 기록</h1><p>클럽 시트와 연결이 필요해요</p></div>' +
@@ -1164,7 +1183,9 @@ document.addEventListener('DOMContentLoaded', function(){
     slowT.forEach(clearTimeout);
     APP.shell = r[0]; APP.settings = r[1] || {};
     if (APP.club) APP.unit = unitWord(r[3] && r[3].unit);   // 클럽판: "우리 클럽 / 우리 도장 / 우리 ○○"
-    if (r[2]) { applyTheme(r[2]); try { localStorage.setItem('jr_theme', JSON.stringify({ accent: r[2].accent, bg: r[2].bg })); } catch (e) {} }
+    if (r[2]) { applyTheme(r[2]); if (!APP.demo) try { localStorage.setItem('jr_theme', JSON.stringify({ accent: r[2].accent, bg: r[2].bg })); } catch (e) {} }
+    if (APP.demo && APP.q.demo === 'admin' && !APP.q.token) { window.JRDEMO.adminToken().then(function(t){ location.replace(APP.base + '&page=admin&token=' + encodeURIComponent(t)); }); return; }
+    if (APP.demo) demoNote();
     render(APP.q.page || 'main');
   }).catch(function(err){
     slowT.forEach(clearTimeout);
