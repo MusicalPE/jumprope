@@ -773,7 +773,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.8.5', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.8.6', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1628,7 +1628,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <h2>카메라 판정기 연동 (모션 인식 줄넘기)</h2>
       <p class="hint">켜면 메인 화면 입력 폼에 <b>📷 카메라로 뛰기</b> 버튼이 생깁니다. 학생이 누르면 <b>줄넘기 판정기</b>(카메라로 관절 움직임을 읽어 실제로 뛴 횟수를 세는 페이지)가 열리고, 다 뛰고 "끝내고 기록하기"를 누르면 횟수가 이 시트에 자동으로 들어와요. 판정기는 태블릿·노트북·스마트폰의 카메라를 씁니다.</p>
       <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;"><input type="checkbox" id="camEnabled" style="width:auto; margin:0;"> 카메라 판정기 사용 (메인 화면에 버튼 표시)</label>
-      <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;"><input type="checkbox" id="camAuto" style="width:auto; margin:0;"> 카메라 기록은 승인 없이 바로 그래프·전국 현황판에 반영 (끄면 직접 입력처럼 승인 대기)</label>
+      <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;"><input type="checkbox" id="camAuto" style="width:auto; margin:0;"> 카메라·스마트 줄넘기 기록은 승인 없이 바로 그래프·전국 현황판에 반영 (끄면 직접 입력처럼 승인 대기 · 스마트 줄넘기는 껍데기 9판부터)</label>
       <div class="form-row" style="align-items:flex-end;">
         <label style="flex:1; min-width:180px;">민감도 (<span id="camSensV">10 · 보통</span>) <input type="range" id="camSens" min="6" max="16" value="10" style="padding:0;"></label>
         <label style="flex:2;">판정기 주소 <input type="text" id="camUrl" placeholder="https://musicalpe.github.io/jump-rope-checker/"></label>
@@ -3358,7 +3358,7 @@ document.getElementById('saveCamBtn').addEventListener('click', function(){
     if (res.ok) {
       const c = res.settings;
       document.getElementById('camUrl').value = c.url;
-      msgEl.textContent = c.enabled ? '저장되었습니다! 메인 화면에 "📷 카메라로 뛰기" 버튼이 보입니다.' + (c.autoApprove ? ' (카메라 기록은 바로 승인)' : ' (카메라 기록은 승인 대기)') : '저장되었습니다. 카메라 판정기는 꺼져 있습니다.';
+      msgEl.textContent = c.enabled ? '저장되었습니다! 메인 화면에 "📷 카메라로 뛰기" 버튼이 보입니다.' + (c.autoApprove ? ' (카메라·스마트 줄넘기 기록은 바로 승인)' : ' (카메라·스마트 줄넘기 기록은 승인 대기)') : '저장되었습니다. 카메라 판정기는 꺼져 있습니다.';
     } else msgEl.textContent = res.message || '저장에 실패했습니다.';
   }).withFailureHandler(function(err){ msgEl.textContent = '오류: ' + String(err); })
   .setCameraSettings(token, {
@@ -4391,6 +4391,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
   if (APP.shell.appUrl && /\/club\//.test(APP.shell.appUrl) !== APP.club) document.getElementById('shellNotice').innerHTML = (function(h){ const np = document.querySelector('.tab-pane[data-tab="national"] .card'); if (np) np.insertAdjacentHTML('afterbegin', h); return h; })('<div class="warn-box">' + (APP.club ? '이 시트에는 <b>학교용 껍데기</b>가 들어 있어요. 스포츠클럽·도장은 <b>클럽용 껍데기</b>를 붙여 넣고 새 버전으로 배포해 주세요. 그대로 두면 전국 현황판 기록이 학교 현황판으로 가요.' : '이 시트에는 <b>클럽용 껍데기</b>가 들어 있어요. 학교는 학교용 껍데기를 붙여 넣고 새 버전으로 배포해 주세요.') + '</div>');
   else if (APP.shell.shell >= APP.requiredShell && APP.shell.shell < 6) document.getElementById('shellNotice').innerHTML = '<div class="warn-box"' + (NAT.cfg && NAT.cfg.on && APP.shell.shell < 4 ? '' : ' style="background:var(--bg);"') + '>새 껍데기 <b>6판</b>이 나왔어요. <b>점프 Live (Lite)</b> — 바깥 서버 없이 학교 시트만으로 한 반이 함께 뛰고, 끝나고 한 번에 결과를 공개하는 수업 방을 열 수 있어요.' + (APP.shell.shell < 5 ? ' 5판부터는 스마트 줄넘기나 카메라 판정기로 뛰면 <b>한 번에 최고 연속</b>(걸리지 않고 이어 뛴 가장 많은 수)이 기록되고, 전국 현황판에도 올라가요.' : '') + (NAT.cfg && NAT.cfg.on && APP.shell.shell < 4 ? ' <b>전국 현황판에 참여 중이면 꼭 바꿔 주세요</b> — 4판부터는 전국 현황판 비밀 키를 학생 화면에 내보내지 않아요.' : '') + (APP.shell.shell < 3 ? ' 급수 인증도 3판부터 쓸 수 있어요.' : '') + (APP.shell.live ? ' 점프 라이브를 쓰는 학교는 <b>점프 라이브판 6판</b>으로 바꿔 주세요.' : '') + ' Shell(껍데기)를 다시 붙여 넣고 "새 버전"으로 배포하세요. 기록·학생·설정은 그대로예요.</div>';
   });
+  if (APP.shell.shell >= 6 && APP.shell.shell < 9) document.getElementById('shellNotice').innerHTML = '<div class="warn-box" style="background:var(--bg);">새 껍데기 <b>9판</b>이 나왔어요. <b>스마트 줄넘기</b>(내 줄넘기로 뛰기)로 잰 기록도 카메라 기록처럼 <b>승인 없이 바로 반영</b>돼요. 지금 판에서는 선생님이 승인해야 반영돼요. Shell(껍데기)를 다시 붙여 넣고 "새 버전"으로 배포하세요. 기록·학생·설정은 그대로예요.</div>';
   if (APP.shell.shell < APP.requiredShell) document.getElementById('shellNotice').innerHTML = '<div class="warn-box">학교 껍데기(Shell.gs)를 새 판으로 바꿔야 하는 기능이 있어요. 관리자 메뉴 안내에 따라 Shell.gs 를 다시 붙여넣고 "새 버전"으로 배포해 주세요.</div>';
   fetch('changelog.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(list){
     if (!Array.isArray(list) || !list.length) throw new Error('내역이 비어 있어요');
