@@ -27,7 +27,7 @@ function makeSheet(name){
 function createGas(opts){
   opts = opts || {};
   const sheets = {}; const props = {}; const cache = {};
-  const ss = { getName: () => '6학년 1반 줄넘기', getSheetByName: n => sheets[n] || null, insertSheet: n => (sheets[n] = makeSheet(n)) };
+  const ss = { getName: () => '6학년 1반 줄넘기', getUrl: () => 'https://docs.google.com/spreadsheets/d/EMU/edit', getSheetByName: n => sheets[n] || null, insertSheet: n => (sheets[n] = makeSheet(n)) };
   const pad = n => String(n).padStart(2, '0');
   const ctx = {
     console, JSON, Math, Date, Number, String, Array, Object, Error, RegExp, encodeURIComponent, decodeURIComponent, parseInt, isNaN,

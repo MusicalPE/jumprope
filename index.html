@@ -466,6 +466,16 @@
   .tbl-tools .seg button:not(.on) { box-shadow: none; }
   @media (max-width: 560px) { .tbl-sheet .tc { display: none; } .tbl-tools input { width: 110px; } }
 
+  /* ---- 껍데기 새 판으로 바꾸는 법 (2.8.7) — 다른 팝업 위에 겹쳐 뜸 ---- */
+  .shup-overlay { position: fixed; inset: 0; z-index: 400; background: rgba(17,24,39,0.62); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .shup-sheet { background: var(--surface); border-radius: 20px; box-shadow: 0 30px 80px rgba(0,0,0,0.25); width: min(560px, 100%); max-height: 100%; overflow: auto; padding: 22px 24px; text-align: left; }
+  .shup-sheet h2 { margin: 0 0 4px; font-size: 1.3em; }
+  .shup-sheet ol { margin: 14px 0 12px; padding: 0; list-style: none; counter-reset: shup; display: grid; gap: 10px; }
+  .shup-sheet li { counter-increment: shup; position: relative; padding: 10px 12px 10px 44px; background: var(--bg); border: 1px solid var(--line-2); border-radius: var(--r-sm); line-height: 1.55; }
+  .shup-sheet li::before { content: counter(shup); position: absolute; left: 12px; top: 10px; width: 22px; height: 22px; border-radius: 50%; background: var(--coral); color: #fff; font-weight: 800; font-size: 0.85em; display: flex; align-items: center; justify-content: center; }
+  .shup-sheet textarea { width: 100%; height: 110px; margin-top: 8px; font: 12px/1.4 monospace; }
+  .shup-btn { padding: 5px 11px !important; font-size: 0.86em; margin-left: 6px; vertical-align: middle; }
+
   /* ---- 학생 접속 QR (v1.6.1) ---- */
   .qr-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(17,24,39,0.62); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 20px; }
   .qr-sheet { background: var(--surface); border-radius: 26px; box-shadow: 0 30px 80px rgba(0,0,0,0.25); width: min(560px, 100%); max-height: 100%; overflow: auto; text-align: center; }
@@ -773,7 +783,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.8.6', requiredShell: 1, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.8.7', requiredShell: 1, latestShell: 9, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -784,6 +794,69 @@ new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
   APP.shellUrl = s;
   APP.base = location.origin + location.pathname + '?s=' + encodeURIComponent(s);
 })();
+
+/* ---- 껍데기 새 판으로 바꾸는 법 (2.8.7) ----
+   이미 설치한 선생님이 시트·기록은 그대로 두고 Apps Script 코드만 새 판으로 바꾸게 안내 (견본 사본을 다시 받게 하지 않음).
+   새 껍데기는 같은 저장소(GitHub Pages)의 Shell.gs 를 받아 클립보드에 복사. 새 판을 내면 APP.latestShell 도 같이 올릴 것 */
+const SHUP = {
+  old: function(){ return !APP.demo && APP.shell && APP.shell.shell > 0 && APP.shell.shell < APP.latestShell; },
+  btn: '<button type="button" class="btn-outline shup-btn">새 판으로 바꾸는 법</button>',
+  // 점프 라이브판 껍데기는 그 저장소 것, 베타 화면은 한 칸 위, 나머지(학교판·클럽판)는 지금 화면과 같은 폴더
+  src: function(){ return APP.shell && APP.shell.live ? 'https://musicalpe.github.io/jumpropelive/Shell.gs' : (APP.channel === 'beta' ? '../Shell.gs' : 'Shell.gs'); },
+  code: null,
+  load: function(){ return SHUP.code ? Promise.resolve(SHUP.code) : fetch(SHUP.src(), { cache: 'no-store' }).then(function(r){ if (!r.ok) throw new Error('받지 못했어요 (' + r.status + ')'); return r.text(); }).then(function(t){ if (!/SHELL_VERSION\s*=\s*\d+/.test(t)) throw new Error('껍데기 파일이 아니에요'); SHUP.code = t; return t; }); },
+  // 예전 판이면: 기본 설정의 접속 주소 칸·업데이트 내역의 판 정보·예전 판 경고 줄에 단추를 닮
+  mark: function(){
+    const line = document.getElementById('shellLine');
+    if (line && APP.shell && APP.shell.shell) {
+      line.style.display = APP.demo ? 'none' : '';
+      line.innerHTML = SHUP.old() ? '껍데기 <b>' + APP.shell.shell + '판</b> (새 판 있음) ' + SHUP.btn : '껍데기 <b>' + APP.shell.shell + '판</b> (최신)';
+    }
+    if (!SHUP.old()) { document.querySelectorAll('.shup-btn').forEach(function(b){ if (!b.closest('.shup-sheet')) b.remove(); }); return; }
+    const vi = document.getElementById('versionInfo');
+    if (vi && !vi.querySelector('.shup-btn')) vi.insertAdjacentHTML('beforeend', ' ' + SHUP.btn);
+    document.querySelectorAll('#shellNotice .warn-box, .tab-pane[data-tab="national"] .card > .warn-box').forEach(function(w){ if (!w.querySelector('.shup-btn')) w.insertAdjacentHTML('beforeend', ' ' + SHUP.btn); });
+  },
+  open: function(){
+    const old = document.getElementById('shupOverlay'); if (old) old.remove();
+    const phone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    const ov = document.createElement('div'); ov.className = 'shup-overlay'; ov.id = 'shupOverlay';
+    ov.innerHTML = '<div class="shup-sheet" role="dialog" aria-label="껍데기 새 판으로 바꾸는 법">' +
+      '<h2>껍데기 새 판으로 바꾸는 법</h2>' +
+      '<p class="hint" style="margin:0 0 10px;">시트와 기록은 그대로 두고 코드만 바꿔요. 지금 <b>' + (APP.shell.shell || '?') + '판</b> → 새 판 <b id="shupVer">' + APP.latestShell + '판</b></p>' +
+      '<div class="warn-box" style="margin-bottom:0;">컴퓨터에서 해 주세요. 휴대폰에서는 Apps Script 화면이 잘 열리지 않고 코드 붙여 넣기도 어려워요.' + (phone ? '<br>지금은 휴대폰이에요. 컴퓨터에서 선생님 화면을 열어 같은 단추를 눌러 주세요.' : '') + '</div>' +
+      '<ol>' +
+        '<li><button type="button" id="shupCopy">껍데기 코드 복사</button> <span id="shupMsg" class="hint"></span><textarea id="shupText" readonly style="display:none;"></textarea></li>' +
+        '<li><a id="shupSheet" target="_blank" rel="noopener" href="https://drive.google.com/drive/search?q=' + encodeURIComponent(APP.shell.title || '줄넘기') + '"><b>내 시트 열기</b></a> → <b>확장 프로그램</b> → <b>Apps Script</b><span id="shupSheetHint" class="hint"> (드라이브에서 "' + String(APP.shell.title || '줄넘기').replace(/[&<>"]/g, '') + '" 시트를 찾아 여세요)</span></li>' +
+        '<li>원래 코드를 모두 지우고(<b>Ctrl+A</b>) 붙여 넣기(<b>Ctrl+V</b>) → 저장(<b>Ctrl+S</b>)</li>' +
+        '<li><b>배포</b> → <b>배포 관리</b> → 연필(수정) → 버전 <b>새 버전</b> → <b>배포</b><br><span class="hint">주소는 그대로라 학생 주소도 그대로예요. 권한 창이 뜨면 <b>허용</b>.</span></li>' +
+      '</ol>' +
+      '<p class="hint" style="margin:0 0 14px;">다 바꾼 뒤 이 화면을 새로고침하면 새 판이 적용돼요.</p>' +
+      '<div style="text-align:right;"><button type="button" class="btn-outline" id="shupClose">닫기</button></div></div>';
+    document.body.appendChild(ov);
+    const $ = function(id){ return document.getElementById(id); }, close = function(){ ov.remove(); document.removeEventListener('keydown', key, true); };
+    const key = function(e){ if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+    document.addEventListener('keydown', key, true);
+    ov.addEventListener('click', function(e){ if (e.target === ov) close(); });
+    $('shupClose').addEventListener('click', close);
+    // 미리 받아 두면 누르는 순간 바로 복사됨
+    SHUP.load().then(function(t){ const m = t.match(/SHELL_VERSION\s*=\s*(\d+)/); if (m && $('shupVer')) $('shupVer').textContent = m[1] + '판'; }).catch(function(){});
+    // 새 껍데기(9판 뒤)는 로그인한 선생님에게 시트 주소를 알려 줌 — 예전 판은 드라이브 검색으로
+    if (APP.q.token && !APP.demo) rpc('getSheetUrlAdmin', [APP.q.token]).then(function(u){ if (u && /^https:\/\/docs\.google\.com\//.test(u) && $('shupSheet')) { $('shupSheet').href = u; $('shupSheetHint').textContent = ''; } }).catch(function(){});
+    const spread = function(t, why){   // 복사가 막히면 글 칸에 펼쳐 전체 선택
+      const ta = $('shupText'); ta.value = t; ta.style.display = ''; ta.focus(); ta.select();
+      $('shupMsg').textContent = (why || '복사가 막혔어요.') + ' 아래 칸이 모두 선택돼 있어요. Ctrl+C 로 복사하세요.';
+    };
+    $('shupCopy').addEventListener('click', function(){
+      const msg = $('shupMsg'); msg.textContent = '받는 중…';
+      SHUP.load().then(function(t){
+        if (!navigator.clipboard || !navigator.clipboard.writeText) { spread(t); return; }
+        return navigator.clipboard.writeText(t).then(function(){ msg.textContent = '복사했어요 (' + t.split('\n').length + '줄). 2번으로 가세요.'; }, function(){ spread(t); });
+      }).catch(function(e){ msg.textContent = '코드를 받지 못했어요: ' + (e && e.message || e) + ' — 잠시 뒤 다시 눌러 주세요.'; });
+    });
+  }
+};
+document.addEventListener('click', function(e){ const b = e.target.closest && e.target.closest('.shup-btn'); if (b) { e.preventDefault(); SHUP.open(); } });
 
 /* 학교 껍데기(Shell.gs)에 요청 보내기 */
 /* 구글이 잠깐 404·429·5xx 로 답하거나 연결이 끊기면 1.5초 뒤 한 번 더 보냄 (껍데기 자체 오류는 다시 보내지 않음) */
@@ -1499,6 +1572,7 @@ document.addEventListener('DOMContentLoaded', function(){
           </div>
         </div>
       </div>
+      <div id="shellLine" class="hint" style="display:none; margin:12px 0 0; padding-top:10px; border-top:1px solid var(--line-2);"></div>
     </div>
 
     <div class="card">
@@ -1758,7 +1832,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <section class="tab-pane" data-tab="levels">
     <div class="card">
       <h2>급수 인증</h2>
-      <div id="lvNoShell" class="warn-box" style="display:none;">급수 인증은 학교 껍데기 <b>3판</b>이 필요해요. 새 <b>Shell(껍데기)</b>를 Apps Script 의 Code.gs 에 통째로 붙여 넣고 <b>배포 → 배포 관리 → 수정 → 새 버전</b>으로 배포하세요. (주소는 그대로, 학생·기록도 그대로)</div>
+      <div id="lvNoShell" class="warn-box" style="display:none;">급수 인증은 학교 껍데기 <b>3판</b>이 필요해요. 새 <b>Shell(껍데기)</b>를 Apps Script 의 Code.gs 에 통째로 붙여 넣고 <b>배포 → 배포 관리 → 수정 → 새 버전</b>으로 배포하세요. (주소는 그대로, 학생·기록도 그대로) <button type="button" class="btn-outline shup-btn">새 판으로 바꾸는 법</button></div>
       <p class="hint" style="margin-top:0;">학생이 선생님 앞에서 <b>걸리지 않고</b> 기준 횟수를 성공하면 그 항목을 체크하고 <b>저장</b>하세요. 한 급수의 항목을 모두 통과하면 다음 급수로 올라갑니다. (흰 → 노랑 → 초록 → 파랑 → 밤 → 주황 → 빨강 → 검은 → 와이어)</p>
       <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="lvMain" style="width:auto; margin:0;"> 메인 화면에 "우리 반 급수" 보이기 <span class="hint">(급수별 명수, 누르면 명단 · 끄면 학생 본인 화면에만 보여요)</span></label>
       <div class="form-row">
@@ -4386,6 +4460,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
       : '<details class="cl-item"><summary>' + head + '</summary><ul>' + items + '</ul></details>';
   }
   document.getElementById('versionInfo').innerHTML = '지금 쓰는 판: <b>v' + APP.version + '</b>' + (APP.channel === 'beta' ? ' (베타)' : '') + ' · 학교 껍데기 판: <b>' + APP.shell.shell + '</b> · 학교 시트: ' + esc(APP.shell.title || '') + (/견본/.test(APP.shell.title || '') ? ' <span style="color:var(--amber)">← 구글 시트 왼쪽 위 파일 이름을 "6학년 1반 줄넘기"처럼 바꿔 두세요</span>' : '');
+  SHUP.mark();
   NAT.load().then(function(){   // 전국 현황판 참여 여부를 알고 나서 안내
   // 학교판·클럽판(스포츠클럽·도장) 껍데기가 바뀌어 붙어 있으면 알림 — 전국 현황판이 다른 리그로 가지 않게
   if (APP.shell.appUrl && /\/club\//.test(APP.shell.appUrl) !== APP.club) document.getElementById('shellNotice').innerHTML = (function(h){ const np = document.querySelector('.tab-pane[data-tab="national"] .card'); if (np) np.insertAdjacentHTML('afterbegin', h); return h; })('<div class="warn-box">' + (APP.club ? '이 시트에는 <b>학교용 껍데기</b>가 들어 있어요. 스포츠클럽·도장은 <b>클럽용 껍데기</b>를 붙여 넣고 새 버전으로 배포해 주세요. 그대로 두면 전국 현황판 기록이 학교 현황판으로 가요.' : '이 시트에는 <b>클럽용 껍데기</b>가 들어 있어요. 학교는 학교용 껍데기를 붙여 넣고 새 버전으로 배포해 주세요.') + '</div>');
@@ -4393,6 +4468,7 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
   });
   if (APP.shell.shell >= 6 && APP.shell.shell < 9) document.getElementById('shellNotice').innerHTML = '<div class="warn-box" style="background:var(--bg);">새 껍데기 <b>9판</b>이 나왔어요. <b>스마트 줄넘기</b>(내 줄넘기로 뛰기)로 잰 기록도 카메라 기록처럼 <b>승인 없이 바로 반영</b>돼요. 지금 판에서는 선생님이 승인해야 반영돼요. Shell(껍데기)를 다시 붙여 넣고 "새 버전"으로 배포하세요. 기록·학생·설정은 그대로예요.</div>';
   if (APP.shell.shell < APP.requiredShell) document.getElementById('shellNotice').innerHTML = '<div class="warn-box">학교 껍데기(Shell.gs)를 새 판으로 바꿔야 하는 기능이 있어요. 관리자 메뉴 안내에 따라 Shell.gs 를 다시 붙여넣고 "새 버전"으로 배포해 주세요.</div>';
+  SHUP.mark(); NAT.load().then(function(){ SHUP.mark(); });
   fetch('changelog.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(list){
     if (!Array.isArray(list) || !list.length) throw new Error('내역이 비어 있어요');
     document.getElementById('changelogLatest').innerHTML = entry(list[0], true);

@@ -93,4 +93,5 @@ python3 test_site.py                              # playwright 전체 흐름 시
 1. `cd dev && npm install` (처음 한 번)
 2. `node test_shell.js` — 껍데기 단위 시험 (모두 통과여야 함)
 3. `SEED=1 node devserver.js &` 띄우고 `python3 test_site.py` — 연결 화면, 메인, 학생 기록 입력(승인 꺼짐·켬), 승인 화면, 관리자 탭, 학생 등록, 테마, 판정기 저장까지. 마지막 줄 `JS 에러: 없음` 확인
-4. 고친 기능에 맞는 시험을 따로 더 돌리고, 결과에 "무엇을 시험했고 무엇은 못 했는지" 적는다
+4. `python3 test_shup.py` (`CH=club/`, `CH=beta/` 도) — 껍데기 새 판으로 바꾸는 법 팝업. **새 껍데기 판을 내면 index.html 의 `APP.latestShell` 도 같이 올릴 것**
+5. 고친 기능에 맞는 시험을 따로 더 돌리고, 결과에 "무엇을 시험했고 무엇은 못 했는지" 적는다
