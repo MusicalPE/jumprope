@@ -522,12 +522,15 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
   const STU_HEAD = '<tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">횟수</th><th class="num hide-sm">📷</th></tr>';
   const stuRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champS(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   // 꾸준히 뛴 친구 (수집기 22판): 하루 100회 넘게 뛴 날 수 — 총 횟수는 여기에 보이지 않음
-  const STEADY_HEAD = '<tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">뛴 날</th><th class="num hide-sm">이어서</th></tr>';
-  const steadyRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + x.d1 + '일</b></td><td class="num mono hide-sm">' + (x.run >= 2 ? x.run + '일' : '–') + '</td></tr>'; };
+  const steadyHead = function(now){ return '<tr><th>이름</th><th>클럽</th>' + (now ? '<th class="num">이번 주</th>' : '') + '<th class="num">달성한 주</th></tr>'; };
+  const twCell = function(x, days){ return x.tw >= days ? '<b style="color:var(--coral-dark)">달성</b>' : (x.tw > 0 ? '<span class="mono">' + x.tw + '/' + days + '일</span>' : '–'); };
+  const steadyRowOf = function(now, days){ return function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + '</td><td>' + schHtml(x.school) + '</td>' + (now ? '<td class="num">' + twCell(x, days) + '</td>' : '') + '<td class="num"><b class="mono">' + (x.wk > 0 ? x.wk + '주' : '–') + '</b></td></tr>'; }; };
   const RUN_HEAD = '<tr><th>순위</th><th>이름</th><th>클럽</th><th class="num">연속</th><th class="num hide-sm">횟수</th></tr>';
   const runRow = function(x){ return '<tr' + (x.pid === me ? ' class="me"' : '') + '><td>' + rankCell(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champ('run', x) + '</td><td>' + schHtml(x.school) + '</td><td class="num"><b class="mono">' + x.run + '일</b>' + (x.live ? ' <span class="run-live">이어 가는 중</span>' : '') + '</td><td class="num mono hide-sm">' + n(x.c) + '</td></tr>'; };
   const IN_HEAD = '<tr><th>클럽 안 순위</th><th>이름</th><th class="num">횟수</th><th class="num">전국</th><th class="num hide-sm">뛴 날</th><th class="num hide-sm">📷</th></tr>';
-  const inRow = function(x){ const sd = x.d1 != null; return '<tr><td>' + rankHtml(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champS(x) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + (sd ? (x.sr ? n(x.sr) + '등' : '–') : (x.nr ? n(x.nr) + '등' : '–')) + '</td><td class="num mono hide-sm">' + (sd ? x.d1 : x.days) + '일</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
+  const IN_HEAD_S = '<tr><th>클럽 안 순위</th><th>이름</th><th class="num">횟수</th><th class="num">달성한 주</th><th class="num hide-sm">뛴 날</th><th class="num hide-sm">📷</th></tr>';   // 수집기 22판: 전국 등수 대신 달성한 주
+  const inHead = function(st){ return st.length && st[0].wk != null ? IN_HEAD_S : IN_HEAD; };
+  const inRow = function(x){ const sd = x.wk != null; return '<tr><td>' + rankHtml(x._r) + '</td><td class="nm">' + '<b>' + esc(x.n) + '</b>' + gradeSub(x) + champS(x) + '</td><td class="num mono">' + n(x.c) + '</td><td class="num mono">' + (sd ? (x.wk > 0 ? x.wk + '주' : '–') : (x.nr ? n(x.nr) + '등' : '–')) + '</td><td class="num mono hide-sm">' + x.days + '일</td><td class="num mono hide-sm">' + n(x.cam) + '</td></tr>'; };
   // 등수 칸: 50등 밖(전국 1,030등 등)도 숫자로
   const rankCell = function(r){ return r > 99 ? '<span class="rank wide">' + n(r) + '</span>' : rankHtml(r); };
   const SHOW_BEST = 5;   // 왼쪽 칸이라 5등까지만 바로 보이고 나머지는 팝업
@@ -589,10 +592,10 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
       return { rows: st.filter(function(x){ return x.best > 0; }).sort(function(a, b){ return b.best - a.best || b.c - a.c; })
         .map(function(x){ return Object.assign({}, x, base, { _r: x.nb }); }), note: '우리 클럽 학생의 전국 등수예요 (최고 연속 기록이 있는 ' + n(d.bestTotal) + '명 중)' };
     }
-    if (kind === 'd1') {
-      if (st[0].d1 == null) return { rows: nat.filter(function(x){ return x.pid === me; }), note: '전국 ' + nat.length + '명 안에 든 우리 클럽 학생이에요' };
-      return { rows: st.filter(function(x){ return x.d1 > 0; }).sort(function(a, b){ return b.d1 - a.d1 || b.run - a.run; })
-        .map(function(x){ return Object.assign({}, x, base, { _r: x.sr }); }), note: '우리 클럽 학생의 전국 등수예요 (하루 ' + (d.steadyMin || 100) + '회를 넘긴 날이 있는 ' + n(d.steadyTotal) + '명 중)' };
+    if (kind === 'wk') {
+      if (st[0].wk == null) return { rows: nat.filter(function(x){ return x.pid === me; }), note: '전국 목록 안에 든 우리 클럽 학생이에요' };
+      return { rows: st.filter(function(x){ return x.wk > 0 || x.tw > 0; }).sort(function(a, b){ return b.wk - a.wk || b.tw - a.tw; })
+        .map(function(x){ return Object.assign({}, x, base); }), note: '우리 클럽에서 꾸준히 뛰고 있는 친구예요' };
     }
     if (kind === 'run') {
       const live = {}; nat.forEach(function(x){ if (x.pid === me && x.live) live[x.n + '|' + x.g + '|' + x.run] = 1; });
@@ -707,16 +710,19 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
     html += '</div>';
 
     // 전국 학생 순위: 10등까지, 나머지는 팝업(10명씩, 50등까지)
-    const steadyOn = Array.isArray(data.steady), SMIN = data.steadyMin || 100;
-    const st = steadyOn ? ranked(data.steady, 'd1') : ranked(data.students || [], 'c');
+    const steadyOn = Array.isArray(data.steady), SMIN = data.steadyMin || 100, SDAYS = data.steadyDays || 5, sNow = !!data.steadyNow;
+    const st = steadyOn ? data.steady : ranked(data.students || [], 'c');
     if (steadyOn) {
-      html += '<div class="card o-stu"><div class="card-head"><div><h2>꾸준히 뛴 친구</h2><span class="hint">' + mLabel(data.month) + ' · 하루 ' + SMIN + '회 넘게 뛴 날 수</span></div></div>';
+      html += '<div class="card o-stu"><div class="card-head"><div><h2>꾸준히 뛴 친구</h2><span class="hint">평일 ' + SDAYS + '일, 하루 ' + SMIN + '회 넘게 뛰면 그 주 달성 · 주말은 쉬어요</span></div></div>';
       if (!st.length) html += '<div class="empty"><span style="display:inline-block">아직 하루 ' + SMIN + '회를 넘긴 친구가 없어요.</span><br><span style="display:inline-block">첫 주인공이 되어 보세요!</span></div>';
       else {
-        html += '<p class="hint" style="margin:0 4px 10px">' + (data.steadyFirst > 1 ? '지금 함께 1등 <b>' + n(data.steadyFirst) + '명</b> · ' : '') + '날마다 뛰면 누구나 1등이에요</p>';
-        html += '<div class="table-wrap">' + table(STEADY_HEAD, st.slice(0, SHOW_STU), steadyRow) + '</div>';
+        html += '<p class="hint" style="margin:0 4px 10px">' + (sNow ? '이번 주 달성 <b>' + n(data.steadyWeek || 0) + '명</b> · ' : '') + mLabel(data.month) + '에 한 주라도 달성 <b>' + n(data.steadyMonth || 0) + '명</b></p>';
+        html += '<div class="table-wrap">' + table(steadyHead(sNow), st.slice(0, SHOW_STU), steadyRowOf(sNow, SDAYS)) + '</div>';
         html += '<div class="more-row"><button type="button" class="more-btn" id="stuMore">' + (st.length > SHOW_STU ? st.length + '명까지 보기 · 이름 찾기 →' : '이름 찾기 →') + '</button></div>';
       }
+      // 많이 뛴 친구도 한 줄로 알림 (순위표가 아니라 박수)
+      const big = (data.big || []).filter(function(x){ return x.c > 0; });
+      if (big.length) html += '<p class="hint" style="margin:12px 4px 0; padding-top:10px; border-top:1px solid var(--line-2)"><b>' + mLabel(data.month) + ' 많이 뛴 친구</b> · ' + big.map(function(x){ return esc(x.n) + ' <span class="mono">' + n(x.c) + '회</span>'; }).join(' · ') + '</p>';
     } else {
     html += '<div class="card o-stu"><div class="card-head"><div><h2>전국 학생 순위</h2><span class="hint">' + mLabel(data.month) + ' 동안 뛴 횟수 합계</span></div></div>';
     if (!st.length) html += '<div class="empty">아직 기록이 없어요.</div>';
@@ -748,14 +754,14 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
     $('bestMore') && $('bestMore').addEventListener('click', function(){ const rb = ranked(data.ropeBest || [], 'best'); rankPopup({ title: '한 번에 최고 연속 · ' + rb.length + '등까지', sub: subOf(' · 걸리지 않고 이어 뛴 가장 많은 수'), rows: rb, head: BEST_HEAD, row: bestRow, mine: me ? function(){ return mineRows('best', rb); } : null }); });
     $('runMore') && $('runMore').addEventListener('click', function(){ const sk = ranked(data.streaks || [], 'run'); rankPopup({ title: '며칠 연속 뛰었나 · ' + sk.length + '등까지', sub: subOf(' · 이어서 뛴 날 수'), rows: sk, head: RUN_HEAD, row: runRow, mine: me ? function(){ return mineRows('run', sk); } : null }); });
     $('stuMore') && $('stuMore').addEventListener('click', function(){
-      if (Array.isArray(data.steady)) { const sd = ranked(data.steady, 'd1'); rankPopup({ title: '꾸준히 뛴 친구 · ' + sd.length + '명', sub: subOf(' · 하루 ' + (data.steadyMin || 100) + '회 넘게 뛴 날 수'), rows: sd, head: STEADY_HEAD, row: steadyRow, mine: me ? function(){ return mineRows('d1', sd); } : null }); return; }
+      if (Array.isArray(data.steady)) { const sd = data.steady, now = !!data.steadyNow, dy = data.steadyDays || 5; rankPopup({ title: '꾸준히 뛴 친구 · ' + sd.length + '명', sub: subOf(' · 평일 ' + dy + '일, 하루 ' + (data.steadyMin || 100) + '회 넘게 뛰면 그 주 달성'), rows: sd, head: steadyHead(now), row: steadyRowOf(now, dy), mine: me ? function(){ return mineRows('wk', sd); } : null }); return; }
       const st = ranked(data.students || [], 'c'); rankPopup({ title: '전국 학생 순위 · ' + st.length + '등까지', sub: subOf(' 동안 뛴 횟수 합계'), rows: st, head: STU_HEAD, row: stuRow, mine: me ? function(){ return mineRows('c', st); } : null }); });
     Array.prototype.forEach.call(document.querySelectorAll('[data-insch]'), function(b){
       b.addEventListener('click', function(e){
         e.stopPropagation();
         const d = schoolData(b.dataset.insch); if (!d) return;
         const sc = d.school || {}, rows = ranked(d.students || [], 'c');
-        rankPopup({ title: esc(schName(sc.label || '')) + ' · 클럽 안 순위', sub: subOf(' · ' + rows.length + '명' + (d.partial ? ' (상위 30명까지)' : '') + (rows[0] && rows[0].d1 != null ? ' · 전국 등수와 뛴 날은 하루 ' + (d.steadyMin || 100) + '회 넘게 뛴 날 기준' : '')), rows: rows, head: IN_HEAD, row: inRow, school: true });
+        rankPopup({ title: esc(schName(sc.label || '')) + ' · 클럽 안 순위', sub: subOf(' · ' + rows.length + '명' + (d.partial ? ' (상위 30명까지)' : '') + ''), rows: rows, head: inHead(rows), row: inRow, school: true });
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-fold]'), function(b){
@@ -774,8 +780,7 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
     if (d.err) return '<p class="hint" style="margin:6px 0;">클럽 안 순위를 불러오지 못했어요. 잠시 뒤 다시 눌러 보세요.</p>';
     const st = ranked(d.students || [], 'c');
     if (!st.length) return '<p class="hint">학생 기록이 없어요.</p>';
-    return table(IN_HEAD, st.slice(0, FOLD), inRow, 'mini') +
-      (st[0].d1 != null ? '<p class="hint" style="margin:6px 4px 0">전국 등수와 뛴 날은 하루 ' + (d.steadyMin || 100) + '회 넘게 뛴 날 수로 세요</p>' : '') +
+    return table(inHead(st), st.slice(0, FOLD), inRow, 'mini') +
       '<div class="more-row"><button type="button" class="more-btn" data-insch="' + esc(sc.pid) + '">클럽 안 전체 순위 보기 · ' + (d.partial && sc.participants > st.length ? '상위 ' + st.length + '명' : st.length + '명') + ' →</button></div>';
   }
 

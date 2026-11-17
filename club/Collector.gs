@@ -24,9 +24,26 @@
  *              Rows = [[학생키, 가린이름, 학년, 게임, 난이도, 정답착지, 시도, 플레이초, 완주판수, 완주정답, 완주시도], ...]
  *************************************************************/
 
-const COLLECTOR_VERSION = 22;  // 22: 꾸준히 뛴 친구 — 하루 100회 넘게 뛴 날 수(d1)로 매기는 전국 학생 순위(steady). 총 횟수 개인 순위는 학교 안 순위·기록실에서만  // 21: 학교 대결 소식 달별 — ?api=duels&month=YYYY-MM (끝난 달 기준, 달마다 건수), 공개 목록에는 점수를 빼고 날짜만  // 20: 실시간 대결·두 학교 함께 박 깨기·도전장 게시판을 파이어베이스(jumpers-together)로 — 스크립트 속성 FB_URL·FB_SECRET 이 있으면 방 정보와 게시판 변경 신호를 파이어베이스에 써서 두 학교 화면이 바로 바뀜, 없으면 19판처럼  // 19: 도전장 게시판 — 열린 도전장을 올리고 아무 학교나 받기, 실시간 종목은 두 학교 가능 시간이 겹치는 때를 골라 버튼으로 약속 (Posts 시트), 학생 화면용 ?api=posts  // 18: 실시간 학교 함께 뛰기 — 두 학교 선생님 화면이 같은 시각에 시작해 몇 초마다 합계를 주고받음 (실시간 대결 · 두 학교 함께 박 깨기), 자료는 6시간 캐시에만  // 17: 학교 대결 종목 '박 터트리기' — 들어온 학생 수 × 30·50·100회 박을 3분 안에 누가 더 빨리 깨나  // 16: 도전장을 만든 학교는 상대가 받기 전에도 먼저 뛰고 결과를 보낼 수 있음(기록을 걸고 도전)  // 15: 15: 학교 대결(도전장) — Duels 시트, 대결 코드로 두 학교가 같은 종목(점프 Live N분 한 판 / 하루 카메라 기록)을 1인당 평균으로 겨룸  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
+const COLLECTOR_VERSION = 22;  // 22: 꾸준히 뛴 친구 — 평일 5일을 하루 100회 넘게 뛰면 그 주 '달성'(순위가 아니라 달성 여부, 주말은 쉼). 달성한 주 수(wk)·이번 주 뛴 날(tw)·많이 뛴 친구 3명(big). 총 횟수 개인 순위는 학교 안 순위·기록실에서만  // 21: 학교 대결 소식 달별 — ?api=duels&month=YYYY-MM (끝난 달 기준, 달마다 건수), 공개 목록에는 점수를 빼고 날짜만  // 20: 실시간 대결·두 학교 함께 박 깨기·도전장 게시판을 파이어베이스(jumpers-together)로 — 스크립트 속성 FB_URL·FB_SECRET 이 있으면 방 정보와 게시판 변경 신호를 파이어베이스에 써서 두 학교 화면이 바로 바뀜, 없으면 19판처럼  // 19: 도전장 게시판 — 열린 도전장을 올리고 아무 학교나 받기, 실시간 종목은 두 학교 가능 시간이 겹치는 때를 골라 버튼으로 약속 (Posts 시트), 학생 화면용 ?api=posts  // 18: 실시간 학교 함께 뛰기 — 두 학교 선생님 화면이 같은 시각에 시작해 몇 초마다 합계를 주고받음 (실시간 대결 · 두 학교 함께 박 깨기), 자료는 6시간 캐시에만  // 17: 학교 대결 종목 '박 터트리기' — 들어온 학생 수 × 30·50·100회 박을 3분 안에 누가 더 빨리 깨나  // 16: 도전장을 만든 학교는 상대가 받기 전에도 먼저 뛰고 결과를 보낼 수 있음(기록을 걸고 도전)  // 15: 15: 학교 대결(도전장) — Duels 시트, 대결 코드로 두 학교가 같은 종목(점프 Live N분 한 판 / 하루 카메라 기록)을 1인당 평균으로 겨룸  // 14: 학교 이름(운영자 칸 SchoolName)이 같은 시트들(반마다 따로 설치)은 한 학교로 합쳐 집계 — 이름은 "지역 두 글자+학교 이름"(예: 서울햇살초등학교)  // 13: 한 번에 최고 연속 — 학생 줄 6번째 칸(best), 현황판 ropeBest 50등·학교 nb 전국 등수  // 12: 학교 하나 받을 때 학생마다 전국 등수 — 줄넘기 ?api=school (nr 횟수·rr 연속), 색동 ?api=matSchool (nrC 정답 착지·nrT 플레이 시간·nrA 정확도). 50등 밖이어도 전국 몇 등인지  11: 색동 한마당도 같은 순위 방식 — 학교 순위 10등까지(+우리 학교는 ?api=matSchool), 학생 순위 50등까지  10: 현황판 학교 순위는 10등까지만(+우리 학교는 따로), 학교 안 전체 순위는 ?api=school 로 그 학교만  9: 며칠 연속 뛰었나 순위(현황판 streaks, 기록실 streaks3·streaks50)  8: 전국 순위 50등까지(현황판 학생 50명, 기록실 students50·schools50)  7: 매트 '다 함께 하늘까지'(정답 착지 1번 = 1m, 학년도별 누적 climb)  6: 색깔 매트 놀이터 기록(matReport, ?api=matBoard)   4: 학년별 순위(?grade=), 지구 한 바퀴(allTime), 기록실 학생 키(상장용)  5: 지구 한 바퀴 학년도별(3월 1일 시작)
 const TZ_ = 'Asia/Seoul';
 const STEADY_MIN = 100;   // 하루에 이만큼 넘게 뛰어야 '꾸준히 뛴 날' 하루로 침 (꾸준히 해서 효과가 있을 만한 양)
+const STEADY_DAYS = 5;    // 한 주(월~금)에 이만큼의 날을 채우면 그 주 '달성'. 주말은 세지 않음(쉬는 날)
+// 'YYYY-MM-DD' 날짜 계산 (시간대와 무관하게 날짜만 다룸)
+function ymdAdd_(d, n) { const p = String(d).split('-'); const t = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)); return t.toISOString().slice(0, 10); }
+function ymdDow_(d) { const p = String(d).split('-'); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay(); }   // 0=일 … 6=토
+function ymdMonday_(d) { return ymdAdd_(d, -((ymdDow_(d) + 6) % 7)); }
+// 그 달에 속한 주(금요일이 그 달에 있는 주)와 이번 주의 평일 날짜 → 그 주 월요일
+function steadyWeeks_(month) {
+  const map = {}, weeks = [], today = today_(), cur = month === month_(today) ? ymdMonday_(today) : '';
+  let mon = ymdMonday_(month + '-01');
+  for (let i = 0; i < 6; i++, mon = ymdAdd_(mon, 7)) {
+    const own = month_(ymdAdd_(mon, 4)) === month;
+    if (!own && mon !== cur) continue;
+    if (own) weeks.push(mon);
+    for (let k = 0; k < 5; k++) map[ymdAdd_(mon, k)] = mon;
+  }
+  return { map: map, weeks: weeks, cur: cur };
+}
 const SH_SCHOOLS = 'Schools';
 const SH_DAILY = 'Daily';
 const MAX_STUDENTS_PER_DAY = 1200;
@@ -302,29 +319,40 @@ function aliasOf_(schools) { const a = {}; Object.keys(schools).forEach(function
 // 한 달치를 학교별·학생별로 묶기
 // grade 가 있으면 그 학년 학생만 묶음 (학년별 순위). 1인당 평균·참여율은 학년별 등록 수를 보낸 학교만 순위
 function aggregateMonth_(month, schools, dv, grade) {
-  const by = {};
+  const by = {}, SW = steadyWeeks_(month), wd = {};   // wd[학교][학생][주 월요일][날짜] = 1 (평일에 STEADY_MIN 넘긴 날)
   for (let i = 1; i < dv.length; i++) {
     const raw = String(dv[i][0]);
     const d = fmtDate_(dv[i][1]);
-    if (month_(d) !== month || !schools[raw] || schools[raw].hidden) continue;
+    const inMonth = month_(d) === month, wkKey = SW.map[d];
+    if ((!inMonth && !wkKey) || !schools[raw] || schools[raw].hidden) continue;
     const pid = schools[raw].canon;   // 같은 학교 여러 반 시트는 한 학교로
-    let s = by[pid];
-    if (!s) s = by[pid] = { total: 0, camera: 0, days: 0, dset: {}, st: {} };
     let list = [];
     try { list = JSON.parse(dv[i][5] || '[]'); } catch (e) {}
     if (grade) list = list.filter(function (r) { return String(r[2]) === grade; });
     if (!list.length) continue;
+    if (wkKey) list.forEach(function (r) {
+      if ((Number(r[3]) || 0) < STEADY_MIN) return;
+      const a = wd[pid] || (wd[pid] = {}), b = a[r[0]] || (a[r[0]] = {}), c = b[wkKey] || (b[wkKey] = {});
+      c[d] = 1;
+    });
+    if (!inMonth) continue;   // 달 밖 날짜(그 주의 앞쪽 평일)는 주 달성 계산에만 씀
+    let s = by[pid];
+    if (!s) s = by[pid] = { total: 0, camera: 0, days: 0, dset: {}, st: {} };
     if (!s.dset[d]) { s.dset[d] = 1; s.days++; }
     list.forEach(function (r) {
       const c = Number(r[3]) || 0, cam = Number(r[4]) || 0, best = Number(r[5]) || 0;
       s.total += c; s.camera += cam;
-      const x = s.st[r[0]] || (s.st[r[0]] = { k: r[0], n: r[1], g: r[2], c: 0, cam: 0, days: 0, d1: 0, best: 0, ds: {} });
-      x.n = r[1]; x.g = r[2]; x.c += c; x.cam += cam; x.days++; if (c >= STEADY_MIN) x.d1++; if (c > 0) x.ds[d] = 1; if (best > x.best) x.best = best;
+      const x = s.st[r[0]] || (s.st[r[0]] = { k: r[0], n: r[1], g: r[2], c: 0, cam: 0, days: 0, best: 0, ds: {} });
+      x.n = r[1]; x.g = r[2]; x.c += c; x.cam += cam; x.days++; if (c > 0) x.ds[d] = 1; if (best > x.best) x.best = best;
     });
   }
   const list = Object.keys(by).map(function (pid) {
     const s = by[pid], info = schools[pid];
-    const students = Object.keys(s.st).map(function (k) { const x = s.st[k], r = run_(x.ds); x.run = r.run; x.runEnd = r.end; delete x.ds; return x; }).sort(function (a, b) { return b.c - a.c; });
+    const students = Object.keys(s.st).map(function (k) { const x = s.st[k], r = run_(x.ds); x.run = r.run; x.runEnd = r.end; delete x.ds;
+      const w = (wd[pid] || {})[k] || {};   // 달성한 주 수 · 이번 주에 뛴 평일 수
+      x.wk = SW.weeks.filter(function (m) { return Object.keys(w[m] || {}).length >= STEADY_DAYS; }).length;
+      x.tw = SW.cur ? Object.keys(w[SW.cur] || {}).length : 0;
+      return x; }).sort(function (a, b) { return b.c - a.c; });
     const participants = students.length;
     const gReg = grade ? (Number(info.regByGrade[grade]) || 0) : info.registered;
     const registered = Math.max(gReg, participants);
@@ -360,15 +388,16 @@ function nationalStudents_(schools, n) {
   all.sort(function (a, b) { return b.c - a.c; });
   return all.slice(0, n);
 }
-// 꾸준히 뛴 친구: 하루 STEADY_MIN 회 넘게 뛴 날 수 순. 날 수가 같으면 같은 등수 (날마다 뛰면 모두 함께 1등)
-// 같은 등수 안에서는 이어 뛴 날이 긴 순, 그다음 이름순 — 총 횟수는 순서에도 표시에도 쓰지 않음
+// 꾸준히 뛴 친구: 평일 STEADY_DAYS 일을 하루 STEADY_MIN 회 넘게 뛰면 그 주 달성. 순위가 아니라 달성 여부라 등수를 매기지 않음
+// 보여 주는 순서는 달성한 주가 많은 순 → 이번 주 뛴 날이 많은 순 → 이름순 (총 횟수는 순서에도 표시에도 쓰지 않음)
 function nationalSteady_(schools, n) {
   const all = [];
   schools.forEach(function (s) {
-    s.students.forEach(function (x) { if (x.d1 > 0) all.push({ n: x.n, g: x.g, d1: x.d1, run: x.run, pid: s.pid, school: s.label }); });
+    s.students.forEach(function (x) { if (x.wk > 0 || x.tw > 0) all.push({ n: x.n, g: x.g, wk: x.wk, tw: x.tw, pid: s.pid, school: s.label }); });
   });
-  all.sort(function (a, b) { return b.d1 - a.d1 || b.run - a.run || String(a.n).localeCompare(String(b.n)); });
-  return { list: all.slice(0, n), total: all.length, first: all.length ? all.filter(function (x) { return x.d1 === all[0].d1; }).length : 0 };
+  all.sort(function (a, b) { return b.wk - a.wk || b.tw - a.tw || String(a.n).localeCompare(String(b.n)); });
+  return { list: all.slice(0, n), total: all.length,
+    week: all.filter(function (x) { return x.tw >= STEADY_DAYS; }).length, month: all.filter(function (x) { return x.wk > 0; }).length };
 }
 function monthsIn_(dv) {
   const m = {};
@@ -466,7 +495,9 @@ function getBoard_(month, grade) {
       camera: schools.reduce(function (a, s) { return a + s.camera; }, 0)
     },
     students: nationalStudents_(schools, 50),
-    steady: steady.list, steadyTotal: steady.total, steadyFirst: steady.first, steadyMin: STEADY_MIN,
+    steady: steady.list, steadyTotal: steady.total, steadyWeek: steady.week, steadyMonth: steady.month, steadyMin: STEADY_MIN, steadyDays: STEADY_DAYS,
+    steadyNow: month === month_(today_()),   // 이번 달을 보고 있을 때만 '이번 주' 칸을 보여 줌
+    big: nationalStudents_(schools, 3),      // 많이 뛴 친구 (총 횟수 상위 3명) — 순위표가 아니라 한 줄로만 알림
     streaks: nationalStreaks_(schools, 50, month === cur),
     ropeBest: nationalBest_(schools, 50),
     alias: aliasOf_(info),
@@ -503,15 +534,15 @@ function getSchool_(pid, month, grade) {
   const schools = aggregateMonth_(month, loadSchools_(), dailySheet_().getDataRange().getValues(), grade);
   const s = schools.filter(function (x) { return x.pid === pid; })[0];
   // 전국 등수: 50등 밖이어도 우리 학교 학생이 전국 몇 등인지 (같은 횟수·같은 날 수면 같은 등수)
-  const allC = [], allR = [], allB = [], allD = [];
-  schools.forEach(function (x) { x.students.forEach(function (y) { allC.push(y.c); if (y.run >= 2) allR.push(y.run); if (y.best > 0) allB.push(y.best); if (y.d1 > 0) allD.push(y.d1); }); });
+  const allC = [], allR = [], allB = [];
+  schools.forEach(function (x) { x.students.forEach(function (y) { allC.push(y.c); if (y.run >= 2) allR.push(y.run); if (y.best > 0) allB.push(y.best); }); });
   const desc = function (a, b) { return b - a; };
-  allC.sort(desc); allR.sort(desc); allB.sort(desc); allD.sort(desc);
+  allC.sort(desc); allR.sort(desc); allB.sort(desc);
   const rankIn = function (arr, v) { let lo = 0, hi = arr.length; while (lo < hi) { const m = (lo + hi) >> 1; if (arr[m] > v) lo = m + 1; else hi = m; } return lo + 1; };
   const out = s ? {
     month: month, grade: grade, schoolsTotal: schools.length, school: schoolRow_(s),
-    studentsTotal: allC.length, runTotal: allR.length, bestTotal: allB.length, steadyTotal: allD.length, steadyMin: STEADY_MIN,
-    students: s.students.map(function (x) { return { n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days, d1: x.d1, sr: x.d1 > 0 ? rankIn(allD, x.d1) : 0, run: x.run, best: x.best, nr: rankIn(allC, x.c), rr: x.run >= 2 ? rankIn(allR, x.run) : 0, nb: x.best > 0 ? rankIn(allB, x.best) : 0 }; })
+    studentsTotal: allC.length, runTotal: allR.length, bestTotal: allB.length, steadyMin: STEADY_MIN, steadyDays: STEADY_DAYS,
+    students: s.students.map(function (x) { return { n: x.n, g: x.g, c: x.c, cam: x.cam, days: x.days, wk: x.wk, tw: x.tw, run: x.run, best: x.best, nr: rankIn(allC, x.c), rr: x.run >= 2 ? rankIn(allR, x.run) : 0, nb: x.best > 0 ? rankIn(allB, x.best) : 0 }; })
   } : { month: month, grade: grade, schoolsTotal: schools.length, studentsTotal: allC.length, runTotal: allR.length, bestTotal: allB.length, school: null, students: [] };
   const text = JSON.stringify(out);
   if (text.length < 95000) cache.put(ck, text, BOARD_CACHE_SEC);
