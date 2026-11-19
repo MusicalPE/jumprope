@@ -474,6 +474,27 @@
   .shup-sheet li { counter-increment: shup; position: relative; padding: 10px 12px 10px 44px; background: var(--bg); border: 1px solid var(--line-2); border-radius: var(--r-sm); line-height: 1.55; }
   .shup-sheet li::before { content: counter(shup); position: absolute; left: 12px; top: 10px; width: 22px; height: 22px; border-radius: 50%; background: var(--coral); color: #fff; font-weight: 800; font-size: 0.85em; display: flex; align-items: center; justify-content: center; }
   .shup-sheet textarea { width: 100%; height: 110px; margin-top: 8px; font: 12px/1.4 monospace; }
+  /* ---- 사용 안내 (2.9.0) — 휘슬·리더스와 같은 방식: 어느 화면에서나 "? 사용 안내" ---- */
+  button.jrhelp-btn { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; border: 0; background: none; box-shadow: none; padding: 0 6px; font: inherit; font-size: 0.9em; font-weight: 700; color: var(--ink); cursor: pointer; border-radius: var(--r-sm); }
+  button.jrhelp-btn:hover { background: none; text-decoration: underline; }
+  button.jrhelp-btn:active { transform: none; }
+  button.jrhelp-btn:focus-visible { outline: 3px solid var(--coral-tint-2); outline-offset: 1px; }
+  .jrhelp-qm { width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 13px; font-weight: 900; line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .jrhelp-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .jrhelp-row .back-link { margin-bottom: 0; }
+  .admin-nav button.jrhelp-btn { margin-top: 4px; padding: 0 12px; justify-content: flex-start; width: 100%; font-size: 0.92em; color: var(--ink); }
+  .admin-nav button.jrhelp-btn:hover { background: none; }
+  @media (max-width: 760px) { .admin-nav button.jrhelp-btn { width: auto; flex: none; margin-top: 0; } }
+  .jrhelp-overlay { position: fixed; inset: 0; z-index: 390; background: rgba(17,24,39,0.62); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .jrhelp-sheet { background: var(--surface); border-radius: 20px; box-shadow: 0 30px 80px rgba(0,0,0,0.25); width: min(620px, 100%); max-height: 100%; overflow: auto; padding: 22px 24px; text-align: left; -webkit-overflow-scrolling: touch; }
+  .jrhelp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .jrhelp-head h2 { margin: 0; font-size: 1.25em; }
+  .jrhelp-sheet section { border-top: 1px solid var(--line); padding: 11px 0 10px; }
+  .jrhelp-sheet h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 1em; }
+  .jrhelp-num { width: 24px; height: 24px; border-radius: 6px; background: var(--ink); color: #fff; font-size: 0.82em; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .jrhelp-sheet ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+  .jrhelp-sheet li { font-size: 0.92em; line-height: 1.55; color: var(--ink-2); }
+  .jrhelp-foot { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: center; border-top: 1px solid var(--line); padding-top: 14px; }
   .shup-btn { padding: 5px 11px !important; font-size: 0.86em; margin-left: 6px; vertical-align: middle; }
 
   /* ---- 학생 접속 QR (v1.6.1) ---- */
@@ -783,7 +804,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.8.7', requiredShell: 1, latestShell: 9, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.9.0', requiredShell: 1, latestShell: 9, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -791,6 +812,46 @@ new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
   APP.shellUrl = s;
   APP.base = location.origin + location.pathname + '?s=' + encodeURIComponent(s);
 })();
+
+/* ---- 사용 안내 (2.9.0) — 휘슬·리더스와 같은 방식. 설치는 빼고 실제로 쓰는 순서대로 ----
+   단추는 화면 틀(template)에 data-help 로 박아 두고, 여기서 한꺼번에 받음. 글자는 화면에 적힌 이름 그대로 */
+const HELP = {
+  items: [
+    ['학생 들어오게 하기 (선생님)', ['위쪽 "접속 QR"을 눌러 크게 띄우고, 학생 휴대폰으로 찍게 해요.', '주소가 바뀌지 않으니 한 번 뽑아 둔 QR을 계속 써요. 관리자 메뉴 → "기본 설정"에서 "주소 복사"·"QR 이미지 저장"도 할 수 있어요.']],
+    ['기록 넣기 (학생)', ['"오늘 기록 입력"에서 학년·반·이름과 "줄넘기 종류"를 고르고, "뛴 횟수"를 넣어 "저장"해요.', '하루에 여러 번 넣어도 막지 않아요. 그날 뛴 횟수가 모두 더해져요.', '내 휴대폰이면 "이 기기에 내 이름 기억하기"를 켜 두세요. 다음부터 이름이 골라져 있어요.']],
+    ['카메라·스마트 줄넘기로 뛰기 (학생)', ['학년·반·이름·종류를 고른 뒤 "카메라로 뛰기"를 누르면 판정기가 열려요. 뛰고 나서 "끝내고 기록하기"를 누르면 횟수가 들어가요.', '"한 대로 둘이"·"각자 기기로 대결"로 친구와 겨뤄요. "스마트 줄넘기로 뛰기"는 줄넘기를 블루투스로 연결해요.', '단추가 안 보이면 선생님이 관리자 메뉴 → "카메라 판정기"에서 켜요.']],
+    ['기록 승인 (선생님)', ['관리자 메뉴 → "기본 설정"에서 "승인 절차"를 켜면, 손으로 넣은 기록이 "기록 승인"에서 기다려요.', '"승인"·"거절"을 하나씩 누르거나 "모두 승인"으로 한꺼번에 승인해요. 그래프에는 승인한 기록만 쌓여요.', '카메라 기록은 승인 없이 바로 반영돼요(스마트 줄넘기는 껍데기 9판부터). "카메라 판정기"에서 승인 대기로 바꿀 수 있어요.']],
+    ['내 기록 보기 (학생)', ['메인 화면 그래프에서 내 막대를 누르거나, "표로 보기"에서 내 이름을 눌러요.', '비밀번호를 넣으면 "날짜별 기록"과 "나의 급수"가 보여요. 따로 정하지 않았으면 1234예요.']],
+    ['반이 함께 뛰기 (선생님)', ['관리자 메뉴 → "점프 Live"에서 "점프 라이브 열기 →"를 눌러요. 학생들이 각자 기기로 뛰는 횟수가 선생님 화면에 바둑판으로 모여요.', '끝나면 결과가 승인된 카메라 기록으로 바로 들어가요.']],
+    ['급수 · 여행 · 인증서 (선생님)', ['"급수 인증"에서 학생이 선생님 앞에서 성공한 항목을 체크하고 "저장"해요.', '"우리 반 여행"에서 출발 도시를 고르면 1회를 1m로 바꿔 국토 대장정을 떠나요.', '"인증서 · 상장"에서 급수 인증서와 순위 상장을 출력해요.']],
+    ['전국 현황판 · 학교 대결 (선생님)', ['"Jump Earth! 전국"에서 "점퍼스(전국 현황판)에 참여하기"를 켜고 학교 이름을 넣어요. 한 달 단위로 겨루고 매달 1일에 새로 시작해요.', '참여하면 승인 절차도 함께 켜지고, 승인한 기록만 현황판에 올라가요.', '"학교 대결"에서 "도전장 올리기"로 다른 학교와 대결 시간을 잡아요.']],
+    ['비밀번호를 잊었을 때 · 새 학년 (선생님)', ['학생 비밀번호는 "학생 관리"의 "비밀번호 변경" 칸에서 새로 정해 줘요.', '관리자 비밀번호를 잊었으면 학교 시트 → 확장 프로그램 → Apps Script → 프로젝트 설정 → 스크립트 속성에서 ADMIN_HASH 를 지워요. 1234로 돌아가요.', '새 학기에는 "비밀번호 · 초기화"의 "모든 기록 삭제"로 기록만 지워요. 학생 명단은 남아요.']]
+  ],
+  esc: function(t){ return String(t).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); },
+  open: function(from){
+    HELP.close();
+    const ov = document.createElement('div'); ov.className = 'jrhelp-overlay'; ov.id = 'jrhelpOverlay';
+    ov.innerHTML = '<div class="jrhelp-sheet" role="dialog" aria-modal="true" aria-labelledby="jrhelpTitle">' +
+      '<div class="jrhelp-head"><h2 id="jrhelpTitle">점퍼스 간략 사용법</h2><button type="button" class="btn-outline" id="jrhelpX">닫기</button></div>' +
+      HELP.items.map(function(h, i){ return '<section><h3><span class="jrhelp-num">' + (i + 1) + '</span>' + HELP.esc(h[0]) + '</h3><ul>' + h[1].map(function(x){ return '<li>' + HELP.esc(x) + '</li>'; }).join('') + '</ul></section>'; }).join('') +
+      '<div class="jrhelp-foot">' + (APP.demo ? '' : '<a class="btn-outline" id="jrhelpDemo" href="' + (APP.channel === 'beta' ? '../' : '') + '?demo" target="_blank" rel="noopener">지어낸 학급으로 미리 눌러 보기</a>') +
+      '<button type="button" id="jrhelpOk">확인</button></div></div>';
+    document.body.appendChild(ov);
+    HELP.from = from || null;
+    document.getElementById('jrhelpX').onclick = HELP.close;
+    document.getElementById('jrhelpOk').onclick = HELP.close;
+    ov.addEventListener('click', function(e){ if (e.target === ov) HELP.close(); });
+    document.getElementById('jrhelpX').focus();
+  },
+  close: function(){
+    const ov = document.getElementById('jrhelpOverlay'); if (!ov) return;
+    ov.remove();
+    if (HELP.from && document.contains(HELP.from)) try { HELP.from.focus(); } catch (e) {}
+    HELP.from = null;
+  }
+};
+document.addEventListener('click', function(e){ const b = e.target.closest && e.target.closest('[data-help]'); if (b) { e.preventDefault(); HELP.open(b); } });
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && document.getElementById('jrhelpOverlay') && !document.getElementById('shupOverlay')) { e.stopImmediatePropagation(); HELP.close(); } }, true);
 
 /* ---- 껍데기 새 판으로 바꾸는 법 (2.8.7) ----
    이미 설치한 선생님이 시트·기록은 그대로 두고 Apps Script 코드만 새 판으로 바꾸게 안내 (견본 사본을 다시 받게 하지 않음).
@@ -1256,6 +1317,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <span class="brand-word"><b class="jn">Jump Us!</b>줄넘기 기록</span>
       </a>
       <div class="topbar-nav">
+        <button type="button" class="jrhelp-btn" data-help><span class="jrhelp-qm" aria-hidden="true">?</span>사용 안내</button>
         <a class="btn-outline" id="navBoard" style="display:none;" title="Jump Earth (점퍼스) · 전국 줄넘기 현황판"><span class="je-slot"></span><b class="jn">Jump Earth!</b>전국</a>
         <button type="button" class="btn-outline" id="navQr" title="학생들이 휴대폰으로 찍어서 들어오는 QR">접속 QR</button>
         <a class="btn-outline" id="navApproval" style="display:none;" href="{{BASE}}&page=adminLogin&next=approval">기록 승인</a>
@@ -1416,7 +1478,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </template>
 <template id="v-student">
 <div class="container">
-  <a class="back-link" href="{{BASE}}">← 메인으로</a>
+  <div class="jrhelp-row"><button type="button" class="jrhelp-btn" data-help><span class="jrhelp-qm" aria-hidden="true">?</span>사용 안내</button><a class="back-link" href="{{BASE}}">← 메인으로</a></div>
   <h1 id="pageTitle">학생 기록 조회</h1>
 
   <div class="card" id="authCard">
@@ -1452,7 +1514,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </template>
 <template id="v-adminLogin">
 <div class="container narrow">
-  <a class="back-link" href="{{BASE}}">← 메인으로</a>
+  <div class="jrhelp-row"><button type="button" class="jrhelp-btn" data-help><span class="jrhelp-qm" aria-hidden="true">?</span>사용 안내</button><a class="back-link" href="{{BASE}}">← 메인으로</a></div>
   <h1>관리자 로그인</h1>
   <div class="card">
     <form id="loginForm">
@@ -1467,7 +1529,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </template>
 <template id="v-approval">
 <div class="container">
-  <a class="back-link" href="{{BASE}}">← 메인으로</a>
+  <div class="jrhelp-row"><button type="button" class="jrhelp-btn" data-help><span class="jrhelp-qm" aria-hidden="true">?</span>사용 안내</button><a class="back-link" href="{{BASE}}">← 메인으로</a></div>
   <h1>기록 승인</h1>
   <div id="deniedMsg" style="display:none;">접근 권한이 없거나 로그인이 만료되었습니다. <a href="{{BASE}}&page=adminLogin&next=approval">다시 로그인</a></div>
 
@@ -1518,6 +1580,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <div class="nav-sep"></div>
       <a class="nav-link" id="navApprovalLink" href="{{BASE}}&page=approval&token={{TOKEN}}" style="display:none;">기록 승인 →</a>
       <a class="nav-link" href="{{BASE}}">메인 화면 →</a>
+      <button type="button" class="jrhelp-btn" data-help><span class="jrhelp-qm" aria-hidden="true">?</span>사용 안내</button>
     </nav>
     <div class="admin-content">
     <section class="tab-pane" data-tab="basic">
