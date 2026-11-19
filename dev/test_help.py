@@ -28,8 +28,8 @@ with sync_playwright() as p:
             btn=pg.locator(where+' .jrhelp-btn')
             check(name+' '+pn+': 단추 1개', btn.count()==1 and pg.locator('.jrhelp-btn').count()==1)
             if pn!='관리자 메뉴':
-                first=pg.evaluate("(w)=>{const c=document.querySelector(w);const k=[...c.children].filter(e=>getComputedStyle(e).display!=='none');return k[0]&&k[0].classList.contains('jrhelp-btn');}", where)
-                check(name+' '+pn+': 줄 맨 앞', first)
+                end=pg.evaluate("(w)=>{const c=document.querySelector(w);const k=[...c.children].filter(e=>getComputedStyle(e).display!=='none');const b=k[k.length-1];if(!b||!b.classList.contains('jrhelp-btn'))return false;const r=b.getBoundingClientRect(),o=document.querySelector('.container').getBoundingClientRect();return o.right-r.right<40;}", where)
+                check(name+' '+pn+': 줄 맨 끝 · 오른쪽', end)
             else:
                 last=pg.evaluate("()=>{const k=[...document.getElementById('adminNav').children];return k[k.length-1].classList.contains('jrhelp-btn');}")
                 check(name+' 관리자 메뉴: 왼쪽 메뉴 맨 아래', last)
