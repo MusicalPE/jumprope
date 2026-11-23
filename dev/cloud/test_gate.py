@@ -93,10 +93,10 @@ with sync_playwright() as p:
     check('암호가 바뀌어도 이미 만든 공간은 그대로 열림', t.is_visible('#recordForm'))
     op.click('[data-del="서울 하늘초등학교"]'); op.wait_for_function("!document.querySelector('[data-del=\"서울 하늘초등학교\"]')")
     check('학교 빼기', '서울 하늘초등학교' not in docs()['gate/schools']['names'])
-    op.fill('#jcPre', '경기'); op.fill('#jcBulk', '수원시\t별빛초등학교\n가평군\t  달빛중학교\n세종\t한빛고등학교\n수원시\t수원초등학교\n가평군\t가평여자고등학교\n수원시\t수원별빛초등학교'); op.click('#jcBulkGo'); op.wait_for_function("document.querySelector('[data-del=\"수원 별빛초등학교\"]')")
+    op.fill('#jcPre', '경기'); op.fill('#jcBulk', '수원시\t별빛초등학교\n가평군\t  달빛중학교\n세종\t한빛고등학교\n수원시\t수원초등학교\n가평군\t가평여자고등학교\n수원시\t수원별빛초등학교\n수원시\t수원공업고등학교\n가평군\t가평중학교'); op.click('#jcBulkGo'); op.wait_for_function("document.querySelector('[data-del=\"수원 별빛초등학교\"]')")
     nm = docs()['gate/schools']['names']
     check('시·군 칸과 학교 이름 칸을 함께 붙이면 "시·군 학교 이름"으로 (시·군 글자는 뗌)', all(x in nm for x in ['수원 별빛초등학교', '가평 달빛중학교', '세종 한빛고등학교']), str(nm[-3:]))
-    check('학교 이름이 시·군 이름뿐이면 앞말 (경기 수원초등학교) · 시·군 이름으로 시작하면 한 번만 (수원별빛초 → 수원 별빛초, 이미 있으면 건너뜀)', all(x in nm for x in ['경기 수원초등학교', '경기 가평여자고등학교', '수원 별빛초등학교']) and '수원 수원초등학교' not in nm and '수원 수원별빛초등학교' not in nm, str(nm[-3:]))
+    check('학교 이름이 시·군 이름뿐이면 앞말 (경기 수원초등학교) · 시·군 이름으로 시작하면 한 번만 (수원별빛초 → 수원 별빛초, 이미 있으면 건너뜀)', all(x in nm for x in ['경기 수원초등학교', '가평 여자고등학교', '수원 별빛초등학교', '수원 공업고등학교', '경기 가평중학교']) and '수원 수원초등학교' not in nm and '수원 수원별빛초등학교' not in nm, str(nm[-3:]))
     # ---------- 6. 운영자는 목록에 없는 이름도 ----------
     op.goto(APP); op.wait_for_selector('#jcNew'); op.click('#jcNew'); op.wait_for_selector('#jcFind')
     check('운영자 화면에는 가입 암호 칸이 없음', op.locator('#jcGp').count() == 0)
