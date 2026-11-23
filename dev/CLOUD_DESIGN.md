@@ -67,14 +67,33 @@ invites/{code}                  선생님 초대 코드
 - 학습지원 소프트웨어 필수기준: 개인정보 처리방침 페이지(수집 항목·목적·기간·보호책임자), 최소 수집
 - 시험: dev/ 에 파이어베이스 흉내(메모리 DB) + 규칙 시험을 두고, 기능을 넣을 때마다 기존 흐름도 다시 밟기
 
-## 지금까지 만든 것 (0.1.0 — 1단계)
+## 0.2.0 — 화면을 지금 점퍼스 그대로 (2026-11-23 방향 바꿈)
 
-- `cloud/index.html` · `cloud/js/app.js`(화면) · `cloud/js/fb.js`(파이어베이스와 이야기하는 곳은 이 파일 하나) · `cloud/js/crypto.js`(더그아웃 것 + QR 열쇠·학생 비번 해시)
-- `cloud/firestore-rules.txt` → 콘솔 Firestore 규칙에 붙여 넣기, `cloud/database-rules.txt` → Realtime Database 규칙(라이브를 붙이기 전까지 잠금)
-- 되는 것: 구글 로그인, 공간 만들기(비밀번호·복구 코드), 내 공간 목록, 초대 코드로 함께하기, 학생 등록·삭제·비번 초기화, 접속 QR·새 QR,
-  학생 기록 입력, 이번 달 그래프, 학생 기록 조회, 승인 절차·기록 승인, 설정(이름·종류), 비밀번호 바꾸기·복구 코드, 이 기기에서 열쇠 잊기
-- 공간 문서의 `qbox` = 공간 키로 잠근 QR 용 키 사본 (기기에 기억한 키는 꺼낼 수 없어서, QR 주소를 만들 때 이걸 풂)
-- 종류는 `{id:'k1', name}` — 기록에는 id 만 남겨 이름을 바꿔도 지난 기록이 따라감
+0.1.0 은 화면을 따로 짰는데 "옛날 판 느낌"이라, **학교판 index.html 을 그대로 쓰고 저장하는 곳만 바꾸는** 구조로 다시 짰다.
+위의 "Firestore 구조" 중 meta/roster · months 는 더 이상 쓰지 않는다 (아래가 지금 구조).
+
+- `cloud/index.html` = `dev/make_cloud.py` 가 index.html 에서 만든 파일. `<base href="../">` 로 그림·글꼴·Shell.gs 는 맨 위 것을 씀.
+  **index.html · demo.js · Shell.gs 를 고치면 `python3 dev/make_cloud.py` 를 다시 돌릴 것** (make_club.py 처럼. 바꿀 글자가 안 맞으면 멈춤)
+- `cloud/js/cloud.js` — 미리보기(demo.js)처럼 **Shell.gs 를 브라우저 안에서 돌림**. 구글 시트 대신 가짜 표(gasfake.js = demo.js 에서 떼어 옴)를 쓰고,
+  그 표를 공간 키로 잠가 Firestore 에 저장. 화면이 부르는 rpc 는 모두 `window.JRCLOUD.call` 로 감
+- 저장 구조
+  ```
+  spaces/{sid}/meta/pub              { name, approval }  — 평문 (규칙이 승인 절차를 확인하려고)
+  spaces/{sid}/book/Students         { box }  표 한 장 = 문서 하나 (암호문)
+  spaces/{sid}/book/Levels           { box }
+  spaces/{sid}/book/props            { box }  껍데기 속성 중 공개 가능한 것 (EXTRA_SETTINGS 는 전국 현황판 비밀 키를 뺀 사본)
+  spaces/{sid}/book/Records_YYYY-MM_NN { box } 기록 표를 달마다, 1200줄씩
+  spaces/{sid}/priv/secret           { box }  선생님만 읽음: GEMINI_KEY · EXTRA_SETTINGS(비밀 키 포함)
+  spaces/{sid}/inbox/{id}            { box(기록 한 줄), n, src, st, w, t }  학생이 넣은 기록 — n·src·st 만 평문(규칙 확인용)
+  ```
+- 선생님 화면: 요청마다 (8초가 지났으면) 표를 새로 읽고, 껍데기 함수를 돌린 뒤, **바뀐 문서만** 다시 잠가 올림. inbox 는 표에 합치고 지움
+- 학생 화면: 표를 읽기만 함(20초마다 새로). addRecord 로 붙은 새 줄만 inbox 에 올림. 다른 표를 고쳐도 올라가지 않음(규칙이 막음)
+- 관리자 메뉴: 구글 로그인한 선생님이면 비밀번호 없이 통과(껍데기 기본 비밀번호로 통행증을 받아 이 기기에만 둠 — `AT_` 속성은 localStorage)
+- [공간 관리](`&page=space`): 학생 QR·새 QR, 학교 이름, 선생님 초대, 공간 비밀번호·복구 코드
+- 복구 코드 화면의 [내 메일로 보내 두기]: 지메일 쓰기 창을 열 뿐, 보내는 것은 본인 — 서버를 거치지 않음
+- 아직 막아 둔 것: 카메라 판정기(issueCameraToken), 점프 Live·라이트, 학생 화면의 전국 현황판 보내기(선생님 화면에서만 보냄)
+- 알아 둘 점: 학생 기기도 공간 키를 가지므로 표(학생 비밀번호 해시·모든 기록)를 풀 수 있다. 고치는 것은 규칙이 막는다.
+  두 선생님이 같은 순간에 고치면 나중 것이 이김(문서 단위) — 요청 직전에 새로 읽어 틈을 줄였음
 
 ## 시험
 

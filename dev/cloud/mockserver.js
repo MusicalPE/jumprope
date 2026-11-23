@@ -79,16 +79,18 @@ function rules(op, p, auth, raw, after, before, st) {
     if (op === 'update') return isOwner(s);
     if (op === 'delete') return google && (uid === seg[3] || isOwner(s));
   }
-  if (col === 'meta' || col === 'months') { if (op === 'get') return signed; if (op === 'list') return false; return isMember(s); }
+  if (col === 'meta') { if (op === 'get') return signed; if (op === 'list') return false; return isMember(s); }
+  if (col === 'book') { if (op === 'get' || op === 'list') return signed; return isMember(s); }
+  if (col === 'priv') return isMember(s);
   if (col === 'keys') { if (op === 'get' || op === 'list') return false; return isMember(s); }
   if (col === 'inbox') {
     if (op === 'get' || op === 'list') return signed;
     if (op === 'update' || op === 'delete') return isMember(s);
     if (op === 'create') {
       const d = raw;
-      const ok = signed && keysOnly(d, ['s', 'd', 'k', 'n', 'src', 'st', 'w', 't'])
-        && typeof d.s === 'string' && d.s.length <= 16 && typeof d.d === 'string' && /^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/.test(d.d)
-        && typeof d.k === 'string' && d.k.length <= 8 && Number.isInteger(d.n) && d.n >= 1 && d.n <= 5000
+      const ok = signed && keysOnly(d, ['box', 'n', 'src', 'st', 'w', 't'])
+        && isObj(d.box) && typeof d.box.ct === 'string' && d.box.ct.length <= 6000
+        && Number.isInteger(d.n) && d.n >= 1 && d.n <= 5000
         && ['hand', 'cam', 'rope', 'live'].includes(d.src) && ['ok', 'wait'].includes(d.st)
         && isObj(d.t) && d.t.__now === 1 && typeof d.w === 'string' && d.w.length <= 40 && !!g('spaces/' + s + '/keys/' + d.w);
       if (!ok) return false;

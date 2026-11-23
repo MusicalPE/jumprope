@@ -98,5 +98,6 @@ python3 test_site.py                              # playwright 전체 흐름 시
 3. `SEED=1 node devserver.js &` 띄우고 `python3 test_site.py` — 연결 화면, 메인, 학생 기록 입력(승인 꺼짐·켬), 승인 화면, 관리자 탭, 학생 등록, 테마, 판정기 저장까지. 마지막 줄 `JS 에러: 없음` 확인
 4. `python3 test_shup.py` (`CH=club/`, `CH=beta/` 도) — 껍데기 새 판으로 바꾸는 법 팝업. **새 껍데기 판을 내면 index.html 의 `APP.latestShell` 도 같이 올릴 것**
 5. `python3 test_steady.py` — 현황판 꾸준히 뛴 친구(수집기 22판: 평일 5일·하루 100회 = 그 주 달성, 등수 없음. 총 횟수 개인 순위는 학교 안 순위·기록실에만, 많이 뛴 친구 3명은 한 줄). 서버를 새로 띄운 뒤 돌릴 것
+5-1. **클라우드판**: index.html·demo.js·Shell.gs 를 고쳤으면 `python3 dev/make_cloud.py` → `cd dev/cloud && node mockserver.js` 띄우고 `python3 test_cloud.py` (설계·구조는 dev/CLOUD_DESIGN.md)
 6. `python3 test_help.py` (`CH=club/`, `CH=beta/` 도) — 사용 안내(2.9.0): 다섯 화면(메인·학생 기록 조회·관리자 로그인·기록 승인·관리자 메뉴)마다 단추가 위쪽 줄 오른쪽 끝(메인은 다른 단추와 띄어서, 관리자는 왼쪽 메뉴 맨 아래)에 하나, 창 제목·항목 9개, 닫기·확인·Esc·바깥으로 닫힘, QR 위에서 Esc 는 안내 창만, 미리보기 안에서는 미리보기 단추 숨김. **안내 항목을 늘리거나 줄이면 test_help.py 의 N 도 같이 고칠 것.** 안내 글은 index.html 의 `HELP.items` (단추 이름은 화면 글자 그대로)
 7. 고친 기능에 맞는 시험을 따로 더 돌리고, 결과에 "무엇을 시험했고 무엇은 못 했는지" 적는다
