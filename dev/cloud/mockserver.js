@@ -1,0 +1,144 @@
+// 점퍼스 클라우드판 시험용 가짜 파이어베이스 (Firestore + 로그인 흉내, 보안 규칙도 firestore-rules.txt 와 같게 흉내)
+// node mockserver.js  → http://localhost:8891  (cloud/ 정적 파일도 /jumprope/cloud/ 로 내줌)
+const http = require('http'), fs = require('fs'), path = require('path');
+const PORT = +(process.env.PORT || 8891);
+const ROOT = path.resolve(__dirname, '../..');
+let store = new Map();   // 'a/b/c/d' → data
+const denies = [];
+
+const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
+const clone = (v) => JSON.parse(JSON.stringify(v));
+function resolve(nv, ov) {           // 표시(INC/DEL/NOW) 풀기
+  if (isObj(nv)) {
+    if ('__inc' in nv) return (typeof ov === 'number' ? ov : 0) + nv.__inc;
+    if ('__now' in nv) return Date.now();
+    const o = {}; for (const k in nv) { if (isObj(nv[k]) && '__del' in nv[k]) continue; o[k] = resolve(nv[k], isObj(ov) ? ov[k] : undefined); } return o;
+  }
+  return nv;
+}
+function mergeDeep(old, nv) {
+  const o = isObj(old) ? clone(old) : {};
+  for (const k in nv) {
+    const v = nv[k];
+    if (isObj(v) && '__del' in v) { delete o[k]; continue; }
+    if (isObj(v) && !('__inc' in v) && !('__now' in v)) o[k] = mergeDeep(o[k], v);
+    else o[k] = resolve(v, o[k]);
+  }
+  return o;
+}
+function applyUpdate(old, nv) {      // 'a.b.c' 점 경로
+  const o = clone(old);
+  for (const key in nv) {
+    const segs = key.split('.'); let cur = o;
+    for (let i = 0; i < segs.length - 1; i++) { if (!isObj(cur[segs[i]])) cur[segs[i]] = {}; cur = cur[segs[i]]; }
+    const last = segs[segs.length - 1], v = nv[key];
+    if (isObj(v) && '__del' in v) delete cur[last]; else cur[last] = isObj(v) && !('__inc' in v) && !('__now' in v) ? resolve(v, undefined) : resolve(v, cur[last]);
+  }
+  return o;
+}
+
+// ---- 규칙 흉내 (firestore-rules.txt 와 같은 뜻) ----
+function rules(op, p, auth, raw, after, before, st) {
+  const signed = !!auth, google = !!auth && !auth.anon, uid = auth && auth.uid;
+  const seg = p.split('/');
+  const g = (q) => st.get(q);
+  const isMember = (s) => google && !!g('spaces/' + s + '/members/' + uid);
+  const isOwner = (s) => google && !!g('spaces/' + s) && g('spaces/' + s).owner === uid;
+  const keysOnly = (o, ks) => Object.keys(o || {}).every((k) => ks.includes(k));
+  if (seg[0] === 'users' && seg.length === 2) return google && uid === seg[1];
+  if (seg[0] === 'invites' && seg.length === 2) {
+    if (op === 'get') return google;
+    if (op === 'list') return false;
+    if (op === 'create') return isMember(after.sid) && keysOnly(after, ['sid', 'by', 'exp']);
+    if (op === 'delete') return google && before && isMember(before.sid);
+    return false;
+  }
+  if (seg[0] !== 'spaces') return false;
+  const s = seg[1];
+  if (seg.length === 2) {
+    if (op === 'create') return google && after.owner === uid;
+    if (op === 'get') return isMember(s);
+    if (op === 'update') {
+      if (!isMember(s) || after.owner !== before.owner) return false;
+      if (isOwner(s)) return true;
+      return JSON.stringify(after.crypto) === JSON.stringify(before.crypto);
+    }
+    if (op === 'delete') return isOwner(s);
+    return false;
+  }
+  const col = seg[2];
+  if (col === 'members') {
+    if (op === 'get' || op === 'list') return isMember(s);
+    if (op === 'create') {
+      if (!google || uid !== seg[3]) return false;
+      const sp = g('spaces/' + s);
+      if (sp && sp.owner === uid && after.role === 'owner') return true;
+      if (after.role === 'teacher' && typeof after.code === 'string') { const inv = g('invites/' + after.code); return !!inv && inv.sid === s && inv.exp > Date.now(); }
+      return false;
+    }
+    if (op === 'update') return isOwner(s);
+    if (op === 'delete') return google && (uid === seg[3] || isOwner(s));
+  }
+  if (col === 'meta' || col === 'months') { if (op === 'get') return signed; if (op === 'list') return false; return isMember(s); }
+  if (col === 'keys') { if (op === 'get' || op === 'list') return false; return isMember(s); }
+  if (col === 'inbox') {
+    if (op === 'get' || op === 'list') return signed;
+    if (op === 'update' || op === 'delete') return isMember(s);
+    if (op === 'create') {
+      const d = raw;
+      const ok = signed && keysOnly(d, ['s', 'd', 'k', 'n', 'src', 'st', 'w', 't'])
+        && typeof d.s === 'string' && d.s.length <= 16 && typeof d.d === 'string' && /^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/.test(d.d)
+        && typeof d.k === 'string' && d.k.length <= 8 && Number.isInteger(d.n) && d.n >= 1 && d.n <= 5000
+        && ['hand', 'cam', 'rope', 'live'].includes(d.src) && ['ok', 'wait'].includes(d.st)
+        && isObj(d.t) && d.t.__now === 1 && typeof d.w === 'string' && d.w.length <= 40 && !!g('spaces/' + s + '/keys/' + d.w);
+      if (!ok) return false;
+      const pub = g('spaces/' + s + '/meta/pub');
+      return d.st === 'wait' || d.src !== 'hand' || isMember(s) || !(pub && pub.approval === true);
+    }
+  }
+  return false;
+}
+
+function doWrite(o, auth, st, next) {   // o = [kind, path, data, merge]
+  const [kind, p, data, merge] = o;
+  const before = st.get(p) || null;
+  if (kind === 'del') { if (!rules('delete', p, auth, null, null, before, st)) throw deny('delete', p); next.delete(p); return; }
+  let after;
+  if (kind === 'set') after = merge ? mergeDeep(before, data) : mergeDeep(null, data);
+  else if (kind === 'update') { if (!before) throw Object.assign(new Error('없는 문서: ' + p), { code: 'not-found' }); after = applyUpdate(before, data); }
+  const op = before ? 'update' : 'create';
+  if (!rules(op, p, auth, data, after, before, st)) throw deny(op, p);
+  next.set(p, after);
+}
+function deny(op, p) { denies.push(op + ' ' + p); return Object.assign(new Error('Missing or insufficient permissions. (' + op + ' ' + p + ')'), { code: 'permission-denied' }); }
+let seq = 0;
+function handle(b) {
+  const auth = b.auth || null;
+  if (b.op === 'get') { if (!rules('get', b.path, auth, null, null, store.get(b.path), store)) throw deny('get', b.path); return store.has(b.path) ? clone(store.get(b.path)) : null; }
+  if (b.op === 'list') {
+    const pre = b.path + '/'; const depth = b.path.split('/').length + 1;
+    if (!rules('list', b.path + '/x', auth, null, null, null, store)) throw deny('list', b.path);
+    return [...store.keys()].filter((k) => k.startsWith(pre) && k.split('/').length === depth).map((k) => ({ id: k.split('/').pop(), data: clone(store.get(k)) }));
+  }
+  if (b.op === 'add') { const id = 'a' + (++seq).toString(36) + Math.random().toString(36).slice(2, 8); const next = new Map(store); doWrite(['set', b.path + '/' + id, b.data], auth, store, next); store = next; return id; }
+  if (b.op === 'write') { const next = new Map(store); b.ops.forEach((o) => doWrite(o, auth, store, next)); store = next; return true; }   // 묶음: 규칙은 묶기 전 상태로 판단
+  if (b.op === 'reset') { store = new Map(); denies.length = 0; return true; }
+  if (b.op === 'dump') return { docs: Object.fromEntries(store), denies };
+  throw new Error('모르는 op ' + b.op);
+}
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.png': 'image/png', '.woff2': 'font/woff2', '.json': 'application/json', '.svg': 'image/svg+xml', '.webp': 'image/webp' };
+http.createServer((req, res) => {
+  if (req.method === 'POST' && req.url === '/__fb') {
+    let body = ''; req.on('data', (c) => body += c); req.on('end', () => {
+      res.setHeader('Content-Type', 'application/json');
+      try { res.end(JSON.stringify({ ok: true, result: handle(JSON.parse(body)) })); }
+      catch (e) { res.end(JSON.stringify({ ok: false, code: e.code || 'error', message: e.message })); }
+    }); return;
+  }
+  let u = decodeURIComponent(req.url.split('?')[0]);
+  if (u.startsWith('/jumprope/')) u = u.slice('/jumprope'.length);
+  if (u === '/cloud/js/fb.js') { res.setHeader('Content-Type', TYPES['.js']); return res.end(fs.readFileSync(path.join(__dirname, 'fb-mock.js'))); }
+  let f = path.join(ROOT, u); if (f.endsWith('/')) f += 'index.html';
+  if (!f.startsWith(ROOT) || !fs.existsSync(f)) { res.statusCode = 404; return res.end('404'); }
+  res.setHeader('Content-Type', TYPES[path.extname(f)] || 'application/octet-stream'); res.end(fs.readFileSync(f));
+}).listen(PORT, () => console.log('mock on ' + PORT));

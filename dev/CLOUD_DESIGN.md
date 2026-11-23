@@ -12,7 +12,7 @@
 
 ## 파이어베이스 (콘솔 하나)
 
-- 프로젝트: `jumpers-pe` (예정)
+- 프로젝트: `jumpus-pe` (설정값은 cloud/firebase-config.js)
 - Authentication: Google(선생님), 익명(학생 기기)
 - Firestore (asia-northeast3 서울): 기록 저장소
 - Realtime Database (asia-southeast1): 새 점프 라이브 — 라이트 방식(학생 3초마다 보내기, 선생님만 실시간 1연결) → 전국 동시 100반쯤
@@ -66,3 +66,20 @@ invites/{code}                  선생님 초대 코드
 
 - 학습지원 소프트웨어 필수기준: 개인정보 처리방침 페이지(수집 항목·목적·기간·보호책임자), 최소 수집
 - 시험: dev/ 에 파이어베이스 흉내(메모리 DB) + 규칙 시험을 두고, 기능을 넣을 때마다 기존 흐름도 다시 밟기
+
+## 지금까지 만든 것 (0.1.0 — 1단계)
+
+- `cloud/index.html` · `cloud/js/app.js`(화면) · `cloud/js/fb.js`(파이어베이스와 이야기하는 곳은 이 파일 하나) · `cloud/js/crypto.js`(더그아웃 것 + QR 열쇠·학생 비번 해시)
+- `cloud/firestore-rules.txt` → 콘솔 Firestore 규칙에 붙여 넣기, `cloud/database-rules.txt` → Realtime Database 규칙(라이브를 붙이기 전까지 잠금)
+- 되는 것: 구글 로그인, 공간 만들기(비밀번호·복구 코드), 내 공간 목록, 초대 코드로 함께하기, 학생 등록·삭제·비번 초기화, 접속 QR·새 QR,
+  학생 기록 입력, 이번 달 그래프, 학생 기록 조회, 승인 절차·기록 승인, 설정(이름·종류), 비밀번호 바꾸기·복구 코드, 이 기기에서 열쇠 잊기
+- 공간 문서의 `qbox` = 공간 키로 잠근 QR 용 키 사본 (기기에 기억한 키는 꺼낼 수 없어서, QR 주소를 만들 때 이걸 풂)
+- 종류는 `{id:'k1', name}` — 기록에는 id 만 남겨 이름을 바꿔도 지난 기록이 따라감
+
+## 시험
+
+- 파이어베이스 에뮬레이터는 이 작업 환경에서 내려받을 수 없어(storage.googleapis.com 막힘) **가짜 서버**로 시험한다
+- `cd dev/cloud && node mockserver.js` (8891) → `python3 test_cloud.py`
+  - mockserver.js 는 Firestore 와 로그인을 흉내 내고, **firestore-rules.txt 와 같은 뜻의 규칙을 JS 로 한 번 더 적어** 권한까지 확인한다
+  - `cloud/js/fb.js` 요청을 `dev/cloud/fb-mock.js` 로 바꿔 내준다 (앱 코드는 그대로)
+- **규칙을 고치면 firestore-rules.txt 와 mockserver.js 의 rules() 를 같이 고칠 것.** 실제 규칙 문법은 여기서 확인되지 않으니, 콘솔에 붙인 뒤 실제 주소에서 한 번 밟아 봐야 한다
