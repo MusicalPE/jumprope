@@ -95,6 +95,22 @@ invites/{code}                  선생님 초대 코드
 - 알아 둘 점: 학생 기기도 공간 키를 가지므로 표(학생 비밀번호 해시·모든 기록)를 풀 수 있다. 고치는 것은 규칙이 막는다.
   두 선생님이 같은 순간에 고치면 나중 것이 이김(문서 단위) — 요청 직전에 새로 읽어 틈을 줄였음
 
+## 0.3.0 — 판정기 연결 · 안내 글 · 내려받기와 옮겨 오기
+
+- **카메라 판정기**: 껍데기의 issueCameraToken 이 만든 주소의 app 이 `cloud:<공간>`. 판정기(jump-rope-checker 1.3.8)는 그 경우
+  `/jumprope/cloud/js/bridge.js` 를 불러 `api(공간, {api:'rope_x_who'|'rope_x_save', t, count…})` 를 부름 → cloud.js 의 `cameraApi` 가 껍데기의 handleCameraApi_ 를 그대로 돌림
+  - 판정기와 점퍼스가 같은 musicalpe.github.io 라 로그인(구글·익명)·학생 QR 열쇠(localStorage)·선생님 열쇠(IndexedDB)를 함께 씀
+  - 판정기 통행증(캐시 `CAM_…`)은 다른 탭에서 읽어야 해서 localStorage `jumpus:cache:<공간>` 에 둠
+  - 껍데기는 같은 날·같은 종류 줄에 횟수를 더하는데, 학생 기기는 있던 줄을 고칠 수 없음 → persistStudent 가 **늘어난 만큼을 새 줄**로 inbox 에 올림 (합계는 같음)
+  - 다리로 불릴 때(`APP.bridge`)는 화면을 그리지 않고 오류를 던짐. 학생 방(각자 기기로 대결)은 아직 없어서 `방: 0`, 메인의 [각자 기기로 대결] 단추는 숨김
+- **안내 글**: make_cloud.py 가 사용 안내 9가지를 클라우드판 내용으로 바꾸고(껍데기·ADMIN_HASH 대신 공간 관리·복구 코드), 관리자 비밀번호 칸은 구글 로그인 안내로 바꿈.
+  현황판·기록실 주소는 `document.baseURI` 기준(저장소 맨 위 board.html)
+- **공간 관리 → 기록 내려받기**: 엑셀(.xlsx, SheetJS 를 그때 불러옴 — 학생별 누적·기록·학생 명단·급수 인증 4장), 백업(.json, `app:'jumpus-backup'`)
+- **공간 관리 → 기록 옮겨 오기**
+  - 시트판에서: 시트판 주소와 관리자 비밀번호로 시트판 껍데기에 직접 물음(verifyAdminPassword → getAllDataAdmin · getLevelsPublic · 설정들).
+    학생 ID 를 그대로 가져와 기록·급수가 이어짐. 학생 비밀번호는 못 가져와 1234 로. 빈 공간일 때만 설정(종류·목표·색·승인·카메라·전국 현황판 키)도 가져오고, 키의 shell 은 `cloud:<공간>` 으로 바꿈
+  - 백업 파일에서: 같은 ID·같은 학년반번호이름 학생, 같은 번호 기록, 같은 급수는 건너뜀 (여러 번 넣어도 늘지 않음)
+
 ## 시험
 
 - 파이어베이스 에뮬레이터는 이 작업 환경에서 내려받을 수 없어(storage.googleapis.com 막힘) **가짜 서버**로 시험한다

@@ -824,15 +824,15 @@ new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
    단추는 화면 틀(template)에 data-help 로 박아 두고, 여기서 한꺼번에 받음. 글자는 화면에 적힌 이름 그대로 */
 const HELP = {
   items: [
-    ['학생 들어오게 하기 (선생님)', ['위쪽 "접속 QR"을 눌러 크게 띄우고, 학생 휴대폰으로 찍게 해요.', '주소가 바뀌지 않으니 한 번 뽑아 둔 QR을 계속 써요. 관리자 메뉴 → "기본 설정"에서 "주소 복사"·"QR 이미지 저장"도 할 수 있어요.']],
+    ['학생 들어오게 하기 (선생님)', ['위쪽 "접속 QR"을 눌러 크게 띄우고, 학생 휴대폰으로 찍게 해요. 학생은 로그인하지 않아요.', 'QR 안에 학생 이름을 여는 열쇠가 들어 있어요. 학급 밖으로 퍼졌다면 관리자 메뉴 → "공간 관리"에서 "새 QR 만들기"를 눌러요.']],
     ['기록 넣기 (학생)', ['"오늘 기록 입력"에서 학년·반·이름과 "줄넘기 종류"를 고르고, "뛴 횟수"를 넣어 "저장"해요.', '하루에 여러 번 넣어도 막지 않아요. 그날 뛴 횟수가 모두 더해져요.', '내 휴대폰이면 "이 기기에 내 이름 기억하기"를 켜 두세요. 다음부터 이름이 골라져 있어요.']],
-    ['카메라·스마트 줄넘기로 뛰기 (학생)', ['학년·반·이름·종류를 고른 뒤 "카메라로 뛰기"를 누르면 판정기가 열려요. 뛰고 나서 "끝내고 기록하기"를 누르면 횟수가 들어가요.', '"한 대로 둘이"·"각자 기기로 대결"로 친구와 겨뤄요. "스마트 줄넘기로 뛰기"는 줄넘기를 블루투스로 연결해요.', '단추가 안 보이면 선생님이 관리자 메뉴 → "카메라 판정기"에서 켜요.']],
-    ['기록 승인 (선생님)', ['관리자 메뉴 → "기본 설정"에서 "승인 절차"를 켜면, 손으로 넣은 기록이 "기록 승인"에서 기다려요.', '"승인"·"거절"을 하나씩 누르거나 "모두 승인"으로 한꺼번에 승인해요. 그래프에는 승인한 기록만 쌓여요.', '카메라 기록은 승인 없이 바로 반영돼요(스마트 줄넘기는 껍데기 9판부터). "카메라 판정기"에서 승인 대기로 바꿀 수 있어요.']],
+    ['카메라·스마트 줄넘기로 뛰기 (학생)', ['학년·반·이름·종류를 고른 뒤 "카메라로 뛰기"를 누르면 판정기가 열려요. 뛰고 나서 "끝내고 기록하기"를 누르면 횟수가 들어가요.', '"한 대로 둘이"는 한 기기로 친구와 나란히 뛰어요. "스마트 줄넘기로 뛰기"는 줄넘기를 블루투스로 연결해요.', '단추가 안 보이면 선생님이 관리자 메뉴 → "카메라 판정기"에서 켜요.']],
+    ['기록 승인 (선생님)', ['관리자 메뉴 → "기본 설정"에서 "승인 절차"를 켜면, 손으로 넣은 기록이 "기록 승인"에서 기다려요.', '"승인"·"거절"을 하나씩 누르거나 "모두 승인"으로 한꺼번에 승인해요. 그래프에는 승인한 기록만 쌓여요.', '카메라·스마트 줄넘기 기록은 승인 없이 바로 반영돼요. "카메라 판정기"에서 승인 대기로 바꿀 수 있어요.']],
     ['내 기록 보기 (학생)', ['메인 화면 그래프에서 내 막대를 누르거나, "표로 보기"에서 내 이름을 눌러요.', '비밀번호를 넣으면 "날짜별 기록"과 "나의 급수"가 보여요. 따로 정하지 않았으면 1234예요.']],
-    ['반이 함께 뛰기 (선생님)', ['관리자 메뉴 → "점프 Live"에서 "점프 라이브 열기 →"를 눌러요. 학생들이 각자 기기로 뛰는 횟수가 선생님 화면에 바둑판으로 모여요.', '끝나면 결과가 승인된 카메라 기록으로 바로 들어가요.']],
     ['급수 · 여행 · 인증서 (선생님)', ['"급수 인증"에서 학생이 선생님 앞에서 성공한 항목을 체크하고 "저장"해요.', '"우리 반 여행"에서 출발 도시를 고르면 1회를 1m로 바꿔 국토 대장정을 떠나요.', '"인증서 · 상장"에서 급수 인증서와 순위 상장을 출력해요.']],
-    ['전국 현황판 · 학교 대결 (선생님)', ['"Jump Earth! 전국"에서 "점퍼스(전국 현황판)에 참여하기"를 켜고 학교 이름을 넣어요. 한 달 단위로 겨루고 매달 1일에 새로 시작해요.', '참여하면 승인 절차도 함께 켜지고, 승인한 기록만 현황판에 올라가요.', '"학교 대결"에서 "도전장 올리기"로 다른 학교와 대결 시간을 잡아요.']],
-    ['비밀번호를 잊었을 때 · 새 학년 (선생님)', ['학생 비밀번호는 "학생 관리"의 "비밀번호 변경" 칸에서 새로 정해 줘요.', '관리자 비밀번호를 잊었으면 학교 시트 → 확장 프로그램 → Apps Script → 프로젝트 설정 → 스크립트 속성에서 ADMIN_HASH 를 지워요. 1234로 돌아가요.', '새 학기에는 "비밀번호 · 초기화"의 "모든 기록 삭제"로 기록만 지워요. 학생 명단은 남아요.']]
+    ['전국 현황판 · 학교 대결 (선생님)', ['"Jump Earth! 전국"에서 "점퍼스(전국 현황판)에 참여하기"를 켜고 학교 이름을 넣어요. 한 달 단위로 겨루고 매달 1일에 새로 시작해요.', '오늘 기록은 선생님 화면이 열려 있을 때 현황판으로 보내요. 하루에 한 번은 선생님 화면을 열어 주세요.', '"학교 대결"에서 "도전장 올리기"로 다른 학교와 대결 시간을 잡아요.']],
+    ['함께 쓰는 선생님 · 다른 기기 (선생님)', ['선생님은 구글 로그인으로 들어와요. 관리자 메뉴 → "공간 관리"에서 "초대 코드 만들기"로 다른 선생님을 초대해요.', '새 기기에서 처음 열 때는 공간 비밀번호를 한 번 넣어요. 함께 쓰는 선생님께도 공간 비밀번호를 알려 주세요.']],
+    ['비밀번호를 잊었을 때 · 새 학년 · 백업 (선생님)', ['학생 비밀번호는 "학생 관리"의 "비밀번호 변경" 칸에서 새로 정해 줘요.', '공간 비밀번호를 잊었으면 비밀번호 칸에 복구 코드를 넣어요. 복구 코드까지 잃으면 운영자도 열 수 없어요.', '"공간 관리"의 "엑셀 파일로 받기"·"백업 파일로 받기"로 기록을 내려받아 두세요. 새 학기에는 "비밀번호 · 초기화"의 "모든 기록 삭제"로 기록만 지워요.']]
   ],
   esc: function(t){ return String(t).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); },
   open: function(from){
@@ -875,7 +875,7 @@ const SHUP = {
     const line = document.getElementById('shellLine');
     if (line && APP.shell && APP.shell.shell) {
       line.style.display = APP.demo ? 'none' : '';
-      line.innerHTML = SHUP.old() ? '껍데기 <b>' + APP.shell.shell + '판</b> (새 판 있음) ' + SHUP.btn : '껍데기 <b>' + APP.shell.shell + '판</b> (최신)';
+      line.innerHTML = SHUP.old() ? '껍데기 <b>' + APP.shell.shell + '판</b> (새 판 있음) ' + SHUP.btn : '클라우드판 <b>' + (APP.shell.cloud || '') + '</b> · 학생 정보는 모두 암호화해서 저장합니다';
     }
     if (!SHUP.old()) { document.querySelectorAll('.shup-btn').forEach(function(b){ if (!b.closest('.shup-sheet')) b.remove(); }); return; }
     const vi = document.getElementById('versionInfo');
@@ -1008,7 +1008,7 @@ const NAT = {
     try { if (crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
     return Array.from(crypto.getRandomValues(new Uint8Array(16))).map(function(b){ return (b < 16 ? '0' : '') + b.toString(16); }).join('');
   },
-  pageUrl: function(page, pid){ return new URL(page, location.href).href.split('?')[0] + (pid ? '?me=' + pid : ''); },
+  pageUrl: function(page, pid){ return new URL(page, document.baseURI).href.split('?')[0] + (pid ? '?me=' + pid : ''); },
   post: function(fn, payload){
     return fetch(this.collector, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: [payload] }), redirect: 'follow' })
       .then(function(r){ if (!r.ok) throw new Error('현황판 응답 오류 (' + r.status + ')'); return r.json(); })
@@ -1680,7 +1680,7 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
     <div class="card">
       <h2>바탕화면에 앱 아이콘 만들기</h2>
-      <p class="hint" style="margin-top:0;">교실 컴퓨터·TV·태블릿에 아이콘을 만들어 두면 주소창 없이 앱처럼 바로 열려요. 이 기기가 기억한 우리 학교 시트로 열립니다.</p>
+      <p class="hint" style="margin-top:0;">교실 컴퓨터·TV·태블릿에 아이콘을 만들어 두면 주소창 없이 앱처럼 바로 열려요. 아이콘은 내 공간 목록으로 열려요.</p>
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;"><button type="button" id="installBtn">📲 앱 아이콘 만들기</button><span id="installMsg" class="hint"></span></div>
       <p id="installHelp" class="hint" style="margin-bottom:0;"></p>
     </div>
@@ -1752,7 +1752,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     <div class="card" id="offImpCard">
       <h2>오프라인판 자료 불러오기</h2>
-      <p class="hint">파일로 여는 <b>줄넘기 기록 관리(오프라인판)</b>에서 쓰던 기록을 이 학교 시트로 옮겨요. 오프라인판 "학생 관리" 탭 → <b>컴퓨터와 동기화(백업) → 내보내기</b>로 받은 <b>줄넘기기록_백업_날짜.json</b> 파일을 골라 주세요. 학생은 학년·반·번호·이름으로 맞추고, 같은 날짜·횟수 기록이 이미 있으면 건너뛰어서 여러 번 해도 겹치지 않아요.</p>
+      <p class="hint">파일로 여는 <b>줄넘기 기록 관리(오프라인판)</b>에서 쓰던 기록을 이 공간으로 옮겨요. (시트판 점퍼스에서 옮기려면 왼쪽 메뉴의 <b>공간 관리 → 기록 옮겨 오기</b>) 오프라인판 "학생 관리" 탭 → <b>컴퓨터와 동기화(백업) → 내보내기</b>로 받은 <b>줄넘기기록_백업_날짜.json</b> 파일을 골라 주세요. 학생은 학년·반·번호·이름으로 맞추고, 같은 날짜·횟수 기록이 이미 있으면 건너뛰어서 여러 번 해도 겹치지 않아요.</p>
       <input type="file" id="offImpFile" accept=".json,application/json" style="display:none">
       <button type="button" id="offImpPick" class="btn-outline">백업 파일 고르기</button>
       <div id="offImpBox" style="display:none; margin-top:12px;">
@@ -1996,9 +1996,9 @@ document.addEventListener('DOMContentLoaded', function(){
 
     <section class="tab-pane" data-tab="security">
     <div class="card">
-      <h2>관리자 비밀번호 변경</h2>
-      <p class="hint">초기 비밀번호는 <b>1234</b>입니다. 변경하면 다음 로그인부터 새 비밀번호가 적용됩니다.</p>
-      <div class="form-row" style="align-items:flex-end;">
+      <h2>관리자 비밀번호</h2>
+      <p class="hint">클라우드판은 <b>구글 로그인</b>이 관리자 비밀번호를 대신해요. 공간 비밀번호·복구 코드·선생님 초대는 왼쪽 메뉴의 <b>공간 관리</b>에서 다뤄요.</p>
+      <div class="form-row" style="align-items:flex-end; display:none;">
         <label style="max-width:200px;">새 비밀번호 <input type="password" id="newAdminPwInput" required></label>
         <label style="max-width:200px;">새 비밀번호 확인 <input type="password" id="newAdminPwConfirm" required></label>
         <button type="button" id="changeAdminPwBtn">변경</button>
@@ -2009,7 +2009,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="card" style="border-color: var(--track-tint); background: #FFFBF9;">
       <h2 style="color: var(--danger);">기록 초기화</h2>
       <p class="hint">학생 명단은 그대로 두고, 지금까지 입력된 <b>모든 줄넘기 기록(승인·대기·거절 전부)</b>을 한 번에 삭제합니다. 학기를 새로 시작할 때 사용하세요.</p>
-      <p class="hint" style="color: var(--danger); font-weight:600;">⚠ 되돌릴 수 없는 작업입니다. 필요하다면 학교 스프레드시트의 "파일 → 버전 기록"에서 미리 백업해두세요.</p>
+      <p class="hint" style="color: var(--danger); font-weight:600;">⚠ 되돌릴 수 없는 작업입니다. 먼저 <b>공간 관리 → 백업 파일로 받기</b>로 내려받아 두세요.</p>
       <button type="button" id="resetRecordsBtn" style="background: var(--danger);">모든 기록 삭제</button>
       <p id="resetMsg" class="hint"></p>
     </div>

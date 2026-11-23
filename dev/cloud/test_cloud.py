@@ -18,6 +18,7 @@ def route(r):
     u = r.request.url
     if 'chart.js' in u: return r.fulfill(path=V + 'chart.umd.js', content_type='application/javascript')
     if 'qrcode' in u: return r.fulfill(path=V + 'qrcode.js', content_type='application/javascript')
+    if 'xlsx' in u: return r.fulfill(path=V + 'xlsx.full.min.js', content_type='application/javascript')
     if 'script.google' in u: return r.fulfill(body='{"ok":true}', content_type='application/json')
     return r.fulfill(body='', content_type='text/css')
 PW = 'sunny-2026!'
@@ -168,11 +169,95 @@ with sync_playwright() as p:
     check('새 기기: 예전 비밀번호는 안 됨', '맞지 않아요' in t3.inner_text('#jcM'))
     t3.fill('#jcPw', rc.lower()); t3.click('#jcGo'); t3.wait_for_selector('#recordForm', timeout=20000); t3.wait_for_timeout(1200)
     check('새 기기: 복구 코드로 열림', t3.text_content('#statStudents').strip() == '3')
+    # ---------- 11-1. 카메라 판정기 연결 (판정기 화면이 다리(bridge.js)로 같은 공간에 저장) ----------
+    main(t); t.click('#navAdmin'); t.wait_for_selector('#adminNav')
+    tok = re.search(r'token=([^&]+)', t.url).group(1)
+    r = t.evaluate("([tok,url])=>window.JRCLOUD.call('setCameraSettings',[tok,{enabled:true,autoApprove:true,sens:10,url:''}])", [tok, ''])
+    local = lambda u: u.replace('https://musicalpe.github.io', ROOT)   # 시험에서는 판정기도 가짜 서버에서
+    main(s)
+    check('카메라 판정기 켜면 학생 화면에 [카메라로 뛰기]', s.locator('#cameraBtn').count() == 1 and s.is_visible('#cameraBtn'))
+    check('각자 기기로 대결(학생 방)은 숨김', not s.is_visible('#duelBtn'))
+    before = int(num(s.text_content('#statTotal')).split()[0].replace('회', '') or 0) if False else None
+    cam = s.evaluate("id=>window.JRCLOUD.call('issueCameraToken',[id,'모아뛰기'])", stu_id)
+    check('판정기 주소: app=cloud:공간', cam['ok'] and ('app=' + urllib.parse.quote('cloud:' + sid, safe='')) in cam['url'], cam.get('url', '')[:90])
+    j = s.context.new_page(); jerr = []; j.on('pageerror', lambda e: jerr.append(str(e)))
+    j.goto(local(cam['url'])); j.wait_for_selector('#btnCam')
+    ctok = re.search(r'[?&]t=([^&]+)', cam['url']).group(1)
+    who = j.evaluate("([sid,t])=>import('/jumprope/cloud/js/bridge.js').then(m=>m.api(sid,{api:'rope_x_who',t:t}))", [sid, ctok])
+    check('판정기 화면에서 학생 이름·오늘 횟수 (rope_x_who, 방 없음)', who['ok'] and who['data']['이름'] == '김하늘' and who['data']['방'] == 0, str(who)[:120])
+    check('판정기 1.3.8: 클라우드판 주소면 다리로 보냄', "LINK.app.indexOf('cloud:')===0" in j.content())
+    sv = j.evaluate("([sid,t])=>import('/jumprope/cloud/js/bridge.js').then(m=>m.api(sid,{api:'rope_x_save',t:t,count:25,best:12}))", [sid, ctok])
+    check('판정기 저장 25회 (카메라 기록은 바로 승인)', sv['ok'] and sv['data']['횟수'] == 25 and sv['data']['승인대기'] is False, str(sv)[:120])
+    sv2 = j.evaluate("([sid,t])=>import('/jumprope/cloud/js/bridge.js').then(m=>m.api(sid,{api:'rope_x_save',t:t,count:15,best:5}))", [sid, ctok])
+    d = dump(); cams = [d[k] for k in d if k.startswith('spaces/' + sid + '/inbox/') and d[k]['src'] == 'cam']
+    check('한 번 더 뛰기 15회 → 늘어난 만큼만 새 줄로', sv2['ok'] and sorted(c['n'] for c in cams) == [15, 25] and all(c['st'] == 'ok' for c in cams), str(sorted(c['n'] for c in cams)))
+    check('판정기 응답의 오늘 합계가 늘어남', sv2['data']['오늘'] - sv['data']['오늘'] == 15, str(sv['data']['오늘']) + ' → ' + str(sv2['data']['오늘']))
+    j.close()
+    main(s); tot_s = num(s.text_content('#statTotal'))
+    main(t); tot_t = num(t.text_content('#statTotal'))
+    check('학생·선생님 화면 누적이 같고 판정기 40회가 들어감 (150 → 190)', tot_s.startswith('190') and tot_t.startswith('190'), tot_s + ' / ' + tot_t)
+    cam2 = t.evaluate("id=>window.JRCLOUD.call('issueCameraToken',[id,'이중뛰기'])", stu_id)
+    j = t.context.new_page(); j.goto(local(cam2['url'])); j.wait_for_selector('#btnCam')
+    ctok2 = re.search(r'[?&]t=([^&]+)', cam2['url']).group(1)
+    sv3 = j.evaluate("([sid,t])=>import('/jumprope/cloud/js/bridge.js').then(m=>m.api(sid,{api:'rope_x_save',t:t,count:5}))", [sid, ctok2]); j.close()
+    d = dump()
+    check('선생님 기기 판정기: inbox 없이 표에 바로', sv3['ok'] and not [k for k in d if k.startswith('spaces/' + sid + '/inbox/') and d[k]['st'] == 'ok'])
+    main(t); tot_t_after = num(t.text_content('#statTotal'))
+    bad = s.evaluate("sid=>import('/jumprope/cloud/js/bridge.js').then(m=>m.api(sid,{api:'rope_x_save',t:'nope',count:5}))", sid) if False else None
+    # ---------- 11-2. 안내 글 · 현황판 주소 ----------
+    main(t); t.click('.topbar-nav .jrhelp-btn'); t.wait_for_selector('.jrhelp-sheet')
+    ht = t.inner_text('.jrhelp-sheet')
+    check('사용 안내: 클라우드판 내용 9가지 (껍데기·ADMIN_HASH 이야기 없음)', t.locator('.jrhelp-sheet section').count() == 9 and '공간 관리' in ht and '복구 코드' in ht and 'ADMIN_HASH' not in ht and '껍데기' not in ht)
+    t.keyboard.press('Escape')
+    check('현황판 주소는 저장소 맨 위 (cloud/ 아래가 아님)', t.evaluate("NAT.pageUrl('board.html','x')") == ROOT + '/jumprope/board.html?me=x', t.evaluate("NAT.pageUrl('board.html','x')"))
+    t.click('#navAdmin'); t.wait_for_selector('#adminNav'); t.click('#adminNav button[data-tab="security"]'); t.wait_for_timeout(300)
+    check('관리자 비밀번호 칸 대신 구글 로그인 안내', '구글 로그인' in t.inner_text('.tab-pane[data-tab="security"]') and not t.is_visible('#changeAdminPwBtn'))
+    # ---------- 11-3. 내려받기 (엑셀 · 백업) ----------
+    t.click('#adminNav a.jc-space'); t.wait_for_selector('#jcXlsx')
+    with t.expect_download() as dl: t.click('#jcXlsx')
+    xf = HERE + '/out.xlsx'; dl.value.save_as(xf); t.wait_for_timeout(300)
+    import zipfile
+    z = zipfile.ZipFile(xf); wbx = z.read('xl/workbook.xml').decode(); shs = ''.join(z.read(n).decode() for n in z.namelist() if 'sharedStrings' in n or 'sheet' in n)
+    check('엑셀 파일: 시트 4장 · 이름과 기록이 들어 있음', dl.value.suggested_filename.endswith('.xlsx') and all(k in wbx for k in ['학생별 누적', '기록', '학생 명단', '급수 인증']) and '김하늘' in shs and '카메라 판정기' in shs, dl.value.suggested_filename)
+    with t.expect_download() as dl: t.click('#jcBak')
+    bf = HERE + '/out.json'; dl.value.save_as(bf); bk = json.load(open(bf, encoding='utf-8'))
+    check('백업 파일: 학생 3 · 기록 여러 건', bk['app'] == 'jumpus-backup' and len(bk['students']) == 3 and len(bk['records']) >= 5, str(len(bk['records'])))
+    # ---------- 11-4. 새 공간에 백업 넣기 · 시트판에서 옮겨 오기 ----------
+    t.goto(APP); t.wait_for_selector('#jcNew'); t.click('#jcNew'); t.fill('#jcNm', '새싹초등학교'); t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.click('#jcMk'); t.wait_for_selector('#jcRc', timeout=20000)
+    t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm', timeout=20000)
+    sid2 = re.search(r's=([a-z0-9]+)', t.url).group(1)
+    t.goto(APP + '?s=' + sid2 + '&page=space'); t.wait_for_selector('#jcBakPick')
+    t.set_input_files('#jcBakFile', bf); t.wait_for_function("/넣었어요/.test(document.getElementById('jcBkM').textContent)", timeout=20000)
+    check('백업 넣기: 학생 3명과 기록', '학생 3명' in t.inner_text('#jcBkM'), t.inner_text('#jcBkM'))
+    t.set_input_files('#jcBakFile', bf); t.wait_for_function("/학생 0명/.test(document.getElementById('jcBkM').textContent)", timeout=20000)
+    check('같은 백업을 또 넣으면 모두 건너뜀', '학생 0명 · 기록 0건' in t.inner_text('#jcBkM'), t.inner_text('#jcBkM'))
+    t.goto(APP + '?s=' + sid2); t.wait_for_selector('#recordForm'); t.wait_for_timeout(1500)
+    check('새 공간 메인: 학생 3 · 누적이 원래 공간과 같음', t.text_content('#statStudents').strip() == '3' and num(t.text_content('#statTotal')) == tot_t_after, num(t.text_content('#statTotal')) + ' vs ' + tot_t_after)
+    try:
+        urllib.request.urlopen('http://localhost:8890/exec', timeout=3)
+        t.goto(APP); t.wait_for_selector('#jcNew'); t.click('#jcNew'); t.fill('#jcNm', '옮겨온초등학교'); t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.click('#jcMk'); t.wait_for_selector('#jcRc', timeout=20000)
+        t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm', timeout=20000)
+        sid3 = re.search(r's=([a-z0-9]+)', t.url).group(1)
+        old = json.loads(urllib.request.urlopen(urllib.request.Request('http://localhost:8890/exec', data=json.dumps({'fn': 'verifyAdminPassword', 'args': ['1234']}).encode())).read())['result']['token']
+        oall = json.loads(urllib.request.urlopen(urllib.request.Request('http://localhost:8890/exec', data=json.dumps({'fn': 'getAllDataAdmin', 'args': [old]}).encode())).read())['result']
+        t.goto(APP + '?s=' + sid3 + '&page=space'); t.wait_for_selector('#jcMgGo')
+        t.fill('#jcMgUrl', ROOT + '/jumprope/?s=' + urllib.parse.quote('http://localhost:8890/exec', safe='')); t.fill('#jcMgPw', 'wrong'); t.click('#jcMgGo'); t.wait_for_timeout(1500)
+        check('시트판 옮기기: 틀린 관리자 비밀번호', '맞지 않아요' in t.inner_text('#jcMgM'), t.inner_text('#jcMgM'))
+        t.fill('#jcMgPw', '1234'); t.click('#jcMgGo'); t.wait_for_function("/옮겨 왔어요/.test(document.getElementById('jcMgM').textContent)", timeout=30000)
+        mm = t.inner_text('#jcMgM')
+        check('시트판에서 옮겨 오기: 학생·기록 수가 시트판과 같음', ('학생 %d명' % len(oall['students'])) in mm and ('기록 %d건' % len(oall['records'])) in mm and '설정' in mm, mm[:90])
+        t.goto(APP + '?s=' + sid3); t.wait_for_selector('#recordForm'); t.wait_for_timeout(1500)
+        osum = sum(r['count'] for r in oall['records'] if r['status'] == 'approved')
+        check('옮겨 온 공간: 학생 수·승인된 누적이 시트판과 같음', t.text_content('#statStudents').strip() == str(len(oall['students'])) and num(t.text_content('#statTotal')).startswith(str(osum)), t.text_content('#statStudents') + ' / ' + num(t.text_content('#statTotal')) + ' vs ' + str(osum))
+        raw3 = json.dumps({k: v for k, v in dump().items() if sid3 in k}, ensure_ascii=False)
+        check('옮겨 온 뒤에도 서버에는 암호문만', not any(st['name'] in raw3 for st in oall['students']))
+    except OSError:
+        print('· 시트판 옮기기 시험은 건너뜀 (dev/devserver.js 가 떠 있지 않음: SEED=1 node devserver.js)')
     # ---------- 12. 전국 현황판 보내기는 선생님 화면에서만 ----------
     check('학생 화면은 전국 현황판에 보내지 않음', s.evaluate("window.JRCLOUD.call('natReportToday',['t']).then(r=>r.skipped)") == 'student')
     # ---------- 화면 ----------
     main(s); s.screenshot(path=HERE + '/cloud_phone.png', full_page=True)
     main(t); t.screenshot(path=HERE + '/cloud_pc.png', full_page=True)
-    allerr = terr + serr + t2err + t3err
+    allerr = terr + serr + t2err + t3err + jerr
     check('JS 에러 없음', not allerr, str(allerr[:3]))
 print('결과:', '모두 통과' if ok else '실패 있음')

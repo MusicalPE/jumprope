@@ -141,6 +141,7 @@ http.createServer((req, res) => {
   if (u.startsWith('/jumprope/')) u = u.slice('/jumprope'.length);
   if (u === '/cloud/js/fb.js') { res.setHeader('Content-Type', TYPES['.js']); return res.end(fs.readFileSync(path.join(__dirname, 'fb-mock.js'))); }
   let f = path.join(ROOT, u); if (f.endsWith('/')) f += 'index.html';
-  if (!f.startsWith(ROOT) || !fs.existsSync(f)) { res.statusCode = 404; return res.end('404'); }
+  if (u.startsWith('/jump-rope-checker/')) { f = path.join(ROOT, '..', u); if (f.endsWith('/')) f += 'index.html'; }   // 판정기 저장소(옆 폴더)
+  if (!(f.startsWith(ROOT) || f.startsWith(path.join(ROOT, '..', 'jump-rope-checker'))) || !fs.existsSync(f)) { res.statusCode = 404; return res.end('404'); }
   res.setHeader('Content-Type', TYPES[path.extname(f)] || 'application/octet-stream'); res.end(fs.readFileSync(f));
 }).listen(PORT, () => console.log('mock on ' + PORT));
