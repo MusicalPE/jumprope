@@ -61,12 +61,18 @@ s = s[:i] + "  items: [\n" + ",\n".join("    [" + js(h[0]) + ", [" + ", ".join(j
 s = must(s, """      <h2>관리자 비밀번호 변경</h2>
       <p class="hint">초기 비밀번호는 <b>1234</b>입니다. 변경하면 다음 로그인부터 새 비밀번호가 적용됩니다.</p>
       <div class="form-row" style="align-items:flex-end;">""", """      <h2>관리자 비밀번호</h2>
-      <p class="hint">클라우드판은 <b>구글 로그인</b>이 관리자 비밀번호를 대신해요. 공간 비밀번호·복구 코드·선생님 초대는 왼쪽 메뉴의 <b>공간 관리</b>에서 다뤄요.</p>
+      <p class="hint">점퍼스 3은 <b>구글 로그인</b>이 관리자 비밀번호를 대신해요. 공간 비밀번호·복구 코드·선생님 초대는 왼쪽 메뉴의 <b>공간 관리</b>에서 다뤄요.</p>
       <div class="form-row" style="align-items:flex-end; display:none;">""")
 s = must(s, '필요하다면 학교 스프레드시트의 "파일 → 버전 기록"에서 미리 백업해두세요.', '먼저 <b>공간 관리 → 백업 파일로 받기</b>로 내려받아 두세요.')
 s = must(s, "에서 쓰던 기록을 이 학교 시트로 옮겨요.", "에서 쓰던 기록을 이 공간으로 옮겨요. (시트판 점퍼스에서 옮기려면 왼쪽 메뉴의 <b>공간 관리 → 기록 옮겨 오기</b>)")
 s = must(s, "이 기기가 기억한 우리 학교 시트로 열립니다.", "아이콘은 내 공간 목록으로 열려요.")
-s = must(s, "'껍데기 <b>' + APP.shell.shell + '판</b> (최신)'", "'클라우드판 <b>' + (APP.shell.cloud || '') + '</b> · 학생 정보는 모두 암호화해서 저장합니다'")
-s = must(s, '<title>줄넘기 기록 관리</title>', '<title>줄넘기 기록 관리 · 클라우드판</title>')
+s = must(s, "'껍데기 <b>' + APP.shell.shell + '판</b> (최신)'", "'점퍼스 <b>' + (APP.shell.cloud || '') + '</b> · 학생 정보는 모두 암호화해서 저장합니다'")
+s = must(s, '<title>줄넘기 기록 관리</title>', '<title>줄넘기 기록 관리</title>')
+# 판 번호: 이 화면은 점퍼스 3 (시트로 쓰는 index.html 은 2.x 그대로)
+import re
+VER = re.search(r"const CLOUD_VERSION = '([0-9.]+)'", read('cloud/js/cloud.js')).group(1)
+s, n = re.subn(r"const APP = \{ version: '[0-9.]+'", "const APP = { version: '" + VER + "'", s)
+if n != 1: sys.exit('판 번호 자리를 못 찾았어요')
+s = must(s, "' · 학교 껍데기 판: <b>' + APP.shell.shell + '</b> · 학교 시트: '", "' · 학교 공간: '")
 write('index.html', '<!-- dev/make_cloud.py 가 index.html 에서 만든 파일 — 직접 고치지 말 것 -->\n' + s if not s.lstrip().lower().startswith('<!doctype') else s.replace('\n', '\n<!-- dev/make_cloud.py 가 index.html 에서 만든 파일 — 직접 고치지 말 것 -->\n', 1))
 print('cloud/index.html · cloud/js/gasfake.js 만들었어요')

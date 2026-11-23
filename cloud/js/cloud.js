@@ -8,7 +8,7 @@ import * as C from './crypto.js';
 import { sha256Bytes, Sheet } from './gasfake.js';
 import * as L from './lite.js';
 
-const CLOUD_VERSION = '0.4.0';
+const CLOUD_VERSION = '3.0.0';   // 점퍼스 3.0.0 — 화면에는 '클라우드판'이라 하지 않고 점퍼스 3 으로 부름 (시트로 쓰는 2.x 와 구분)
 const APPV = window.APP, SID = APPV.shellUrl || '';
 const BASE = location.origin + location.pathname;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -39,7 +39,7 @@ style.textContent = '.jc-msg{padding:10px 12px;border-radius:10px;margin:10px 0;
 document.head.appendChild(style);
 
 function view(html) { const el = $('#app'); if (!el) return; el.innerHTML = html; window.scrollTo(0, 0); }
-function shell(title, sub, body) { return '<div class="boot-wrap"><div class="card"><div class="boot-hero"><h1>' + esc(title) + '</h1><p>' + esc(sub || '') + '</p></div>' + body + '</div><p class="hint" style="text-align:center">점퍼스 클라우드판 ' + CLOUD_VERSION + ' · 학생 정보는 모두 암호화해서 저장합니다</p></div>'; }
+function shell(title, sub, body) { return '<div class="boot-wrap"><div class="card"><div class="boot-hero"><h1>' + esc(title) + '</h1><p>' + esc(sub || '') + '</p></div>' + body + '</div><p class="hint" style="text-align:center">점퍼스 ' + CLOUD_VERSION + ' · 학생 정보는 모두 암호화해서 저장합니다</p></div>'; }
 function msg(sel, text, kind) { const el = typeof sel === 'string' ? $(sel) : sel; if (el) el.innerHTML = text ? '<div class="jc-msg jc-' + (kind || 'ok') + '">' + esc(text) + '</div>' : ''; }
 function busy(b, on) { if (!b) return; b.disabled = on; if (on) { b.dataset.t = b.textContent; b.textContent = '잠시만요…'; } else if (b.dataset.t) b.textContent = b.dataset.t; }
 
@@ -282,7 +282,7 @@ function call(fn, args) {
 async function callNow(fn, args, retried) {
   await open();
   if (SH.RPC_ALLOW_.indexOf(fn) < 0) throw new Error('알 수 없는 요청: ' + fn);
-  if (fn === 'changeAdminPassword') throw new Error('클라우드판은 구글 로그인이 관리자 비밀번호를 대신해요. 공간 비밀번호는 [공간 관리]에서 바꿔요.');
+  if (fn === 'changeAdminPassword') throw new Error('점퍼스 3은 구글 로그인이 관리자 비밀번호를 대신해요. 공간 비밀번호는 [공간 관리]에서 바꿔요.');
   if (fn === 'verifyAdminPassword') { if (!isTeacher()) return { ok: false, message: '선생님은 구글 로그인으로 들어와 주세요.' }; args = ['1234']; }
   if (fn === 'getSheetUrlAdmin') return '';
   if (fn === 'natReportToday' && !isTeacher()) return { skipped: 'student' };
@@ -419,7 +419,7 @@ function viewRecovery(sid, rc, back) {
     '<p class="hint">[내 메일로 보내 두기]를 누르면 로그인한 구글 메일(' + esc((S.user && S.user.email) || '') + ')로 보내는 편지가 열려요. [보내기]를 눌러야 보내져요. 저희 쪽 서버는 이 코드를 보지 않아요.</p>' +
     '<label class="jc-chk"><input type="checkbox" id="jcOk"> 안전한 곳에 적어 두었어요</label><button type="button" id="jcGo" disabled>계속</button>'));
   const em = (S.user && S.user.email) || '', nm = (S.pub && S.pub.name) || (S.space && S.space.name) || ($('#jcNm') ? $('#jcNm').value : '') || '';
-  const body = '점퍼스 클라우드판 복구 코드입니다. 이 편지를 지우지 말고 보관해 주세요.\n\n학교 공간: ' + (window.__jcName || nm) + '\n복구 코드: ' + rc + '\n여는 주소: ' + BASE + '?s=' + sid + '\n\n공간 비밀번호를 잊었을 때, 비밀번호 칸에 이 복구 코드를 넣으면 열려요.';
+  const body = '점퍼스 복구 코드입니다. 이 편지를 지우지 말고 보관해 주세요.\n\n학교 공간: ' + (window.__jcName || nm) + '\n복구 코드: ' + rc + '\n여는 주소: ' + BASE + '?s=' + sid + '\n\n공간 비밀번호를 잊었을 때, 비밀번호 칸에 이 복구 코드를 넣으면 열려요.';
   $('#jcMail').href = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(em) + '&su=' + encodeURIComponent('[점퍼스] 복구 코드 — ' + (window.__jcName || nm)) + '&body=' + encodeURIComponent(body);
   $('#jcCp').onclick = () => navigator.clipboard && navigator.clipboard.writeText(rc);
   $('#jcOk').onchange = (e) => { $('#jcGo').disabled = !e.target.checked; };
