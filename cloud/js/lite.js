@@ -79,6 +79,7 @@ export async function closeRoom(sid, room) {
 }
 
 // ---- 학생 기기 ----
+const sent = {};   // 방/기기 → 마지막으로 올린 상태와 시각
 export async function info(sid, room) {
   const t0 = Date.now(); await begin(sid); room = roomId(room);
   const all = await fb.rt('GET', R(sid, room)), meta = all && js(all.meta, null);
@@ -95,8 +96,12 @@ export async function send(sid, room, dev, data, wantMeta) {
   const rec = { g: num(d.g, 0, 6), c: num(d.c, 0, 30), n: num(d.n, 0, 99), cnt: num(d.cnt, 0, 5000), best: num(d.best, 0, 5000),
     st: ST.indexOf(String(d.st)) >= 0 ? String(d.st) : 'ready', run: d.run === true, ctl: String(d.ctl || '').slice(0, 32), v: String(d.v || '').slice(0, 16), t: now() };
   const p = R(sid, room);
+  // 쉬는 동안(뛰지 않을 때) 상태가 그대로면 10초에 한 번만 올림 — 신호 받기(3초마다)는 그대로. 큰 화면은 25초 넘게 소식이 없어야 끊긴 것으로 봄
+  const sig = JSON.stringify(Object.assign({}, rec, { t: 0 })), k = room + '/' + dev, last = sent[k];
+  const skip = !rec.run && last && last.sig === sig && Date.now() - last.at < 10000;
+  if (!skip) sent[k] = { sig, at: Date.now() };
   let got;
-  try { got = await Promise.all([fb.rt('PUT', p + '/devs/' + dev, JSON.stringify(rec)), fb.rt('GET', p + '/ctl'), wantMeta ? fb.rt('GET', p + '/meta') : null]); }
+  try { got = await Promise.all([skip ? null : fb.rt('PUT', p + '/devs/' + dev, JSON.stringify(rec)), fb.rt('GET', p + '/ctl'), wantMeta ? fb.rt('GET', p + '/meta') : null]); }
   catch (e) { if (denied(e)) return { t: mid(t0), closed: true }; throw e; }   // 방이 없으면 규칙이 쓰기를 막음
   if (!got[1]) return { t: mid(t0), closed: true };
   const out = { t: mid(t0), ctl: js(got[1], null) };

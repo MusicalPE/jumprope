@@ -116,6 +116,12 @@ with sync_playwright() as p:
     check('시작 신호가 학생 기기에 닿음', snd['ctl']['ph'] == 'go' and snd['ctl']['id'] == 'k1', str(snd)[:100])
     pl = rpc(m, 'litePull', [room, ''])
     check('큰 화면에 횟수 42', pl['devs']['devaaaa0001']['cnt'] == 42)
+    idle = {'g': 4, 'c': 1, 'n': 1, 'cnt': 42, 'best': 20, 'st': 'stop', 'run': False, 'ctl': 'k1'}
+    rpc(d1, 'liteSend', [room, 'devaaaa0001', idle, False]); tA = json.loads(dump()['rt']['lite'][sid]['rooms'][room]['devs']['devaaaa0001'])['t']
+    d1.wait_for_timeout(300); r_idle = rpc(d1, 'liteSend', [room, 'devaaaa0001', idle, False]); tB = json.loads(dump()['rt']['lite'][sid]['rooms'][room]['devs']['devaaaa0001'])['t']
+    check('쉬는 동안 상태가 그대로면 다시 올리지 않고 신호만 받음', tA == tB and r_idle['ctl']['ph'] == 'go', str(tB - tA))
+    rpc(d1, 'liteSend', [room, 'devaaaa0001', dict(idle, st='ready'), False]); tC = json.loads(dump()['rt']['lite'][sid]['rooms'][room]['devs']['devaaaa0001'])['t']
+    check('상태가 바뀌면 바로 올림', tC > tB)
     inf2 = d1.evaluate("([sid,room])=>" + BR + ".then(m=>m.rpc(sid,'liteInfo',[room]))", [sid, room])
     check('들어온 번호(taken)에 4-1-1', inf2['taken'] == [{'g': 4, 'c': 1, 'n': 1}], str(inf2['taken']))
     # 결과 저장 (큰 화면 → 다리 → 공간)
