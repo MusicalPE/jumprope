@@ -14,6 +14,7 @@ def fb(body):
     return json.loads(r.read())
 def dump(): return fb({'op': 'dump'})['result']
 fb({'op': 'reset'})
+fb({'op': 'console_set', 'path': 'admins/teacher1', 'data': {'ok': True}})   # 시험용 선생님을 운영자로 (가입 코드 없이 공간을 만들 수 있게)
 def route(r):
     u = r.request.url
     if 'chart.js' in u: return r.fulfill(path=V + 'chart.umd.js', content_type='application/javascript')

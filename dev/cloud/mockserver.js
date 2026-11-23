@@ -47,6 +47,15 @@ function rules(op, p, auth, raw, after, before, st) {
   const isMember = (s) => google && !!g('spaces/' + s + '/members/' + uid);
   const isOwner = (s) => google && !!g('spaces/' + s) && g('spaces/' + s).owner === uid;
   const keysOnly = (o, ks) => Object.keys(o || {}).every((k) => ks.includes(k));
+  const isAdmin = () => google && !!g('admins/' + uid);
+  const changed = (a, b, ks) => ks.some((k) => JSON.stringify((a || {})[k]) !== JSON.stringify((b || {})[k]));
+  if (seg[0] === 'admins' && seg.length === 2) return op === 'get' && google && uid === seg[1];
+  if (seg[0] === 'codes' && seg.length === 2) {
+    if (op === 'get') return google;
+    if (op === 'list' || op === 'create' || op === 'delete') return isAdmin();
+    if (op === 'update') return isAdmin() || (google && !changed(after, before, Object.keys(Object.assign({}, after, before)).filter((k) => k !== 'n')) && after.n === ((before.n || 0) + 1));
+    return false;
+  }
   if (seg[0] === 'users' && seg.length === 2) return google && uid === seg[1];
   if (seg[0] === 'invites' && seg.length === 2) {
     if (op === 'get') return google;
@@ -58,12 +67,17 @@ function rules(op, p, auth, raw, after, before, st) {
   if (seg[0] !== 'spaces') return false;
   const s = seg[1];
   if (seg.length === 2) {
-    if (op === 'create') return google && after.owner === uid;
+    if (op === 'create') {
+      if (!(google && after.owner === uid)) return false;
+      if (isAdmin()) return true;
+      const c = typeof after.code === 'string' ? g('codes/' + after.code) : null;
+      return !!c && c.school === after.name && c.off !== true;
+    }
     if (op === 'get') return isMember(s);
     if (op === 'update') {
       if (!isMember(s) || after.owner !== before.owner) return false;
-      if (isOwner(s)) return true;
-      return JSON.stringify(after.crypto) === JSON.stringify(before.crypto);
+      if (!isOwner(s) && JSON.stringify(after.crypto) !== JSON.stringify(before.crypto)) return false;
+      return isAdmin() || !changed(after, before, ['name', 'code']);
     }
     if (op === 'delete') return isOwner(s);
     return false;
@@ -81,7 +95,12 @@ function rules(op, p, auth, raw, after, before, st) {
     if (op === 'update') return isOwner(s);
     if (op === 'delete') return google && (uid === seg[3] || isOwner(s));
   }
-  if (col === 'meta') { if (op === 'get') return signed; if (op === 'list') return false; return isMember(s) && seg[3] !== 'flags'; }
+  if (col === 'meta') {
+    if (op === 'get') return signed; if (op === 'list') return false;
+    if (!(isMember(s) && seg[3] !== 'flags')) return false;
+    if (op === 'delete' || seg[3] !== 'pub' || isAdmin()) return true;
+    return after.name === (g('spaces/' + s) || {}).name;
+  }
   if (col === 'book') { if (op === 'get' || op === 'list') return signed; return isMember(s); }
   if (col === 'priv') return isMember(s);
   if (col === 'keys') { if (op === 'get' || op === 'list') return false; return isMember(s); }

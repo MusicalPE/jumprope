@@ -4,6 +4,7 @@ import re,json,urllib.request,sys
 ROOT='http://localhost:8891'; APP=ROOT+'/jumprope/cloud/'
 def fb(b): return json.loads(urllib.request.urlopen(urllib.request.Request(ROOT+'/__fb',data=json.dumps(b).encode(),headers={'Content-Type':'application/json'})).read())
 fb({'op':'reset'})
+fb({'op': 'console_set', 'path': 'admins/t1', 'data': {'ok': True}})   # 시험용 선생님을 운영자로 (가입 코드 없이 공간을 만들 수 있게)
 size=lambda v: len(json.dumps(v))
 with sync_playwright() as p:
     b=p.chromium.launch()
