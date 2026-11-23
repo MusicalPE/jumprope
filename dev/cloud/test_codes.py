@@ -79,6 +79,16 @@ with sync_playwright() as p:
     check('이미 만든 공간은 그대로 열림', t.is_visible('#recordForm'))
     op.click('[data-del="' + code2 + '"]'); op.wait_for_function("document.querySelectorAll('[data-cp]').length==1")
     check('코드 삭제', ('codes/' + code2) not in docs())
+    # ---------- 5-2. 여러 학교 한꺼번에 발급 · 찾기 · 내려받기 ----------
+    op.click('details summary'); op.fill('#jcBulk', '푸른초등학교\n하늘중학교\n\n  바다고등학교  \n햇살초등학교\n푸른초등학교'); op.fill('#jcPre', '서울'); op.click('#jcBulkGo')
+    op.wait_for_function("document.querySelectorAll('[data-cp]').length==4")
+    sch = sorted(v['school'] for k, v in docs().items() if k.startswith('codes/'))
+    check('한꺼번에 발급: 새 학교 3곳만 (이미 있는 학교·겹친 줄·빈 줄은 건너뜀, 앞말 붙임)', sch == ['서울 바다고등학교', '서울 푸른초등학교', '서울 하늘중학교', '서울 햇살초등학교'], str(sch))
+    op.fill('#jcFind', '하늘'); op.wait_for_timeout(200)
+    check('학교 이름으로 찾기', op.locator('#jcCt tr[data-sc]:visible').count() == 1)
+    with op.expect_download() as dl: op.click('#jcCsv')
+    csv = open(dl.value.path(), encoding='utf-8-sig').read()
+    check('목록 내려받기: 학교와 코드가 모두 들어 있음', dl.value.suggested_filename.endswith('.csv') and csv.count('\n') == 4 and '서울 하늘중학교' in csv and '가입 코드' in csv, dl.value.suggested_filename)
     # ---------- 6. 운영자는 코드 없이도 · 이름도 바꿈 ----------
     op.goto(APP); op.wait_for_selector('#jcNew'); op.click('#jcNew'); op.wait_for_selector('#jcCd'); op.fill('#jcNm', '시험용 학교'); op.fill('#jcPw', PW); op.fill('#jcPw2', PW); op.click('#jcMk'); op.wait_for_selector('#jcRc', timeout=20000)
     check('운영자는 코드 없이 공간을 만듦', any(v.get('name') == '시험용 학교' for k, v in docs().items() if re.fullmatch(r'spaces/[a-z0-9]+', k)))

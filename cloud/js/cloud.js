@@ -484,8 +484,13 @@ async function viewCodes() {
   view(shell('가입 코드 관리', '학교마다 코드를 하나씩 발급해요',
     '<label>학교 이름 (이 이름 그대로 공간이 만들어져요) <input id="jcSc" maxlength="30" placeholder="예: 서울 햇살초등학교"></label>' +
     '<div class="jc-row"><button type="button" id="jcIss">코드 발급</button><a class="btn-outline" href="' + esc(BASE) + '">← 내 공간</a></div><div id="jcM"></div>' +
-    (list.length ? '<table style="margin-top:16px"><tr><th style="text-align:left">학교</th><th style="white-space:nowrap">코드</th><th style="white-space:nowrap">공간 수</th><th></th></tr>' + list.map((c) =>
-      '<tr><td>' + esc(c.data.school) + (c.data.off ? ' <span class="hint">(중지)</span>' : '') + '</td><td><code style="white-space:nowrap">' + esc(codeShow(c.id)) + '</code></td><td style="text-align:center">' + (c.data.n || 0) + '</td>' +
+    '<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:800">여러 학교 한꺼번에 발급</summary>' +
+    '<label style="margin-top:10px">학교 이름을 한 줄에 하나씩 (엑셀의 학교 이름 칸을 그대로 붙여 넣어도 돼요) <textarea id="jcBulk" rows="8" placeholder="햇살초등학교&#10;새싹중학교&#10;푸른고등학교"></textarea></label>' +
+    '<label>이름 앞에 붙일 말 (선택) <input id="jcPre" maxlength="10" placeholder="예: 서울"></label>' +
+    '<button type="button" id="jcBulkGo">한꺼번에 발급</button><p class="hint">이미 코드가 있는 학교는 건너뛰어요.</p><div id="jcBm"></div></details>' +
+    (list.length ? '<div class="jc-row" style="margin-top:16px"><input id="jcFind" placeholder="학교 이름으로 찾기" style="flex:1;min-width:160px"><button type="button" class="btn-outline" id="jcCsv">목록 내려받기 (엑셀용)</button></div><p class="hint">발급한 코드 ' + list.length + '개</p>' : '') +
+    (list.length ? '<table id="jcCt" style="margin-top:8px"><tr><th style="text-align:left">학교</th><th style="white-space:nowrap">코드</th><th style="white-space:nowrap">공간 수</th><th></th></tr>' + list.map((c) =>
+      '<tr data-sc="' + esc(c.data.school) + '"><td>' + esc(c.data.school) + (c.data.off ? ' <span class="hint">(중지)</span>' : '') + '</td><td><code style="white-space:nowrap">' + esc(codeShow(c.id)) + '</code></td><td style="text-align:center">' + (c.data.n || 0) + '</td>' +
       '<td style="text-align:right;white-space:nowrap"><button type="button" class="btn-outline" data-cp="' + esc(c.id) + '">복사</button> <button type="button" class="btn-outline" data-off="' + esc(c.id) + '" data-v="' + (c.data.off ? '0' : '1') + '">' + (c.data.off ? '다시 쓰기' : '중지') + '</button> <button type="button" class="jc-danger" data-del="' + esc(c.id) + '">삭제</button></td></tr>').join('') + '</table>' +
       '<p class="hint">중지하거나 삭제하면 그 코드로 새 공간을 만들 수 없어요. 이미 만든 공간은 그대로 쓸 수 있어요.</p>'
       : '<p class="hint" style="margin-top:16px">아직 발급한 코드가 없어요.</p>')));
@@ -496,6 +501,25 @@ async function viewCodes() {
     try { const code = codeNorm(C.newRecoveryCode()).slice(0, 8); await fb.set('codes/' + code, { school, n: 0, at: fb.NOW, by: S.user.uid }); viewCodes(); }
     catch (err) { busy(e.target, false); msg('#jcM', fb.errText(err), 'err'); }
   };
+  $('#jcBulkGo').onclick = async (e) => {
+    const pre = $('#jcPre').value.trim(), have = new Set(list.map((c) => c.data.school)), ids = new Set(list.map((c) => c.id)), names = [];
+    $('#jcBulk').value.split(/[\r\n\t]+/).forEach((l) => { let n = l.trim().replace(/\s+/g, ' '); if (!n) return; if (pre && n.indexOf(pre) !== 0) n = pre + ' ' + n; n = n.slice(0, 30); if (!have.has(n)) { have.add(n); names.push(n); } });
+    if (!names.length) return msg('#jcBm', '새로 발급할 학교가 없어요. (이미 코드가 있거나 칸이 비어 있어요)', 'err');
+    if (!window.confirm(names.length + '개 학교의 코드를 발급할까요?')) return;
+    busy(e.target, true);
+    try {
+      const ops = names.map((school) => { let code; do { code = codeNorm(C.newRecoveryCode()).slice(0, 8); } while (ids.has(code)); ids.add(code); return ['set', 'codes/' + code, { school, n: 0, at: fb.NOW, by: S.user.uid }]; });
+      await fb.batch(ops); viewCodes();
+    } catch (err) { busy(e.target, false); msg('#jcBm', fb.errText(err), 'err'); }
+  };
+  if (list.length) {
+    $('#jcFind').oninput = () => { const q = $('#jcFind').value.trim(); $$('#jcCt tr[data-sc]').forEach((tr) => { tr.style.display = !q || tr.dataset.sc.indexOf(q) >= 0 ? '' : 'none'; }); };
+    $('#jcCsv').onclick = () => {   // 엑셀에서 바로 열리게 (한글이 깨지지 않도록 맨 앞에 표시를 붙임)
+      const q = (v) => '"' + String(v).replace(/"/g, '""') + '"';
+      const rows = [['학교', '가입 코드', '만든 공간 수', '상태']].concat(list.slice().sort((a, b) => a.data.school.localeCompare(b.data.school, 'ko')).map((c) => [c.data.school, codeShow(c.id), c.data.n || 0, c.data.off ? '중지' : '사용']));
+      download('점퍼스_가입코드_' + formatDate(new Date(), '', 'yyyy-MM-dd') + '.csv', new Blob(['\ufeff' + rows.map((r) => r.map(q).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+    };
+  }
   $$('[data-cp]').forEach((b) => { b.onclick = async () => { const t = codeShow(b.dataset.cp); try { await navigator.clipboard.writeText(t); msg('#jcM', '코드 ' + t + ' 을(를) 복사했어요.', 'ok'); } catch (e) { msg('#jcM', t, 'warn'); } }; });
   $$('[data-off]').forEach((b) => { b.onclick = async () => { busy(b, true); try { await fb.update('codes/' + b.dataset.off, { off: b.dataset.v === '1' }); viewCodes(); } catch (e) { busy(b, false); msg('#jcM', fb.errText(e), 'err'); } }; });
   $$('[data-del]').forEach((b) => { b.onclick = async () => { if (!window.confirm('이 코드를 지울까요? 이 코드로는 더 이상 공간을 만들 수 없어요.')) return; busy(b, true); try { await fb.del('codes/' + b.dataset.del); viewCodes(); } catch (e) { busy(b, false); msg('#jcM', fb.errText(e), 'err'); } }; });
