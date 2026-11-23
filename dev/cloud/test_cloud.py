@@ -108,6 +108,12 @@ with sync_playwright() as p:
     t.click('#adm'); t.click('[data-tab=settings]'); t.uncheck('#ap'); t.click('#sv'); t.wait_for_timeout(400)
     s.goto(APP + '?s=' + sid); s.wait_for_selector('#save'); s.fill('#fn', '30'); s.click('#save'); s.wait_for_timeout(800)
     check('승인 끔 → 바로 반영 (150)', s.inner_text('#fm').startswith('입력되었습니다') and '150' in s.inner_text('.bars'), s.inner_text('.bars'))
+    # 학생 화면을 연 뒤에 선생님이 승인 절차를 켬 → 새로 고치지 않아도 승인 대기로
+    t.check('#ap'); t.click('#sv'); t.wait_for_timeout(400)
+    s.fill('#fn', '7'); s.click('#save'); s.wait_for_timeout(900)
+    check('열어 둔 학생 화면: 뒤늦게 켠 승인 절차도 따름', '승인 후' in s.inner_text('#fm') and '150' in s.inner_text('.bars'), s.inner_text('#fm'))
+    t.uncheck('#ap'); t.click('#sv'); t.wait_for_timeout(400)
+    t.click('[data-tab=approve]'); t.click('[data-no]'); t.wait_for_timeout(600)
     # ---------- 8. 두 번째 선생님 초대 ----------
     t.click('#back'); t.click('#adm'); t.click('[data-tab=teachers]'); t.click('#mk'); t.wait_for_selector('.code')
     code = t.inner_text('.code').strip()

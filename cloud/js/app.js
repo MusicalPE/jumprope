@@ -289,10 +289,17 @@ function viewMain() {
     if (!sId) return msg('#fm', '이름을 골라 주세요.', 'err');
     if (!(n >= 1 && n <= MAXN)) return msg('#fm', '뛴 횟수는 1에서 ' + fmt(MAXN) + ' 사이로 넣어 주세요.', 'err');
     if ($('#fme').checked) ls.set('jumpus:me:' + S.sid, sId); else if (me === sId) ls.del('jumpus:me:' + S.sid);
-    const wait = !!(S.pub.approval && !isTeacher());
+    let wait = !!(S.pub.approval && !isTeacher());
     const b = $('#save'); busy(b, true);
+    const send = () => fb.add('spaces/' + S.sid + '/inbox', { s: sId, d: today(), k, n, src: 'hand', st: wait ? 'wait' : 'ok', w: S.wtok, t: fb.NOW });
     try {
-      await fb.add('spaces/' + S.sid + '/inbox', { s: sId, d: today(), k, n, src: 'hand', st: wait ? 'wait' : 'ok', w: S.wtok, t: fb.NOW });
+      try { await send(); }
+      catch (e1) {   // 화면을 연 뒤에 선생님이 승인 절차를 켰을 수 있음 → 설정을 다시 읽고 승인 대기로 한 번 더
+        if (isTeacher() || wait || !String(e1 && e1.code).includes('permission-denied')) throw e1;
+        const pub = await fb.get('spaces/' + S.sid + '/meta/pub');
+        if (!pub || !pub.approval) throw e1;
+        S.pub = pub; wait = true; await send();
+      }
       await loadRecords();
       viewMain();
       msg('#fm', wait ? '입력되었습니다! 선생님 승인 후 그래프에 반영됩니다.' : '입력되었습니다!', 'ok');
@@ -348,6 +355,7 @@ async function showQrOverlay() {
 const TABS = [['students', '학생'], ['approve', '기록 승인'], ['settings', '설정'], ['qr', '접속 QR'], ['teachers', '선생님'], ['keys', '비밀번호 · 복구 코드']];
 async function viewAdmin(tab) {
   S.tab = tab || 'students';
+  if (S.tab === 'approve') { try { await loadRecords(); } catch (e) {} }   // 승인 탭은 열 때마다 새로 읽음
   const waiting = S.inbox.filter((x) => x.data.st === 'wait').length;
   view('<div class="container">' + top('<button class="btn-outline btn-sm" id="back">← 메인으로</button>') +
     '<h1 style="margin:0 0 12px;font-size:1.4em">관리 · ' + esc(S.pub.name) + '</h1>' +
