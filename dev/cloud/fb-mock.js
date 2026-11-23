@@ -29,5 +29,6 @@ export const update = (path, data) => call({ op: 'write', ops: [['update', path,
 export const add = (path, data) => call({ op: 'add', path, data });
 export const del = (path) => call({ op: 'write', ops: [['del', path]] });
 export const list = (path) => call({ op: 'list', path });
+export const listSince = (path, field, ms) => call({ op: 'list', path, field, since: ms });
 export const batch = (ops) => call({ op: 'write', ops });
 export function errText(e) { const c = (e && e.code) || ''; if (c.includes('permission-denied')) return '권한이 없어요. 로그인했는지, 이 공간의 선생님인지 확인해 주세요.'; return (e && e.message) || String(e); }

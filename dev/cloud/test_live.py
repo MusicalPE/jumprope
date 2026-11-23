@@ -178,6 +178,34 @@ with sync_playwright() as p:
     m.close()
     main(s); check('학생 기기도 표시를 읽을 수 있음(읽기만)', s.evaluate("window.JRCLOUD.call('ping',[]).then(p=>p.live)") == 1)
 
+    # ---------- 6-2. 읽기 수 아끼기: 두 번째부터는 "그 뒤로 바뀐 문서"만 ----------
+    def reads_after(fn):
+        n0 = len(dump()['reads']); fn(); return dump()['reads'][n0:]
+    main(s3)
+    r1 = reads_after(lambda: main(s3))
+    check('학생 기기: 다시 열 때 표·기록함을 전부 읽지 않고 바뀐 것만 물음', r1 and all(x.endswith(' since') for x in r1), str(r1))
+    tot0 = num(s3.text_content('#statTotal'))
+    tok2 = t.evaluate("window.JRCLOUD.adminToken()")
+    typ2 = t.evaluate("window.JRCLOUD.call('getJumpTypes',[])")[0]
+    t.evaluate("([tok,id,typ])=>window.JRCLOUD.call('addLiveRecordsAdmin',[tok,typ,[{id:id,count:8}],'kx2'])", [tok2, ids['박준우'], typ2]); t.wait_for_timeout(500)
+    r2 = reads_after(lambda: main(s3))
+    check('선생님이 기록을 넣으면 학생 기기도 바로 따라옴 (42 → 50)', tot0.startswith('42') and num(s3.text_content('#statTotal')).startswith('50'), tot0 + ' → ' + num(s3.text_content('#statTotal')) + ' ' + str(r2))
+    main(s); s.select_option('#gradeSelect', '4'); s.wait_for_timeout(150); s.select_option('#classSelect', '1'); s.wait_for_timeout(150); s.select_option('#nameSelect', ids['김하늘'])
+    s.select_option('#typeSelect', index=1); s.fill('#countInput', '11'); s.click('#recordForm button[type=submit]'); s.wait_for_timeout(1800)
+    main(t); pend2 = t.evaluate("tok=>window.JRCLOUD.call('getPendingRecords',[tok])", tok2)
+    check('학생이 넣은 기록은 그대로 선생님 승인 대기로', len(pend2) == 1 and str(pend2[0].get('count')) == '11', str(pend2)[:100])
+    t.evaluate("([tok,id])=>window.JRCLOUD.call('approveRecord',[tok,id])", [tok2, pend2[0]['recordId']]); t.wait_for_timeout(600)
+    main(s3); check('승인하면 다른 학생 기기 누적에도 반영 (50 → 61)', num(s3.text_content('#statTotal')).startswith('61'), num(s3.text_content('#statTotal')))
+    t.evaluate("tok=>window.JRCLOUD.call('resetAllRecords',[tok]).catch(e=>String(e.message||e))", tok2); t.wait_for_timeout(800)
+    gone = [k for k, v in dump()['docs'].items() if k.startswith('spaces/' + sid + '/book/Records_') and v.get('gone')]
+    main(s3); main(s)
+    check('기록 모두 지우기: 표 문서는 없어짐 표시로 · 학생 기기들도 0으로', len(gone) >= 1 and num(s3.text_content('#statTotal')).startswith('0') and num(s.text_content('#statTotal')).startswith('0'), str(len(gone)) + ' / ' + num(s3.text_content('#statTotal')) + ' / ' + num(s.text_content('#statTotal')))
+    main(t); check('선생님 화면도 0 · 다시 기록하면 살아남', num(t.text_content('#statTotal')).startswith('0'))
+    t.evaluate("([tok,id,typ])=>window.JRCLOUD.call('addLiveRecordsAdmin',[tok,typ,[{id:id,count:5}],'kx3'])", [tok2, ids['박준우'], typ2]); t.wait_for_timeout(500)
+    main(s3); check('지운 뒤 새 기록 5회가 학생 기기에 보임', num(s3.text_content('#statTotal')).startswith('5'), num(s3.text_content('#statTotal')))
+    r3 = reads_after(lambda: main(t))
+    check('선생님 화면: 표는 바뀐 것만 묻고 기록함만 전부 읽음', 'spaces/' + sid + '/book since' in r3 and ('spaces/' + sid + '/book') not in r3, str(r3))
+
     # ---------- 7. 공간 삭제 ----------
     t.goto(APP + '?s=' + sid + '&page=space'); t.wait_for_selector('#jcDelGo')
     check('공간 관리: 점프 Live 안내와 공간 주소', '전용 점프 라이브' in t.inner_text('body') and sid in t.inner_text('body'))

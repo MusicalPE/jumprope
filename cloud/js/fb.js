@@ -2,7 +2,7 @@
 // 값 안의 특별한 표시: INC(n) 더하기 · DEL 지우기 · NOW 서버 시각
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInAnonymously, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { initializeFirestore, doc, collection, getDoc as fsGet, setDoc as fsSet, updateDoc as fsUpdate, addDoc as fsAdd, deleteDoc as fsDelete, getDocs, writeBatch, increment, deleteField, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { initializeFirestore, doc, collection, getDoc as fsGet, setDoc as fsSet, updateDoc as fsUpdate, addDoc as fsAdd, deleteDoc as fsDelete, getDocs, query, where, writeBatch, increment, deleteField, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { firebaseConfig } from '../firebase-config.js';
 
 export const INC = (n) => ({ __inc: n });
@@ -73,6 +73,8 @@ export async function add(colPath, data) { const r = await fsAdd(collection(db, 
 export function del(path) { return fsDelete(ref(path)); }
 export async function list(colPath) { const q = await getDocs(collection(db, colPath)); return q.docs.map((d) => ({ id: d.id, data: plain(d.data()) })); }
 // ops: [['set', path, data, merge?], ['update', path, data], ['del', path]]  — 450개씩 끊어서
+// 그 뒤로 바뀐 문서만 (field 가 서버 시각인 문서) — 읽기 수를 아끼려고. 같은 시각의 문서는 다시 와도 되게 >= 로 물음
+export async function listSince(colPath, field, ms) { const q = await getDocs(query(collection(db, colPath), where(field, '>=', Timestamp.fromMillis(ms)))); return q.docs.map((d) => ({ id: d.id, data: plain(d.data()) })); }
 export async function batch(ops) {
   for (let i = 0; i < ops.length; i += 450) {
     const b = writeBatch(db);

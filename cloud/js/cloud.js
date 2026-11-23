@@ -170,10 +170,44 @@ let loadedAt = 0;
 const seal = (name, text) => C.seal(S.key, { t: text }, SID + '/book/' + name);
 const unseal = async (name, box) => (await C.open(S.key, box, SID + '/book/' + name)).t;
 
+// ---- 읽기 수 아끼기 ----
+// 받아 온 문서(암호문 그대로)를 이 기기에 두고, 다음부터는 "그 뒤로 바뀐 문서"만 물어봄. 사흘에 한 번은 전부 다시 읽어 맞춤
+const FULL_MS = 3 * 864e5;
+let CB = null;                       // { docs: {이름: {box, at}}, inbox: {id: {box, t}}, maxAt, maxT, fullAt }
+function cdb() { return new Promise((ok, no) => { const r = indexedDB.open('jumpus-book', 1); r.onupgradeneeded = () => r.result.createObjectStore('book'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); }); }
+async function cacheGet() { try { const db = await cdb(); return await new Promise((ok) => { const q = db.transaction('book', 'readonly').objectStore('book').get(SID); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); } catch (e) { return null; } }
+async function cachePut() { try { const db = await cdb(); await new Promise((ok) => { const t = db.transaction('book', 'readwrite'); t.objectStore('book').put(CB, SID); t.oncomplete = ok; t.onerror = ok; }); } catch (e) {} }
+async function cacheDrop() { CB = null; try { const db = await cdb(); await new Promise((ok) => { const t = db.transaction('book', 'readwrite'); t.objectStore('book').delete(SID); t.oncomplete = ok; t.onerror = ok; }); } catch (e) {} }
+let privDoc = null, privAt = 0;
+const plainMemo = {};                // 문서 이름 → { iv, t } (같은 암호문을 다시 풀지 않게)
+const sameBox = (a, b) => !!a && !!b && ((a.gone && b.gone) || (!!a.box && !!b.box && a.box.iv === b.box.iv));
+async function fetchBook() {
+  if (!CB) CB = (await cacheGet()) || { docs: {}, inbox: {}, maxAt: 0, maxT: 0, fullAt: 0 };
+  const full = !CB.fullAt || !CB.maxAt || Date.now() - CB.fullAt > FULL_MS || Date.now() < CB.fullAt;
+  let changed = full;
+  if (full) { const all = await fb.list(BOOK); CB.docs = {}; all.forEach((d) => { CB.docs[d.id] = d.data; }); CB.fullAt = Date.now(); }
+  else (await fb.listSince(BOOK, 'at', CB.maxAt)).forEach((d) => { if (!sameBox(CB.docs[d.id], d.data)) { CB.docs[d.id] = d.data; changed = true; } });
+  Object.keys(CB.docs).forEach((n) => { CB.maxAt = Math.max(CB.maxAt || 0, +CB.docs[n].at || 0); });
+  // inbox: 선생님은 늘 전부(표에 합치고 지워야 해서). 학생은 표가 그대로면 그 뒤로 들어온 것만
+  if (isTeacher() || changed || !CB.maxT) { const all = await fb.list(INBOX); CB.inbox = {}; all.forEach((x) => { CB.inbox[x.id] = x.data; }); changed = true; }
+  else (await fb.listSince(INBOX, 't', CB.maxT)).forEach((x) => { if (!CB.inbox[x.id]) { CB.inbox[x.id] = x.data; changed = true; } });
+  Object.keys(CB.inbox).forEach((id) => { CB.maxT = Math.max(CB.maxT || 0, +CB.inbox[id].t || 0); });
+  if (!CB.maxT) CB.maxT = CB.maxAt || 1;
+  if (changed) cachePut();
+  return { docs: Object.keys(CB.docs).filter((n) => CB.docs[n].box).map((n) => ({ id: n, data: CB.docs[n] })), inbox: Object.keys(CB.inbox).map((id) => ({ id, data: CB.inbox[id] })) };
+}
 async function loadBook(first) {
-  const [docs, inbox, priv] = await Promise.all([fb.list(BOOK), fb.list(INBOX), isTeacher() ? fb.get(PRIV).catch(() => null) : null]);
+  // 선생님만 읽는 설정은 5분에 한 번만 다시 읽음 (자주 안 바뀜)
+  const needPriv = isTeacher() && (first || Date.now() - privAt > 300e3);
+  const [fetched, pv] = await Promise.all([fetchBook(), needPriv ? fb.get(PRIV).catch(() => null) : null]);
+  if (needPriv) { privDoc = pv; privAt = Date.now(); }
+  const priv = isTeacher() ? privDoc : null;
+  const docs = fetched.docs, inbox = fetched.inbox;
   const got = {};
-  await Promise.all(docs.map(async (d) => { try { got[d.id] = await unseal(d.id, d.data.box); } catch (e) { console.warn('열 수 없는 문서', d.id); } }));
+  await Promise.all(docs.map(async (d) => {
+    const m = plainMemo[d.id]; if (m && m.iv === d.data.box.iv) { got[d.id] = m.t; return; }
+    try { got[d.id] = await unseal(d.id, d.data.box); plainMemo[d.id] = { iv: d.data.box.iv, t: got[d.id] }; } catch (e) { console.warn('열 수 없는 문서', d.id); }
+  }));
   const sheets = {}; const recParts = [];
   Object.keys(got).sort().forEach((id) => {
     if (id === 'props') return;
@@ -185,7 +219,7 @@ async function loadBook(first) {
   recParts.forEach((id) => rowsParse(got[id]).forEach((r) => { if (!seen[r[0]]) { seen[r[0]] = 1; rec.push(r); } }));
   const ib = [];
   await Promise.all(inbox.map(async (x) => { if (!x.data.box) return; try { const o = await C.open(S.key, x.data.box, SID + '/inbox'); ib.push({ id: x.id, t: x.data.t || 0, row: JSON.parse(o.t).map(dec) }); } catch (e) {} }));
-  ib.sort((a, b) => a.t - b.t).forEach((x) => { if (!seen[x.row[0]]) { seen[x.row[0]] = 1; rec.push(x.row); } });
+  ib.sort((a, b) => a.t - b.t).forEach((x) => { if (!seen[x.row[0]]) { seen[x.row[0]] = 1; rec.push(x.row); } else if (!isTeacher() && CB) delete CB.inbox[x.id]; });   // 이미 표에 합쳐진 것은 기억에서 뺌
   if (rec.length || recParts.length || ib.length) sheets.Records = new Sheet('Records', [SH.RECORDS_HEADER_.slice()].concat(rec));
   book.sheets = sheets;
   // 속성: 공개 + (선생님) 비밀 + 이 기기
@@ -223,7 +257,7 @@ async function persist() {
   want.props = JSON.stringify(publicProps());
   const ops = [];
   for (const n of Object.keys(want)) if (want[n] !== synced[n]) ops.push(['set', BOOK + '/' + n, { box: await seal(n, want[n]), at: fb.NOW }]);
-  Object.keys(synced).forEach((n) => { if (!(n in want)) ops.push(['del', BOOK + '/' + n]); });
+  Object.keys(synced).forEach((n) => { if (!(n in want)) ops.push(['set', BOOK + '/' + n, { gone: true, at: fb.NOW }]); });   // 지우지 않고 '없어짐' 표시 — 바뀐 것만 묻는 다른 기기도 알 수 있게
   const pv = JSON.stringify(secretProps());
   if (pv !== syncedPriv && (pv !== '{}' || syncedPriv)) ops.push(['set', PRIV, { box: await C.seal(S.key, { t: pv }, SID + '/priv'), at: fb.NOW }]);
   const approval = props.APPROVAL_ON !== '0';
@@ -231,6 +265,7 @@ async function persist() {
   inboxIds.forEach((id) => ops.push(['del', INBOX + '/' + id]));
   if (!ops.length) return;
   await fb.batch(ops);
+  if (pv !== syncedPriv) privAt = 0;   // 방금 고친 설정은 다음에 바로 다시 읽음
   synced = want; syncedPriv = pv; inboxIds = [];
 }
 // 학생 화면: 새로 붙은 기록 줄만 inbox 로 (다른 표는 못 고침 — 규칙이 막음)
@@ -547,7 +582,7 @@ async function deleteSpace() {
   await fb.del(P + '/members/' + S.user.uid);
   await fb.del(P);
   await fb.set('users/' + S.user.uid, { spaces: { [SID]: fb.DEL } }, true);
-  await C.forgetKey(SID); ls.del('jumpus:local:' + SID); ls.del('jumpus:cache:' + SID); ls.del('jumpus:stu:' + SID); ls.del('jumpropeCloud:' + SID);
+  await C.forgetKey(SID); await cacheDrop(); ls.del('jumpus:local:' + SID); ls.del('jumpus:cache:' + SID); ls.del('jumpus:stu:' + SID); ls.del('jumpropeCloud:' + SID);
 }
 
 // ================= 내려받기 · 옮겨 오기 =================

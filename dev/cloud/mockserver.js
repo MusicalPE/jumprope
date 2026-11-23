@@ -5,6 +5,7 @@ const PORT = +(process.env.PORT || 8891);
 const ROOT = path.resolve(__dirname, '../..');
 let store = new Map();   // 'a/b/c/d' → data
 const denies = [];
+const reads = [];   // 목록 읽기 기록 (읽기 수 줄이기 시험용)
 
 const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
 const clone = (v) => JSON.parse(JSON.stringify(v));
@@ -120,13 +121,14 @@ function handle(b) {
   if (b.op === 'list') {
     const pre = b.path + '/'; const depth = b.path.split('/').length + 1;
     if (!rules('list', b.path + '/x', auth, null, null, null, store)) throw deny('list', b.path);
-    return [...store.keys()].filter((k) => k.startsWith(pre) && k.split('/').length === depth).map((k) => ({ id: k.split('/').pop(), data: clone(store.get(k)) }));
+    reads.push(b.path + (b.field ? ' since' : ''));
+    return [...store.keys()].filter((k) => k.startsWith(pre) && k.split('/').length === depth && (!b.field || store.get(k)[b.field] >= b.since)).map((k) => ({ id: k.split('/').pop(), data: clone(store.get(k)) }));
   }
   if (b.op === 'add') { const id = 'a' + (++seq).toString(36) + Math.random().toString(36).slice(2, 8); const next = new Map(store); doWrite(['set', b.path + '/' + id, b.data], auth, store, next); store = next; return id; }
   if (b.op === 'write') { const next = new Map(store); b.ops.forEach((o) => doWrite(o, auth, store, next)); store = next; return true; }   // 묶음: 규칙은 묶기 전 상태로 판단
-  if (b.op === 'reset') { store = new Map(); rtdb = {}; denies.length = 0; return true; }
+  if (b.op === 'reset') { store = new Map(); rtdb = {}; denies.length = 0; reads.length = 0; return true; }
   if (b.op === 'console_set') { store.set(b.path, b.data); return true; }   // 운영자가 파이어베이스 콘솔에서 직접 넣는 것 흉내 (규칙을 거치지 않음)
-  if (b.op === 'dump') return { docs: Object.fromEntries(store), denies, rt: rtdb };
+  if (b.op === 'dump') return { docs: Object.fromEntries(store), denies, rt: rtdb, reads };
   throw new Error('모르는 op ' + b.op);
 }
 // ---- 실시간 데이터베이스 흉내 (cloud/database-rules.txt 와 같은 뜻) ----
