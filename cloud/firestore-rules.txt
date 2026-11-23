@@ -60,9 +60,10 @@ service cloud.firestore {
       }
 
       // 공개 설정(학교 이름·승인 절차): 공간 주소를 아는 기기만
+      // meta/flags 는 운영자가 파이어베이스 콘솔에서만 만들고 고침 (live: true → 전용 점프 라이브 사용). 앱에서는 아무도 못 씀
       match /meta/{m} {
         allow get: if signedIn();
-        allow write: if isMember(s);
+        allow write: if isMember(s) && m != 'flags';
       }
       // 표(학생·기록·급수·설정) — 모두 암호문. 공간 주소를 아는 기기만 읽고, 선생님만 씀
       match /book/{d} {

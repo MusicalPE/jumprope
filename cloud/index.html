@@ -1959,9 +1959,9 @@ document.addEventListener('DOMContentLoaded', function(){
 
     <section class="tab-pane" data-tab="live">
     <div class="card">
-      <h2>점프 Live (Lite) <span style="font-size:13px;font-weight:600;color:var(--coral-dark);">학교 시트만으로</span></h2>
-      <p class="hint">바깥 서버 없이 이 학교 시트만으로 수업 방을 열어요. 학생은 1인 1기기로 카메라 판정기에서 뛰고, 큰 화면에는 <b>끝나고 한 번에</b>(또는 10·15·20·30초마다 잠깐씩, 또는 바로바로) 공개돼요. 끝나면 결과가 <b>승인된 카메라 기록</b>으로 들어가요.</p>
-      <p class="hint">학생 화면의 숫자는 몇 초씩 늦게 모일 수 있어서, 끝난 뒤 결과를 모두 모아 한꺼번에 보여 줘요. 껍데기 <b>6판</b>부터 쓸 수 있어요.</p>
+      <h2>점프 Live (Lite)</h2>
+      <p class="hint">이 공간에서 바로 수업 방을 열어요. 학생은 1인 1기기로 카메라 판정기에서 뛰고, 큰 화면에는 <b>끝나고 한 번에</b>(또는 10·15·20·30초마다 잠깐씩, 또는 바로바로) 공개돼요. 끝나면 결과가 <b>승인된 카메라 기록</b>으로 들어가요.</p>
+      <p class="hint">학생 화면의 숫자는 몇 초씩 늦게 모일 수 있어서, 끝난 뒤 결과를 모두 모아 한꺼번에 보여 줘요.</p>
       <p class="hint"><b>학교와 함께 (실시간)</b> · 방을 연 뒤 위쪽 <b>학교와 함께</b>를 누르면 다른 학교와 같은 시각에 시작해 실시간 대결이나 두 학교 함께 박 깨기를 할 수 있어요 (전국 현황판 참여가 켜져 있어야 해요).</p>
       <button type="button" id="openLiteBtn">점프 Live (Lite) 열기 →</button>
       <p id="liteMsg" class="hint"></p>
@@ -3165,13 +3165,13 @@ loadTypes();
   // 점프 라이브: 점프 라이브용 껍데기(ping 이 live 를 알려 줌)를 설치한 학교에만 보임
   // 점프 Live (Lite): 6판 껍데기(ping 이 lite 를 알려 줌)면 누구나 — 바깥 서버 없이 학교 시트만으로
   if (APP.shell && APP.shell.lite) { const xb = document.getElementById('openLiteBtn'); if (xb) xb.addEventListener('click', function(){
-    const w = window.open(location.origin + '/jumpropelive/monitor.html?lite=1' + (APP.club ? '&club=1' : '') + '&s=' + encodeURIComponent(APP.shellUrl), '_blank');
+    const w = window.open(location.origin + '/jumpropelive/monitor.html?lite=1' + (APP.club ? '&club=1' : '') + '&s=' + encodeURIComponent('cloud:' + APP.shellUrl), '_blank');
     if (!w) document.getElementById('liteMsg').textContent = '새 창이 막혔어요. 주소창 오른쪽에서 팝업을 허용해 주세요.'; }); }
   else { const xc = document.getElementById('openLiteBtn'); if (xc) xc.closest('.card').remove(); }
   if (!(APP.shell && APP.shell.live)) { const fc = document.getElementById('liveFbCard'); if (fc) fc.remove(); }
   if (!(APP.shell && (APP.shell.live || APP.shell.lite))) { Array.prototype.forEach.call(document.querySelectorAll('[data-tab="live"]'), function(el){ el.remove(); }); }
   if (APP.shell && (APP.shell.live || APP.shell.lite)) { const lb = document.getElementById('openLiveBtn'); if (lb) lb.addEventListener('click', function(){
-    const w = window.open(location.origin + '/jumpropelive/monitor.html?s=' + encodeURIComponent(APP.shellUrl), '_blank');
+    const w = window.open(location.origin + '/jumpropelive/monitor.html?s=' + encodeURIComponent('cloud:' + APP.shellUrl), '_blank');
     if (!w) document.getElementById('liveMsg').textContent = '새 창이 막혔어요. 주소창 오른쪽에서 팝업을 허용해 주세요.'; });
     // 점프 라이브가 결과를 시트에 넣으면 알려 줌 → 점퍼스(전국 현황판)에 바로 보냄 (카메라 인증 기록으로 집계)
     window.addEventListener('message', function(e){ if (e.origin === location.origin && e.data && e.data.type === 'jumplive-saved') NAT.syncAll(token, true).catch(function(){}); }); }
@@ -3279,7 +3279,7 @@ loadTypes();
       const live = APP.shell && APP.shell.live, lite = APP.shell && APP.shell.lite;
       if (!live && !lite) { alert('점프 Live는 껍데기 6판부터 쓸 수 있어요.'); return; }
       const q = '&duel=' + encodeURIComponent(t.dataset.drun) + (t.dataset.dbak ? '&bak=' + t.dataset.dbak : '&dur=' + t.dataset.ddur);
-      const url = location.origin + '/jumpropelive/monitor.html?' + (live ? '' : 'lite=1' + (APP.club ? '&club=1' : '') + '&') + 's=' + encodeURIComponent(APP.shellUrl) + q;
+      const url = location.origin + '/jumpropelive/monitor.html?' + (live ? '' : 'lite=1' + (APP.club ? '&club=1' : '') + '&') + 's=' + encodeURIComponent('cloud:' + APP.shellUrl) + q;
       if (!window.open(url, '_blank')) alert('새 창이 막혔어요. 주소창 오른쪽에서 팝업을 허용해 주세요.');
       return;
     }
@@ -3409,7 +3409,7 @@ loadTypes();
     if (t.dataset.prop) { const s = document.querySelector('[data-pslot="' + t.dataset.prop + '"]').value; act('postReply', { id: t.dataset.prop, t: 'propose', slot: s }, t); return; }
     if (t.dataset.pcancel && confirm('이 도전장을 내릴까요?')) { act('postCancel', { id: t.dataset.pcancel }, t); return; }
     if (t.dataset.live) { const live = APP.shell && APP.shell.live, lite = APP.shell && APP.shell.lite; if (!live && !lite) { alert('점프 Live는 껍데기 6판부터 쓸 수 있어요.'); return; }
-      const url = location.origin + '/jumpropelive/monitor.html?' + (live ? '' : 'lite=1' + (APP.club ? '&club=1' : '') + '&') + 's=' + encodeURIComponent(APP.shellUrl) + '&lmpost=' + encodeURIComponent(t.dataset.live);
+      const url = location.origin + '/jumpropelive/monitor.html?' + (live ? '' : 'lite=1' + (APP.club ? '&club=1' : '') + '&') + 's=' + encodeURIComponent('cloud:' + APP.shellUrl) + '&lmpost=' + encodeURIComponent(t.dataset.live);
       if (!window.open(url, '_blank')) alert('새 창이 막혔어요. 주소창 오른쪽에서 팝업을 허용해 주세요.'); }
   });
 })();

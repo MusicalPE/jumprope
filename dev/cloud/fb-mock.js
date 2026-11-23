@@ -6,6 +6,13 @@ let cbs = [];
 const getU = () => { try { return JSON.parse(localStorage.getItem('mock-user')); } catch (e) { return null; } };
 const setU = (u) => { if (u) localStorage.setItem('mock-user', JSON.stringify(u)); else localStorage.removeItem('mock-user'); cbs.forEach((cb) => cb(u)); };
 export function init() {}
+export function ready() { return Promise.resolve(); }
+export const SV_TIME = { '.sv': 'timestamp' };
+export async function rt(method, path, body) {
+  const u = getU();
+  const r = await fetch('/__rt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ method, path, body, auth: u ? { uid: u.uid, anon: !!u.anon } : null }) });
+  const j = await r.json(); if (!j.ok) throw Object.assign(new Error(j.message), { code: j.code }); return j.result;
+}
 export function onUser(cb) { cbs.push(cb); setTimeout(() => cb(getU()), 0); return () => {}; }
 export function user() { return getU(); }
 export async function signInGoogle() { const g = JSON.parse(localStorage.getItem('mock-google') || 'null') || { uid: 'teacher1', name: '김선생', email: 't1@example.com' }; setU(Object.assign({ anon: false }, g)); }

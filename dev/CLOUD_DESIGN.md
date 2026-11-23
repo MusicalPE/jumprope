@@ -118,3 +118,20 @@ invites/{code}                  선생님 초대 코드
   - mockserver.js 는 Firestore 와 로그인을 흉내 내고, **firestore-rules.txt 와 같은 뜻의 규칙을 JS 로 한 번 더 적어** 권한까지 확인한다
   - `cloud/js/fb.js` 요청을 `dev/cloud/fb-mock.js` 로 바꿔 내준다 (앱 코드는 그대로)
 - **규칙을 고치면 firestore-rules.txt 와 mockserver.js 의 rules() 를 같이 고칠 것.** 실제 규칙 문법은 여기서 확인되지 않으니, 콘솔에 붙인 뒤 실제 주소에서 한 번 밟아 봐야 한다
+
+## 0.4.0 — 점프 Live (수업 방 · 학생 방) · 전용 라이브 표시 · 공간 삭제
+
+- 껍데기의 lite* 함수는 CacheService(학교 시트 스크립트 하나)에 방을 두는데, 클라우드판은 껍데기가 기기마다 따로 돌아서 방을 함께 볼 수 없음
+  → `cloud/js/lite.js` 가 같은 일을 jumpus-pe 의 실시간 데이터베이스로 함. 연결을 붙잡지 않는 REST 요청만 써서 동시 접속 수(무료 100)를 쓰지 않음
+- 자리: `lite/{공간}/rooms/{방}/{own, meta, ctl, devs/{기기}, ppl/{학년-반-번호}}` · `lite/{공간}/codes/{4자리}` · `lite/{공간}/clock/{uid}`
+  - meta·ctl·devs 값은 JSON 글자. 방에는 학년·반·번호·횟수만. 학생 방의 이름(ppl, meta.hostBox)은 공간 열쇠로 잠근 글자
+  - 방 주인 = 방을 연 기기의 로그인 uid. 신호(ctl)·방 닫기는 규칙(`cloud/database-rules.txt`)이 주인에게만 허락 → 껍데기의 '방 열쇠(owner)' 인자는 받기만 하고 안 씀
+  - 서버 시각: clock 에 서버 시각을 써 보고 차이를 잼(10분마다). 응답의 t 는 왕복 시간의 가운데로 맞춤
+- 큰 화면(jumpropelive/monitor.html 1.5.0): `?s=cloud:<공간>` 이면 `bridge.js` 의 rpc 로. 관리자 통행증은 다리의 adminToken (구글 로그인한 선생님이면 비밀번호 없이)
+- 판정기(1.3.9): `&ls=cloud:<공간>` · 학생 방(app=cloud:<공간>)도 다리로. 수업 방 주고받기(liteInfo·liteSend 등)는 공간을 열지 않아도 됨 → 공간 QR을 찍은 적 없는 기기도 방 QR만으로(익명 로그인)
+- 전용 점프 라이브(jumpropelive 파이어베이스, 실시간·스마트 줄넘기 허브): `spaces/{공간}/meta/flags` 문서의 `live: true` 인 공간만. 이 문서는 규칙상 앱에서 아무도 못 쓰고 파이어베이스 콘솔에서만 만듦 → ping 이 live:1
+- 공간 삭제: 공간 관리 맨 아래(만든 선생님만, 학교 이름을 그대로 적어야 함). book·inbox·priv·meta/pub·keys·members → 공간 문서 → users 목록 순서로 지움. meta/flags 는 남음(콘솔에서 지움)
+- 고친 것: 거절된 기록이 있는 공간에 학생 기기가 들어오면, 거절된 줄을 '늘어난 횟수'로 잘못 보고 inbox 에 올리려다 규칙에 막혀 "QR이 바뀌었어요"가 뜨던 문제 (persistStudent)
+- 시험: `dev/cloud/test_live.py`(가짜 서버, 실시간 데이터베이스 규칙도 흉내) · `dev/cloud/test_sheet_live.py`(시트판 Lite 가 그대로인지, devserver 필요)
+- 못 해 본 것: 진짜 실시간 데이터베이스(규칙·REST), 여러 기기로 실제 수업 방, 전용 라이브에 연결한 실제 수업
+- 요청 수 어림: 학생 한 명이 3초마다 2번(보내기 + 신호 받기). 30명 40분이면 약 4만 8천 번 · 내려받는 양은 수십 MB. 무료 한도(한 달 10GB)로는 한 달에 수백 차시쯤

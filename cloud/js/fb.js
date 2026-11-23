@@ -10,11 +10,27 @@ export const DEL = { __del: 1 };
 export const NOW = { __now: 1 };
 
 let app, auth, db;
+let userKnown;
 export function init() {
+  if (app) return;
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
   getRedirectResult(auth).catch(() => {});
+  userKnown = new Promise((ok) => { const off = onAuthStateChanged(auth, () => { off(); ok(); }); });
+}
+export function ready() { return userKnown; }      // 로그인 상태를 처음 알게 되면 풀림
+
+// ---- 실시간 데이터베이스 (점프 Live 방) — 연결을 붙잡지 않는 REST 요청만 씀 (동시 접속 수를 쓰지 않음) ----
+export const SV_TIME = { '.sv': 'timestamp' };
+export async function rt(method, path, body) {
+  const tok = auth.currentUser ? await auth.currentUser.getIdToken() : '';
+  // 쓰기는 POST + x-http-method-override 로 보냄 → 브라우저가 미리 물어보는 요청(preflight) 없이 한 번에 감 (3초마다 오가서 요청 수를 아낌)
+  const url = firebaseConfig.databaseURL + '/' + path + '.json?auth=' + encodeURIComponent(tok);
+  const r = await fetch(method === 'GET' ? url : url + '&x-http-method-override=' + method, method === 'GET' ? { cache: 'no-store' } : { method: 'POST', body: method === 'DELETE' ? '' : JSON.stringify(body) });
+  if (r.status === 401 || r.status === 403) throw Object.assign(new Error('permission-denied'), { code: 'permission-denied' });
+  if (!r.ok) throw Object.assign(new Error('실시간 방 서버 응답 오류 (' + r.status + ')'), { code: 'rt-' + r.status });
+  return r.json();
 }
 
 // ---- 로그인 ----

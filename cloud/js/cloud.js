@@ -6,8 +6,9 @@
 import * as fb from './fb.js';
 import * as C from './crypto.js';
 import { sha256Bytes, Sheet } from './gasfake.js';
+import * as L from './lite.js';
 
-const CLOUD_VERSION = '0.3.0';
+const CLOUD_VERSION = '0.4.0';
 const APPV = window.APP, SID = APPV.shellUrl || '';
 const BASE = location.origin + location.pathname;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -34,7 +35,7 @@ style.textContent = '.jc-msg{padding:10px 12px;border-radius:10px;margin:10px 0;
   '.jc-recovery{font-family:ui-monospace,Menlo,monospace;font-size:1.3em;font-weight:800;letter-spacing:.05em;background:#FEF3C7;padding:14px;border-radius:12px;text-align:center;word-break:break-all;color:#78350F}' +
   '.jc-spaces a{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);font-weight:800;margin-bottom:8px;background:#fff}.jc-spaces a:hover{border-color:var(--coral)}' +
   '.jc-chk{display:flex;gap:8px;align-items:center;color:var(--ink);font-size:.92em}.jc-qr{background:#fff;padding:12px;border:1px solid var(--line);border-radius:14px;width:220px}.jc-qr svg{width:100%;height:auto;display:block}' +
-  '#duelBtn{display:none!important}.admin-nav a.jc-space{display:block!important}button.jc-danger{background:#fff;color:#DC2626;border:1px solid #FEE2E2;box-shadow:none}button.jc-danger:hover{background:#FEE2E2}';
+  '.admin-nav a.jc-space{display:block!important}button.jc-danger{background:#fff;color:#DC2626;border:1px solid #FEE2E2;box-shadow:none}button.jc-danger:hover{background:#FEE2E2}';
 document.head.appendChild(style);
 
 function view(html) { const el = $('#app'); if (!el) return; el.innerHTML = html; window.scrollTo(0, 0); }
@@ -83,6 +84,7 @@ async function doOpen() {
 async function afterOpen() {
   S.pub = await fb.get('spaces/' + SID + '/meta/pub');
   if (!S.pub) throw new Error('이 공간을 찾을 수 없어요. 주소나 QR을 확인해 주세요.');
+  try { S.flags = await fb.get('spaces/' + SID + '/meta/flags'); } catch (e) { S.flags = null; }   // 운영자가 콘솔에서만 켜는 표시 (live: 전용 점프 라이브)
   if (S.mode === 'teacher') { const q = await C.open(S.key, S.space.qbox, SID + '/qbox'); APPV.stuLink = BASE + '?s=' + SID + '#k=' + q.k + '&w=' + S.space.wtok; }
   await bootShell();
   await loadBook(true);
@@ -97,7 +99,7 @@ const book = { sheets: {}, getName() { return (S.pub && S.pub.name) || '줄넘�
   getSheets() { return Object.keys(this.sheets).map((k) => this.sheets[k]); }, deleteSheet(s) { delete this.sheets[s.name]; } };
 let props = {};                      // 껍데기 '스크립트 속성'
 let cache = ls.get('jumpus:cache:' + SID) || {};   // 판정기 통행증(CAM_)은 다른 탭(판정기)에서도 읽어야 해서 이 기기에 기억
-function saveCache() { const o = {}; Object.keys(cache).forEach((k) => { if (/^CAM_|^JL_sv_/.test(k) && cache[k].e > Date.now()) o[k] = cache[k]; }); ls.set('jumpus:cache:' + SID, o); }
+function saveCache() { const o = {}; Object.keys(cache).forEach((k) => { if (/^CAM_|^JL_sv_|^JL_host_/.test(k) && cache[k].e > Date.now()) o[k] = cache[k]; }); ls.set('jumpus:cache:' + SID, o); }
 const LOCAL_PROP = /^AT_/;           // 이 기기에만 두는 것 (관리자 통행증)
 const SECRET_PROPS = ['GEMINI_KEY', 'ADMIN_HASH', 'EXTRA_SETTINGS'];   // 선생님만 읽는 문서에 둠 (EXTRA_SETTINGS 는 비밀 키를 뺀 사본을 공개 쪽에도 둠)
 const Props = {
@@ -237,7 +239,9 @@ async function persistStudent() {
   const fresh = sh.rows.slice(Math.max(1, recBase));
   // 이미 있던 줄에 더해진 횟수(판정기 '한 번 더 뛰기')는 학생 기기가 고칠 수 없으니, 늘어난 만큼을 새 줄로 올림
   for (let i = 1; i < Math.min(recBase, sh.rows.length); i++) {
-    const r = sh.rows[i], was = recSnap[i] || [0, 'approved'], prev = was[1] === 'rejected' ? 0 : was[0], cur = Number(r[4]) || 0;
+    // (거절된 줄은 그대로면 건드리지 않음 — 거절된 줄을 판정기가 다시 살렸을 때만 그 줄 횟수를 통째로 올림)
+    const r = sh.rows[i], was = recSnap[i] || [0, 'approved'], cur = Number(r[4]) || 0, st = String(r[5] || 'approved');
+    const prev = was[1] === 'rejected' ? (st === 'rejected' ? cur : 0) : was[0];
     if (cur > prev) { const d = r.slice(); d[0] = G.Utilities.getUuid(); d[1] = new Date(); d[4] = cur - prev; fresh.push(d); }
   }
   recBase = sh.rows.length; recSnap = sh.rows.map((r) => [Number(r[4]) || 0, String(r[5] || 'approved')]);
@@ -249,9 +253,28 @@ async function persistStudent() {
 
 // ================= 화면이 부르는 곳 =================
 const FRESH_MS = { teacher: 8000, student: 20000 };
-const NOT_YET = ['liteOpenRoom', 'liteSetControl', 'litePull', 'liteCloseRoom', 'liteInfo', 'liteSend', 'liteStuOpen', 'liteStuJoin', 'liteStuBoard', 'liteStuLeave'];
+// 점프 Live 방 (lite*): 껍데기는 기기마다 따로 돌아서 방을 함께 볼 수 없음 → 실시간 데이터베이스(lite.js)로 대신함
+const nameBox = { seal: async (n) => JSON.stringify(await C.seal(S.key, { n: String(n || '') }, SID + '/lite')), open: async (s) => (await C.open(S.key, JSON.parse(s), SID + '/lite')).n };
+function liteWho(t) { cache = Object.assign(ls.get('jumpus:cache:' + SID) || {}, cache); return SH.liteStu_(t); }   // 판정기 통행증으로 누구인지 (앱 탭에서 받은 통행증도 읽음)
+const LITE = {
+  liteOpenRoom(a) { if (!SH.checkAdminToken_(a[0])) throw new Error('권한이 없습니다. 관리자 메뉴로 다시 들어와 주세요.'); return L.openRoom(SID, a[1], a[2]); },
+  liteSetControl: (a) => L.setControl(SID, a[0], a[1], a[2]),
+  litePull: (a) => L.pull(SID, a[0]),
+  liteCloseRoom: (a) => L.closeRoom(SID, a[0]),
+  liteInfo: (a) => L.info(SID, a[0]),
+  liteSend: (a) => L.send(SID, a[0], a[1], a[2], a[3]),
+  async liteStuOpen(a) {
+    const who = liteWho(a[0]), hk = 'JL_host_' + String(a[0]);
+    const r = await L.stuOpen(SID, who, a[1], JSON.parse(Cache.get(hk) || 'null'), nameBox);
+    Cache.put(hk, JSON.stringify({ room: r.room, code: r.code }), 6 * 3600); saveCache(); return r;
+  },
+  liteStuJoin: (a) => L.stuJoin(SID, liteWho(a[0]), a[1], nameBox),
+  liteStuBoard: (a) => L.stuBoard(SID, a[0], nameBox),
+  liteStuLeave: (a) => L.stuLeave(SID, liteWho(a[0]), a[1])
+};
 let chain = Promise.resolve();
 function call(fn, args) {
+  if (LITE[fn]) return open().then(() => LITE[fn](args || []));   // 방 주고받기는 표 저장 줄에 세우지 않음 (3초마다 오가서)
   const run = chain.then(() => callNow(fn, args || []));
   chain = run.catch(() => {});
   return run;
@@ -259,7 +282,6 @@ function call(fn, args) {
 async function callNow(fn, args, retried) {
   await open();
   if (SH.RPC_ALLOW_.indexOf(fn) < 0) throw new Error('알 수 없는 요청: ' + fn);
-  if (NOT_YET.indexOf(fn) >= 0) throw new Error('클라우드판에서는 아직 준비 중인 기능이에요.');
   if (fn === 'changeAdminPassword') throw new Error('클라우드판은 구글 로그인이 관리자 비밀번호를 대신해요. 공간 비밀번호는 [공간 관리]에서 바꿔요.');
   if (fn === 'verifyAdminPassword') { if (!isTeacher()) return { ok: false, message: '선생님은 구글 로그인으로 들어와 주세요.' }; args = ['1234']; }
   if (fn === 'getSheetUrlAdmin') return '';
@@ -281,7 +303,7 @@ async function callNow(fn, args, retried) {
     throw new Error(fb.errText(e));
   }
   out = out === undefined ? null : JSON.parse(JSON.stringify(out));
-  if (fn === 'ping') { out.lite = 0; out.title = book.getName(); out.cloud = CLOUD_VERSION; }
+  if (fn === 'ping') { out.lite = out.lite || 1; out.live = S.flags && S.flags.live === true ? 1 : 0; out.title = book.getName(); out.cloud = CLOUD_VERSION; }
   saveCache();
   return out;
 }
@@ -295,7 +317,6 @@ function cameraApi(q) {
     const j = JSON.parse(SH.handleCameraApi_(q));
     if (j.ok) {
       try { await persist(); } catch (e) { await loadBook().catch(() => {}); return { ok: false, error: !isTeacher() && String(e && e.code).includes('permission-denied') ? 'QR이 바뀌었어요. 선생님이 새로 띄운 QR을 다시 찍어 주세요.' : fb.errText(e) }; }
-      if (j.data && '방' in j.data) j.data.방 = 0;   // 친구들과 함께 뛰기(학생 방)는 클라우드판에서 아직
     }
     saveCache();
     return j;
@@ -303,6 +324,9 @@ function cameraApi(q) {
   chain = run.catch(() => {});
   return run;
 }
+
+// 점프 Live 큰 화면(monitor.html)이 쓰는 관리자 통행증 — 선생님(구글 로그인)이면 비밀번호 없이
+async function adminToken() { await open(); if (!isTeacher()) return null; const r = await call('verifyAdminPassword', ['']); return r && r.ok ? r.token : null; }
 
 // 관리자 메뉴 들어가기: 선생님이면 비밀번호 없이 통과
 async function adminLogin(nextPage) {
@@ -453,7 +477,10 @@ async function spacePage() {
       '<label>지금 비밀번호 (또는 복구 코드) <input id="jcCur" type="password" autocomplete="current-password"></label><label>새 비밀번호 (8자 이상, 비워 두면 그대로) <input id="jcNp" type="password" autocomplete="new-password"></label>' +
       '<label class="jc-chk"><input type="checkbox" id="jcNr"> 복구 코드도 새로 만들기 (예전 코드는 못 쓰게 돼요)</label><button type="button" id="jcKeyGo">바꾸기</button><div id="jcKm"></div>'
       : '<p class="hint">비밀번호와 복구 코드는 공간을 만든 선생님만 바꿀 수 있어요.</p>') +
-    '<p class="hint" style="margin-top:16px">이 기기는 공간 열쇠를 기억하고 있어요. 공용 컴퓨터라면 잊게 해 주세요.</p><div class="jc-row"><button type="button" class="btn-outline" id="jcForget">이 기기에서 열쇠 잊기</button><button type="button" class="btn-outline" id="jcOut">로그아웃</button></div></div></div>');
+    '<p class="hint" style="margin-top:16px">이 기기는 공간 열쇠를 기억하고 있어요. 공용 컴퓨터라면 잊게 해 주세요.</p><div class="jc-row"><button type="button" class="btn-outline" id="jcForget">이 기기에서 열쇠 잊기</button><button type="button" class="btn-outline" id="jcOut">로그아웃</button></div></div>' +
+    '<div class="card"><h2>점프 Live</h2><p class="hint" style="margin-top:0">' + (S.flags && S.flags.live === true ? '이 공간은 <b>전용 점프 라이브</b>(실시간 · 스마트 줄넘기 허브)와 점프 Live (Lite)를 모두 쓸 수 있어요.' : '이 공간은 <b>점프 Live (Lite)</b>를 쓸 수 있어요. 학생 기기가 3초쯤마다 횟수를 보내는 방식이에요.') + ' 관리자 메뉴의 <b>점프 Live</b>에서 열어요.</p><p class="hint">공간 주소: <code>' + esc(SID) + '</code></p></div>' +
+    (owner ? '<div class="card"><h2>공간 삭제</h2><p class="hint" style="margin-top:0">이 공간의 학생 명단·기록·급수·설정을 모두 지워요. <b>되돌릴 수 없어요.</b> 남길 기록이 있으면 먼저 위에서 백업 파일을 받아 두세요.</p>' +
+      '<label>지우려면 학교 이름을 그대로 적어 주세요 <input id="jcDelNm" autocomplete="off" placeholder="' + esc(S.pub.name) + '"></label><button type="button" class="jc-danger" id="jcDelGo">이 공간 삭제</button><div id="jcDelM"></div></div>' : '') + '</div>');
   $('#jcCp').onclick = async () => { try { await navigator.clipboard.writeText(link); msg('#jcQm', '주소를 복사했어요.', 'ok'); } catch (e) { msg('#jcQm', link, 'warn'); } };
   $('#jcRot').onclick = async (e) => {
     if (!window.confirm('새 QR을 만들까요? 학생들은 새 QR을 다시 찍어야 기록을 넣을 수 있어요.')) return;
@@ -485,6 +512,13 @@ async function spacePage() {
   $('#jcForget').onclick = async () => { await C.forgetKey(SID); location.href = APPV.base; };
   $('#jcOut').onclick = async () => { await fb.signOut(); };
   if (!owner) return;
+  $('#jcDelGo').onclick = async (e) => {
+    if ($('#jcDelNm').value.trim() !== String(S.pub.name).trim()) return msg('#jcDelM', '학교 이름이 같지 않아요. "' + S.pub.name + '" 을(를) 그대로 적어 주세요.', 'err');
+    if (!window.confirm('"' + S.pub.name + '" 공간을 지울까요? 학생 명단과 기록이 모두 사라지고 되돌릴 수 없어요.')) return;
+    busy(e.target, true);
+    try { await deleteSpace(); location.href = BASE; }
+    catch (err) { busy(e.target, false); msg('#jcDelM', '지우다가 멈췄어요: ' + fb.errText(err) + ' — 다시 눌러 주세요.', 'err'); }
+  };
   $('#jcKeyGo').onclick = async (e) => {
     const cur = $('#jcCur').value, np = $('#jcNp').value, nr = $('#jcNr').checked;
     if (!cur) return msg('#jcKm', '지금 비밀번호를 넣어 주세요.', 'err');
@@ -501,6 +535,19 @@ async function spacePage() {
       busy(e.target, false); $('#jcCur').value = ''; $('#jcNp').value = ''; msg('#jcKm', '비밀번호를 바꿨어요. 함께 쓰는 선생님께도 알려 주세요.', 'ok');
     } catch (err) { busy(e.target, false); msg('#jcKm', fb.errText(err), 'err'); }
   };
+}
+
+// 공간 삭제 (만든 선생님만): 안쪽 문서부터 지우고 마지막에 공간 문서를 지움
+async function deleteSpace() {
+  const P = 'spaces/' + SID, ops = [];
+  for (const col of ['book', 'inbox', 'priv']) (await fb.list(P + '/' + col)).forEach((d) => ops.push(['del', P + '/' + col + '/' + d.id]));
+  ops.push(['del', P + '/meta/pub'], ['del', P + '/keys/' + S.space.wtok]);
+  (await fb.list(P + '/members')).forEach((m) => { if (m.id !== S.user.uid) ops.push(['del', P + '/members/' + m.id]); });
+  await fb.batch(ops);
+  await fb.del(P + '/members/' + S.user.uid);
+  await fb.del(P);
+  await fb.set('users/' + S.user.uid, { spaces: { [SID]: fb.DEL } }, true);
+  await C.forgetKey(SID); ls.del('jumpus:local:' + SID); ls.del('jumpus:cache:' + SID); ls.del('jumpus:stu:' + SID); ls.del('jumpropeCloud:' + SID);
 }
 
 // ================= 내려받기 · 옮겨 오기 =================
@@ -612,4 +659,4 @@ async function migrateFromSheet(btn) {
     (r.nat ? ' 전국 현황판은 같은 학교로 이어져요 — 시트판 쪽의 전국 현황판 참여는 꺼 주세요(두 곳에서 보내면 숫자가 엇갈려요).' : ''), 'ok');
 }
 
-window.JRCLOUD = { call, cameraApi, entry: () => entry().catch(viewFail), adminLogin, spacePage, fail: viewFail, version: CLOUD_VERSION };
+window.JRCLOUD = { call, cameraApi, entry: () => entry().catch(viewFail), adminLogin, spacePage, fail: viewFail, version: CLOUD_VERSION, adminToken };

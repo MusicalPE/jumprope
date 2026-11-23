@@ -38,6 +38,11 @@ s = must(s, "const url = baseUrl, autoUrl = baseUrl + '&qr=1';", "const url = AP
 s = must(s, '      <a class="nav-link" href="{{BASE}}">메인 화면 →</a>\n', '      <a class="nav-link" href="{{BASE}}">메인 화면 →</a>\n      <a class="nav-link jc-space" href="{{BASE}}&page=space">공간 관리 →</a>\n')
 s = must(s, '</head>', '<script>window.APP = APP;</script>\n<script type="module" src="cloud/js/cloud.js"></script>\n</head>')
 s = must(s, "new URL(page, location.href).href", "new URL(page, document.baseURI).href")   # 현황판·기록실은 저장소 맨 위 것
+# ---- 점프 Live: 큰 화면(monitor.html)에 '학교 시트 주소' 대신 'cloud:공간' 을 넘김 → 큰 화면·판정기가 다리(bridge.js)로 이 공간을 씀 ----
+s = must(s, "s=' + encodeURIComponent(APP.shellUrl)", "s=' + encodeURIComponent('cloud:' + APP.shellUrl)", 4)
+s = must(s, '<h2>점프 Live (Lite) <span style="font-size:13px;font-weight:600;color:var(--coral-dark);">학교 시트만으로</span></h2>', '<h2>점프 Live (Lite)</h2>')
+s = must(s, "바깥 서버 없이 이 학교 시트만으로 수업 방을 열어요.", "이 공간에서 바로 수업 방을 열어요.")
+s = must(s, " 껍데기 <b>6판</b>부터 쓸 수 있어요.</p>", "</p>")
 # ---- 클라우드판에 맞춘 안내 글 ----
 i = s.index("  items: [\n"); j = s.index("  esc: function(t)", i)
 HELP = [

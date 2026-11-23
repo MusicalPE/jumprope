@@ -176,7 +176,7 @@ with sync_playwright() as p:
     local = lambda u: u.replace('https://musicalpe.github.io', ROOT)   # 시험에서는 판정기도 가짜 서버에서
     main(s)
     check('카메라 판정기 켜면 학생 화면에 [카메라로 뛰기]', s.locator('#cameraBtn').count() == 1 and s.is_visible('#cameraBtn'))
-    check('각자 기기로 대결(학생 방)은 숨김', not s.is_visible('#duelBtn'))
+    check('각자 기기로 대결(학생 방) 보임 (0.4.0)', s.is_visible('#duelBtn'))
     before = int(num(s.text_content('#statTotal')).split()[0].replace('회', '') or 0) if False else None
     cam = s.evaluate("id=>window.JRCLOUD.call('issueCameraToken',[id,'모아뛰기'])", stu_id)
     check('판정기 주소: app=cloud:공간', cam['ok'] and ('app=' + urllib.parse.quote('cloud:' + sid, safe='')) in cam['url'], cam.get('url', '')[:90])
@@ -184,8 +184,8 @@ with sync_playwright() as p:
     j.goto(local(cam['url'])); j.wait_for_selector('#btnCam')
     ctok = re.search(r'[?&]t=([^&]+)', cam['url']).group(1)
     who = j.evaluate("([sid,t])=>import('/jumprope/cloud/js/bridge.js').then(m=>m.api(sid,{api:'rope_x_who',t:t}))", [sid, ctok])
-    check('판정기 화면에서 학생 이름·오늘 횟수 (rope_x_who, 방 없음)', who['ok'] and who['data']['이름'] == '김하늘' and who['data']['방'] == 0, str(who)[:120])
-    check('판정기 1.3.8: 클라우드판 주소면 다리로 보냄', "LINK.app.indexOf('cloud:')===0" in j.content())
+    check('판정기 화면에서 학생 이름·오늘 횟수 (rope_x_who)', who['ok'] and who['data']['이름'] == '김하늘', str(who)[:120])
+    check('판정기: 클라우드판 주소면 다리로 보냄', "LINK.app.indexOf('cloud:')===0" in j.content())
     sv = j.evaluate("([sid,t])=>import('/jumprope/cloud/js/bridge.js').then(m=>m.api(sid,{api:'rope_x_save',t:t,count:25,best:12}))", [sid, ctok])
     check('판정기 저장 25회 (카메라 기록은 바로 승인)', sv['ok'] and sv['data']['횟수'] == 25 and sv['data']['승인대기'] is False, str(sv)[:120])
     sv2 = j.evaluate("([sid,t])=>import('/jumprope/cloud/js/bridge.js').then(m=>m.api(sid,{api:'rope_x_save',t:t,count:15,best:5}))", [sid, ctok])

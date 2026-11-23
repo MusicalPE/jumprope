@@ -1,6 +1,61 @@
 {
   "rules": {
     ".read": false,
-    ".write": false
+    ".write": false,
+    "lite": {
+      "$sid": {
+        "clock": {
+          "$uid": {
+            ".read": "auth != null && auth.uid == $uid",
+            ".write": "auth != null && auth.uid == $uid",
+            ".validate": "newData.val() == now"
+          }
+        },
+        "codes": {
+          "$code": {
+            ".read": "auth != null",
+            ".write": "auth != null && (!data.exists() || data.child('by').val() == auth.uid || data.child('at').val() < now - 21600000)",
+            ".validate": "$code.matches(/^[0-9]{4}$/) && newData.hasChildren(['room', 'by', 'at']) && newData.child('by').val() == auth.uid && newData.child('at').val() == now && newData.child('room').isString() && newData.child('room').val().matches(/^[A-Za-z0-9_-]{16,64}$/)",
+            "room": { ".validate": true },
+            "by": { ".validate": true },
+            "at": { ".validate": true },
+            "$other": { ".validate": false }
+          }
+        },
+        "rooms": {
+          "$room": {
+            ".read": "auth != null",
+            ".write": "auth != null && !newData.exists() && (data.child('own').val() == auth.uid || !data.child('own').exists())",
+            ".validate": "$room.matches(/^[A-Za-z0-9_-]{16,64}$/)",
+            "own": {
+              ".write": "auth != null && (!data.exists() || data.val() == auth.uid)",
+              ".validate": "newData.val() == auth.uid"
+            },
+            "meta": {
+              ".write": "auth != null && newData.parent().child('own').val() == auth.uid",
+              ".validate": "newData.isString() && newData.val().length <= 1500"
+            },
+            "ctl": {
+              ".write": "auth != null && newData.parent().child('own').val() == auth.uid",
+              ".validate": "newData.isString() && newData.val().length <= 2000"
+            },
+            "devs": {
+              "$dev": {
+                ".write": "auth != null && data.parent().parent().child('own').exists()",
+                ".validate": "$dev.matches(/^[a-z0-9]{8,16}$/) && newData.isString() && newData.val().length <= 400"
+              }
+            },
+            "ppl": {
+              "$who": {
+                ".write": "auth != null && data.parent().parent().child('own').exists()",
+                ".validate": "$who.matches(/^[0-9]{1,2}-[0-9]{1,2}-[0-9]{1,2}$/) && newData.isString() && newData.val().length <= 1500"
+              }
+            },
+            "$other": { ".validate": false }
+          }
+        },
+        "$other": { ".validate": false }
+      }
+    }
   }
 }
