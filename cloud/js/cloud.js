@@ -486,8 +486,8 @@ async function viewCodes() {
     '<label>가입 암호 (선생님들께 알려 주는 암호 하나) <input id="jcGp" maxlength="40" autocomplete="off" value="' + esc((main && main.pass) || '') + '" placeholder="아직 없어요 — 정해서 저장해 주세요"></label>' +
     '<div class="jc-row"><button type="button" id="jcGpS">암호 저장</button><a class="btn-outline" href="' + esc(BASE) + '">← 내 공간</a></div><p class="hint">암호를 바꾸면 그때부터 새 암호로만 새 공간을 만들 수 있어요. 이미 만든 공간은 그대로예요.</p><div id="jcM"></div>' +
     '<h2 style="margin-top:22px">학교 목록 <span class="hint" style="font-weight:600">' + names.length + '곳 · 만들어진 공간 ' + spaces.length + '개</span></h2>' +
-    '<label>학교 이름을 한 줄에 하나씩 (엑셀의 학교 이름 칸을 그대로 붙여 넣어도 돼요) <textarea id="jcBulk" rows="6" placeholder="햇살초등학교&#10;새싹중학교&#10;푸른고등학교"></textarea></label>' +
-    '<label>이름 앞에 붙일 말 (선택) <input id="jcPre" maxlength="10" placeholder="예: 서울"></label>' +
+    '<label>학교 이름을 한 줄에 하나씩 (엑셀에서 시·군 칸과 학교 이름 칸을 함께 복사해 붙이면 "시·군 학교 이름"으로 들어가요) <textarea id="jcBulk" rows="6" placeholder="햇살초등학교&#10;새싹중학교&#10;푸른고등학교"></textarea></label>' +
+    '<label>모든 이름 앞에 붙일 말 (선택 — 시·군 칸 없이 학교 이름만 붙였을 때) <input id="jcPre" maxlength="10" placeholder="예: 서울"></label>' +
     '<button type="button" id="jcBulkGo">목록에 더하기</button><p class="hint">이미 있는 학교는 건너뛰어요.</p><div id="jcBm"></div>' +
     (names.length ? '<input id="jcFind" placeholder="학교 이름으로 찾기" style="margin-top:10px"><table id="jcCt" style="margin-top:8px"><tr><th style="text-align:left">학교</th><th style="white-space:nowrap">공간 수</th><th></th></tr>' + names.map((n) => { const off = sc.off.indexOf(n) >= 0; return '<tr data-sc="' + esc(n) + '"><td>' + esc(n) + (off ? ' <span class="hint">(중지)</span>' : '') + '</td><td style="text-align:center">' + (cnt[n] || 0) + '</td>' +
       '<td style="text-align:right;white-space:nowrap"><button type="button" class="btn-outline" data-off="' + esc(n) + '" data-v="' + (off ? '0' : '1') + '">' + (off ? '다시 열기' : '중지') + '</button> <button type="button" class="jc-danger" data-del="' + esc(n) + '">빼기</button></td></tr>'; }).join('') + '</table>' +
@@ -500,7 +500,8 @@ async function viewCodes() {
   };
   $('#jcBulkGo').onclick = async (e) => {
     const pre = $('#jcPre').value.trim(), have = new Set(sc.names), add = [];
-    $('#jcBulk').value.split(/[\r\n\t]+/).forEach((l) => { let n = l.trim().replace(/\s+/g, ' '); if (!n) return; if (pre && n.indexOf(pre) !== 0) n = pre + ' ' + n; n = n.slice(0, 30); if (!have.has(n)) { have.add(n); add.push(n); } });
+    // 한 줄에 칸이 둘(엑셀에서 '시·군' 칸과 '학교 이름' 칸을 함께 복사)이면 "전주 햇살초등학교"처럼 이어 붙임. 앞 칸의 '시'·'군'은 뗌 (전주시 → 전주)
+    $('#jcBulk').value.split(/[\r\n]+/).forEach((l) => { const cols = l.split('\t').map((x) => x.trim()).filter(Boolean); if (cols.length > 1) cols[0] = cols[0].replace(/^(.{2,3})[시군]$/, '$1'); let n = cols.join(' ').replace(/\s+/g, ' '); if (!n) return; if (pre && n.indexOf(pre) !== 0) n = pre + ' ' + n; n = n.slice(0, 30); if (!have.has(n)) { have.add(n); add.push(n); } });
     if (!add.length) return msg('#jcBm', '새로 더할 학교가 없어요. (이미 있거나 칸이 비어 있어요)', 'err');
     if (sc.names.length + add.length > 5000) return msg('#jcBm', '학교 목록은 5,000곳까지 넣을 수 있어요.', 'err');
     busy(e.target, true);
