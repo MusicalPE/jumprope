@@ -73,8 +73,15 @@ export async function add(colPath, data) { const r = await fsAdd(collection(db, 
 export function del(path) { return fsDelete(ref(path)); }
 export async function list(colPath) { const q = await getDocs(collection(db, colPath)); return q.docs.map((d) => ({ id: d.id, data: plain(d.data()) })); }
 // ops: [['set', path, data, merge?], ['update', path, data], ['del', path]]  — 450개씩 끊어서
-// 그 뒤로 바뀐 문서만 (field 가 서버 시각인 문서) — 읽기 수를 아끼려고. 같은 시각의 문서는 다시 와도 되게 >= 로 물음
-export async function listSince(colPath, field, ms) { const q = await getDocs(query(collection(db, colPath), where(field, '>=', Timestamp.fromMillis(ms)))); return q.docs.map((d) => ({ id: d.id, data: plain(d.data()) })); }
+// 그 뒤로 바뀐 문서만 (field 가 서버 시각인 문서) — 읽기 수·내려받는 양을 아끼려고
+// cursor: 지난번에 받은 { docs, cursor } 의 cursor (서버 시각을 마이크로초까지 그대로 적은 글자). 비우면 전부
+export async function listSince(colPath, field, cursor) {
+  const col = collection(db, colPath); let q = col;
+  if (cursor) { const p = String(cursor).split('.'); q = query(col, where(field, '>', new Timestamp(+p[0], +p[1]))); }
+  const snap = await getDocs(q); let max = null;
+  snap.docs.forEach((d) => { const v = d.data()[field]; if (v instanceof Timestamp && (!max || v.valueOf() > max.valueOf())) max = v; });
+  return { docs: snap.docs.map((d) => ({ id: d.id, data: plain(d.data()) })), cursor: max ? max.seconds + '.' + max.nanoseconds : (cursor || '') };
+}
 export async function batch(ops) {
   for (let i = 0; i < ops.length; i += 450) {
     const b = writeBatch(db);

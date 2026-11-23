@@ -189,7 +189,7 @@ with sync_playwright() as p:
         n0 = len(dump()['reads']); fn(); return dump()['reads'][n0:]
     main(s3)
     r1 = reads_after(lambda: main(s3))
-    check('학생 기기: 다시 열 때 표·기록함을 전부 읽지 않고 바뀐 것만 물음', r1 and all(x.endswith(' since') for x in r1), str(r1))
+    check('학생 기기: 다시 열 때 표를 전부 읽지 않고 바뀐 것만 물음 (빈 기록함은 그냥 읽음)', r1 and all(x.endswith('/book since') or '/inbox' in x for x in r1), str(r1))
     tot0 = num(s3.text_content('#statTotal'))
     tok2 = t.evaluate("window.JRCLOUD.adminToken()")
     typ2 = t.evaluate("window.JRCLOUD.call('getJumpTypes',[])")[0]

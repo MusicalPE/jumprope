@@ -7,12 +7,13 @@ let store = new Map();   // 'a/b/c/d' → data
 const denies = [];
 const reads = [];   // 목록 읽기 기록 (읽기 수 줄이기 시험용)
 
+let lastTick = 0; const tick = () => (lastTick = Math.max(Date.now(), lastTick + 1));   // 서버 시각: 쓸 때마다 반드시 커지게 (진짜 서버는 마이크로초까지 구분)
 const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
 const clone = (v) => JSON.parse(JSON.stringify(v));
 function resolve(nv, ov) {           // 표시(INC/DEL/NOW) 풀기
   if (isObj(nv)) {
     if ('__inc' in nv) return (typeof ov === 'number' ? ov : 0) + nv.__inc;
-    if ('__now' in nv) return Date.now();
+    if ('__now' in nv) return tick();
     const o = {}; for (const k in nv) { if (isObj(nv[k]) && '__del' in nv[k]) continue; o[k] = resolve(nv[k], isObj(ov) ? ov[k] : undefined); } return o;
   }
   return nv;
@@ -121,8 +122,8 @@ function handle(b) {
   if (b.op === 'list') {
     const pre = b.path + '/'; const depth = b.path.split('/').length + 1;
     if (!rules('list', b.path + '/x', auth, null, null, null, store)) throw deny('list', b.path);
-    reads.push(b.path + (b.field ? ' since' : ''));
-    return [...store.keys()].filter((k) => k.startsWith(pre) && k.split('/').length === depth && (!b.field || store.get(k)[b.field] >= b.since)).map((k) => ({ id: k.split('/').pop(), data: clone(store.get(k)) }));
+    reads.push(b.path + (b.field && b.since != null ? ' since' : ''));
+    return [...store.keys()].filter((k) => k.startsWith(pre) && k.split('/').length === depth && (!b.field || b.since == null || store.get(k)[b.field] > b.since)).map((k) => ({ id: k.split('/').pop(), data: clone(store.get(k)) }));
   }
   if (b.op === 'add') { const id = 'a' + (++seq).toString(36) + Math.random().toString(36).slice(2, 8); const next = new Map(store); doWrite(['set', b.path + '/' + id, b.data], auth, store, next); store = next; return id; }
   if (b.op === 'write') { const next = new Map(store); b.ops.forEach((o) => doWrite(o, auth, store, next)); store = next; return true; }   // 묶음: 규칙은 묶기 전 상태로 판단

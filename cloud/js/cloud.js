@@ -156,7 +156,7 @@ async function bootShell() {
 
 // ================= 표 ↔ Firestore =================
 const BOOK = 'spaces/' + SID + '/book', INBOX = 'spaces/' + SID + '/inbox', PRIV = 'spaces/' + SID + '/priv/secret';
-const PART = 1200;                   // 기록 표는 달마다, 1200줄씩 나눠 저장
+const PART = 300;                    // 기록 표는 달마다, 300줄씩 나눠 저장 — 조각이 작을수록 학생 기기가 다시 받는 양이 줄어듦 (바뀌는 것은 거의 마지막 조각뿐)
 const enc = (v) => (v instanceof Date ? { __d: v.getTime() } : v);
 const dec = (v) => (v && typeof v === 'object' && '__d' in v ? new Date(v.__d) : v);
 const rowsJson = (rows) => JSON.stringify(rows.map((r) => r.map(enc)));
@@ -171,9 +171,9 @@ const seal = (name, text) => C.seal(S.key, { t: text }, SID + '/book/' + name);
 const unseal = async (name, box) => (await C.open(S.key, box, SID + '/book/' + name)).t;
 
 // ---- 읽기 수 아끼기 ----
-// 받아 온 문서(암호문 그대로)를 이 기기에 두고, 다음부터는 "그 뒤로 바뀐 문서"만 물어봄. 사흘에 한 번은 전부 다시 읽어 맞춤
-const FULL_MS = 3 * 864e5;
-let CB = null;                       // { docs: {이름: {box, at}}, inbox: {id: {box, t}}, maxAt, maxT, fullAt }
+// 받아 온 문서(암호문 그대로)를 이 기기에 두고, 다음부터는 "그 뒤로 바뀐 문서"만 물어봄. 한 달에 한 번은 전부 다시 읽어 맞춤
+const FULL_MS = 30 * 864e5;
+let CB = null;                       // { docs: {이름: {box, at}}, inbox: {id: {box, t}}, curAt, curT, fullAt }
 function cdb() { return new Promise((ok, no) => { const r = indexedDB.open('jumpus-book', 1); r.onupgradeneeded = () => r.result.createObjectStore('book'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); }); }
 async function cacheGet() { try { const db = await cdb(); return await new Promise((ok) => { const q = db.transaction('book', 'readonly').objectStore('book').get(SID); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); } catch (e) { return null; } }
 async function cachePut() { try { const db = await cdb(); await new Promise((ok) => { const t = db.transaction('book', 'readwrite'); t.objectStore('book').put(CB, SID); t.oncomplete = ok; t.onerror = ok; }); } catch (e) {} }
@@ -182,17 +182,22 @@ let privDoc = null, privAt = 0;
 const plainMemo = {};                // 문서 이름 → { iv, t } (같은 암호문을 다시 풀지 않게)
 const sameBox = (a, b) => !!a && !!b && ((a.gone && b.gone) || (!!a.box && !!b.box && a.box.iv === b.box.iv));
 async function fetchBook() {
-  if (!CB) CB = (await cacheGet()) || { docs: {}, inbox: {}, maxAt: 0, maxT: 0, fullAt: 0 };
-  const full = !CB.fullAt || !CB.maxAt || Date.now() - CB.fullAt > FULL_MS || Date.now() < CB.fullAt;
+  if (!CB) CB = (await cacheGet()) || {};
+  if (!CB.docs) CB = { docs: {}, inbox: {}, curAt: '', curT: '', fullAt: 0 };
+  const full = !CB.fullAt || !CB.curAt || Date.now() - CB.fullAt > FULL_MS || Date.now() < CB.fullAt;
   let changed = full;
-  if (full) { const all = await fb.list(BOOK); CB.docs = {}; all.forEach((d) => { CB.docs[d.id] = d.data; }); CB.fullAt = Date.now(); }
-  else (await fb.listSince(BOOK, 'at', CB.maxAt)).forEach((d) => { if (!sameBox(CB.docs[d.id], d.data)) { CB.docs[d.id] = d.data; changed = true; } });
-  Object.keys(CB.docs).forEach((n) => { CB.maxAt = Math.max(CB.maxAt || 0, +CB.docs[n].at || 0); });
+  const r = await fb.listSince(BOOK, 'at', full ? '' : CB.curAt);
+  if (full) { CB.docs = {}; CB.fullAt = Date.now(); }
+  r.docs.forEach((d) => { if (!sameBox(CB.docs[d.id], d.data)) { CB.docs[d.id] = d.data; changed = true; } });
+  CB.curAt = r.cursor;
   // inbox: 선생님은 늘 전부(표에 합치고 지워야 해서). 학생은 표가 그대로면 그 뒤로 들어온 것만
-  if (isTeacher() || changed || !CB.maxT) { const all = await fb.list(INBOX); CB.inbox = {}; all.forEach((x) => { CB.inbox[x.id] = x.data; }); changed = true; }
-  else (await fb.listSince(INBOX, 't', CB.maxT)).forEach((x) => { if (!CB.inbox[x.id]) { CB.inbox[x.id] = x.data; changed = true; } });
-  Object.keys(CB.inbox).forEach((id) => { CB.maxT = Math.max(CB.maxT || 0, +CB.inbox[id].t || 0); });
-  if (!CB.maxT) CB.maxT = CB.maxAt || 1;
+  if (isTeacher()) { const all = await fb.list(INBOX); CB.inbox = {}; all.forEach((x) => { CB.inbox[x.id] = x.data; }); changed = true; }
+  else {
+    const fullIn = changed || !CB.curT, q = await fb.listSince(INBOX, 't', fullIn ? '' : CB.curT);
+    if (fullIn) CB.inbox = {};
+    q.docs.forEach((x) => { if (!CB.inbox[x.id]) { CB.inbox[x.id] = x.data; changed = true; } });
+    CB.curT = q.cursor;
+  }
   if (changed) cachePut();
   return { docs: Object.keys(CB.docs).filter((n) => CB.docs[n].box).map((n) => ({ id: n, data: CB.docs[n] })), inbox: Object.keys(CB.inbox).map((id) => ({ id, data: CB.inbox[id] })) };
 }
