@@ -12,7 +12,7 @@ with sync_playwright() as p:
         c=b.new_context(viewport={'width':1200,'height':900}); c.route(re.compile(r'^https://.*'),lambda r:r.fulfill(body='',content_type='application/javascript' if r.request.url.endswith('.js') else 'text/css'))
         pg=c.new_page(); pg.set_default_timeout(120000); pg.on('dialog',lambda d:d.accept()); return pg
     t=ctx(); t.goto(APP); t.evaluate("localStorage.setItem('mock-google', JSON.stringify({uid:'t1',name:'김선생',email:'t@example.com'}))")
-    t.goto(APP); t.click('#jcG'); t.click('#jcNew'); t.fill('#jcNm','햇살초등학교'); t.fill('#jcPw','sunny-2026!'); t.fill('#jcPw2','sunny-2026!'); t.click('#jcMk'); t.wait_for_selector('#jcRc')
+    t.goto(APP); t.click('#jcG'); t.click('#jcNew'); t.fill('#jcFind','햇살초등학교'); t.fill('#jcPw','sunny-2026!'); t.fill('#jcPw2','sunny-2026!'); t.click('#jcMk'); t.wait_for_selector('#jcRc')
     t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm'); sid=re.search(r's=([a-z0-9]+)',t.url).group(1)
     tok=t.evaluate("window.JRCLOUD.adminToken()")
     rows=[[str(1+i//100+3),str(1+(i%100)//25),str(1+i%25),'학생%03d'%i] for i in range(300)]

@@ -35,7 +35,7 @@ style.textContent = '.jc-msg{padding:10px 12px;border-radius:10px;margin:10px 0;
   '.jc-recovery{font-family:ui-monospace,Menlo,monospace;font-size:1.3em;font-weight:800;letter-spacing:.05em;background:#FEF3C7;padding:14px;border-radius:12px;text-align:center;word-break:break-all;color:#78350F}' +
   '.jc-spaces a{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);font-weight:800;margin-bottom:8px;background:#fff}.jc-spaces a:hover{border-color:var(--coral)}' +
   '.jc-chk{display:flex;gap:8px;align-items:center;color:var(--ink);font-size:.92em}.jc-qr{background:#fff;padding:12px;border:1px solid var(--line);border-radius:14px;width:220px}.jc-qr svg{width:100%;height:auto;display:block}' +
-  '.admin-nav a.jc-space{display:block!important;white-space:nowrap;flex:0 0 auto}button.jc-danger{background:#fff;color:#DC2626;border:1px solid #FEE2E2;box-shadow:none}button.jc-danger:hover{background:#FEE2E2}';
+  '.jc-pick{display:flex;flex-direction:column;gap:6px;margin:0 0 8px}.jc-pick button{text-align:left;justify-content:flex-start}.admin-nav a.jc-space{display:block!important;white-space:nowrap;flex:0 0 auto}button.jc-danger{background:#fff;color:#DC2626;border:1px solid #FEE2E2;box-shadow:none}button.jc-danger:hover{background:#FEE2E2}';
 document.head.appendChild(style);
 
 function view(html) { const el = $('#app'); if (!el) return; el.innerHTML = html; window.scrollTo(0, 0); }
@@ -405,7 +405,7 @@ async function viewSpaces() {
     '<label>초대 코드로 함께하기 <input id="jcInv" maxlength="12" autocomplete="off" placeholder="초대 코드 8자"></label><div class="jc-row"><button type="button" class="btn-outline" id="jcJoin">함께하기</button><button type="button" class="btn-outline" id="jcOut">로그아웃</button></div><div id="jcM"></div>'));
   $('#jcOut').onclick = () => fb.signOut();
   $('#jcNew').onclick = () => viewCreate().catch(viewFail);
-  if (await isAdmin()) { $('#jcNew').insertAdjacentHTML('afterend', '<button type="button" class="btn-outline" id="jcCodes">가입 코드 관리 (운영자)</button>'); $('#jcCodes').onclick = () => viewCodes().catch(viewFail); }
+  if (await isAdmin()) { $('#jcNew').insertAdjacentHTML('afterend', '<button type="button" class="btn-outline" id="jcCodes">가입 관리 (운영자)</button>'); $('#jcCodes').onclick = () => viewCodes().catch(viewFail); }
   $('#jcJoin').onclick = async () => {
     const code = $('#jcInv').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (code.length < 6) return msg('#jcM', '초대 코드를 확인해 주세요.', 'err');
@@ -423,46 +423,45 @@ async function viewSpaces() {
 // 운영자: 파이어베이스 콘솔에서 admins/{내 계정 UID} 문서를 만든 계정 (앱에서는 못 만듦)
 let adminP = null;
 function isAdmin() { if (!adminP) adminP = fb.get('admins/' + S.user.uid).then((d) => !!d).catch(() => false); return adminP; }
-const codeNorm = (v) => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-const codeShow = (c) => String(c).replace(/^(.{4})(.+)$/, '$1-$2');
+// 가입 문: 운영자가 올려 둔 학교 목록(gate/schools)에서 학교를 고르고, 공통 가입 암호(gate/main 의 hash — 운영자만 읽음)를 맞혀야 새 공간을 만듦
+async function gateHash(pass) { const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('jumpus-gate|' + String(pass).trim().normalize('NFC')))); return [...h].map((b) => (b < 16 ? '0' : '') + b.toString(16)).join(''); }
+const loadSchools = async () => { let d = null; try { d = await fb.get('gate/schools'); } catch (e) { d = null; } return { names: (d && d.names) || [], off: (d && d.off) || [] }; };
 async function viewCreate() {
-  const admin = await isAdmin();
+  const admin = await isAdmin(), sc = await loadSchools(), open = sc.names.filter((n) => sc.off.indexOf(n) < 0).sort((a, b) => a.localeCompare(b, 'ko'));
   view(shell('새 학교 공간 만들기', '학교에서 반마다 하나씩 만들 수 있어요',
-    '<label>가입 코드 <input id="jcCd" maxlength="12" autocomplete="off" placeholder="운영자에게 받은 코드 8자"></label>' +
-    '<label>학교 이름 <input id="jcNm" maxlength="30" ' + (admin ? 'placeholder="운영자는 코드 없이 직접 적을 수 있어요"' : 'readonly placeholder="가입 코드를 넣으면 저절로 들어가요" style="background:var(--bg)"') + '></label>' +
+    '<label>학교 찾기 <input id="jcFind" autocomplete="off" placeholder="학교 이름을 몇 글자 적어 보세요"></label><div id="jcList" class="jc-pick"></div>' +
+    '<div id="jcSel" style="display:none;margin:6px 0 12px"><div class="jc-row" style="align-items:center"><b id="jcNmT" style="font-size:1.1em"></b><button type="button" class="btn-outline" id="jcRe">다시 고르기</button></div></div>' +
+    '<p class="hint" id="jcNo">' + (open.length ? '목록에 우리 학교가 없으면 운영자에게 알려 주세요.' : '아직 학교 목록이 없어요. 운영자에게 물어봐 주세요.') + (admin ? ' (운영자는 목록에 없는 이름을 그대로 적어 만들 수 있어요)' : '') + '</p>' +
     '<label>학급 (선택 — 내 공간 목록에서 구분하는 이름) <input id="jcCl" maxlength="20" placeholder="예: 6학년 1반"></label>' +
+    (admin ? '' : '<label>가입 암호 <input id="jcGp" autocomplete="off" placeholder="운영자에게 받은 가입 암호"></label>') +
     '<label>공간 비밀번호 (8자 이상) <input id="jcPw" type="password" autocomplete="new-password"></label>' +
     '<label>한 번 더 <input id="jcPw2" type="password" autocomplete="new-password"></label>' +
     '<p class="hint">학생 이름과 기록은 이 비밀번호로 잠가서 저장해요. 운영자도 풀 수 없어요. 함께 쓰는 선생님께도 이 비밀번호를 알려 주세요.</p>' +
     '<div class="jc-row"><button type="button" id="jcMk">만들기</button><a class="btn-outline" href="' + esc(BASE) + '">← 내 공간</a></div><div id="jcM"></div>'));
-  let found = null;   // { code, school }
-  const look = async () => {
-    const code = codeNorm($('#jcCd').value); found = null;
-    if (!code) { if (!admin) $('#jcNm').value = ''; $('#jcNm').readOnly = !admin; return null; }
-    let d = null; try { d = await fb.get('codes/' + code); } catch (e) { d = null; }
-    if (!d || d.off === true) { if (!admin) $('#jcNm').value = ''; msg('#jcM', d ? '지금은 쓸 수 없는 코드예요. 운영자에게 물어봐 주세요.' : '가입 코드를 찾지 못했어요. 다시 확인해 주세요.', 'err'); return null; }
-    found = { code, school: d.school }; $('#jcNm').value = d.school; $('#jcNm').readOnly = true; msg('#jcM', '');
-    return found;
+  let picked = '';
+  const pick = (n) => { picked = n; $('#jcNmT').textContent = n; $('#jcSel').style.display = n ? '' : 'none'; $('#jcFind').closest('label').style.display = n ? 'none' : ''; $('#jcList').innerHTML = ''; $('#jcNo').style.display = n ? 'none' : ''; if (!n) { $('#jcFind').value = ''; $('#jcFind').focus(); } };
+  $('#jcRe').onclick = () => pick('');
+  $('#jcFind').oninput = () => {
+    const q = $('#jcFind').value.trim().replace(/\s+/g, ''), hit = q ? open.filter((n) => n.replace(/\s+/g, '').indexOf(q) >= 0) : [];
+    $('#jcList').innerHTML = hit.slice(0, 30).map((n) => '<button type="button" class="btn-outline" data-n="' + esc(n) + '">' + esc(n) + '</button>').join('') + (hit.length > 30 ? '<p class="hint">더 있어요. 이름을 조금 더 적어 주세요.</p>' : '') + (q && !hit.length ? '<p class="hint">찾는 학교가 없어요.</p>' : '');
+    $$('#jcList [data-n]').forEach((b) => { b.onclick = () => pick(b.dataset.n); });
   };
-  $('#jcCd').onchange = look;
   $('#jcMk').onclick = async () => {
     const pw = $('#jcPw').value, pw2 = $('#jcPw2').value, cls = $('#jcCl').value.trim();
-    const b = $('#jcMk'); busy(b, true);
-    const f = await look(); busy(b, false);
-    if (codeNorm($('#jcCd').value) && !f) return;
-    if (!f && !admin) return msg('#jcM', '가입 코드를 넣어 주세요. 코드는 운영자가 학교마다 발급해요.', 'err');
-    const name = f ? f.school : $('#jcNm').value.trim();
-    if (!name) return msg('#jcM', '학교 이름을 넣어 주세요.', 'err');
+    const name = picked || (admin ? $('#jcFind').value.trim().replace(/\s+/g, ' ') : '');
+    if (!name) return msg('#jcM', '학교를 찾아서 골라 주세요.', 'err');
+    const gp = admin ? '' : $('#jcGp').value.trim();
+    if (!admin && !gp) return msg('#jcM', '가입 암호를 넣어 주세요.', 'err');
     if (pw.length < 8) return msg('#jcM', '비밀번호는 8자 이상으로 해 주세요.', 'err');
     if (pw !== pw2) return msg('#jcM', '두 비밀번호가 달라요.', 'err');
-    busy(b, true);
+    const b = $('#jcMk'); busy(b, true);
     try {
       const sid = C.randId(24), wtok = C.randId(24), rc = C.newRecoveryCode();
       const key = await C.newTeamKey();
       const crypto = { wrap: await C.wrapKey(key, pw), recovery: await C.wrapKey(key, C.normRecovery(rc)), check: await C.seal(key, { ok: 1 }, sid + '/check') };
       const qbox = await C.seal(key, { k: await C.exportKeyUrl(key) }, sid + '/qbox');
       const uid = S.user.uid, sp = { owner: uid, name, created: fb.NOW, crypto, qbox, wtok, v: 2 };
-      if (f) sp.code = f.code;
+      if (!admin) sp.gate = await gateHash(gp);
       await fb.set('spaces/' + sid, sp);
       await fb.set('spaces/' + sid + '/members/' + uid, { role: 'owner', name: S.user.name || '', joined: fb.NOW });
       await fb.batch([
@@ -470,59 +469,47 @@ async function viewCreate() {
         ['set', 'spaces/' + sid + '/keys/' + wtok, { t: fb.NOW }],
         ['set', 'users/' + uid, { spaces: { [sid]: cls ? name + ' · ' + cls : name } }, true]
       ]);
-      if (f) fb.update('codes/' + f.code, { n: fb.INC(1) }).catch(() => {});   // 이 코드로 만든 공간 수 (운영자 화면에 보임)
       await C.rememberKey(sid, key);
       window.__jcName = name;
       viewRecovery(sid, rc);
-    } catch (e) { busy(b, false); msg('#jcM', String(e && e.code).includes('permission-denied') ? '공간을 만들 수 없어요. 가입 코드를 다시 확인해 주세요.' : fb.errText(e), 'err'); }
+    } catch (e) { busy(b, false); msg('#jcM', String(e && e.code).includes('permission-denied') ? '공간을 만들 수 없어요. 가입 암호가 맞는지 확인해 주세요.' : fb.errText(e), 'err'); }
   };
 }
-// 운영자: 학교마다 가입 코드 발급 (같은 학교는 반마다 같은 코드로 여러 공간을 만들 수 있음 — 학교 이름은 코드에 적힌 그대로)
+// 운영자: 가입 암호 하나 + 학교 목록 (선생님은 목록에서 학교를 골라야 하고, 학교 이름은 목록에 적힌 그대로 들어감)
 async function viewCodes() {
   if (!(await isAdmin())) return viewSpaces();
-  const list = (await fb.list('codes')).sort((a, b) => (b.data.at || 0) - (a.data.at || 0));
-  view(shell('가입 코드 관리', '학교마다 코드를 하나씩 발급해요',
-    '<label>학교 이름 (이 이름 그대로 공간이 만들어져요) <input id="jcSc" maxlength="30" placeholder="예: 서울 햇살초등학교"></label>' +
-    '<div class="jc-row"><button type="button" id="jcIss">코드 발급</button><a class="btn-outline" href="' + esc(BASE) + '">← 내 공간</a></div><div id="jcM"></div>' +
-    '<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:800">여러 학교 한꺼번에 발급</summary>' +
-    '<label style="margin-top:10px">학교 이름을 한 줄에 하나씩 (엑셀의 학교 이름 칸을 그대로 붙여 넣어도 돼요) <textarea id="jcBulk" rows="8" placeholder="햇살초등학교&#10;새싹중학교&#10;푸른고등학교"></textarea></label>' +
+  const [sc, main, spaces] = await Promise.all([loadSchools(), fb.get('gate/main').catch(() => null), fb.list('spaces').catch(() => [])]);
+  const cnt = {}; spaces.forEach((x) => { cnt[x.data.name] = (cnt[x.data.name] || 0) + 1; });
+  const names = sc.names.slice().sort((a, b) => a.localeCompare(b, 'ko'));
+  const save = (n, off) => fb.set('gate/schools', { names: n, off: off.filter((x) => n.indexOf(x) >= 0), at: fb.NOW });
+  view(shell('가입 관리', '가입 암호와 학교 목록',
+    '<label>가입 암호 (선생님들께 알려 주는 암호 하나) <input id="jcGp" maxlength="40" autocomplete="off" value="' + esc((main && main.pass) || '') + '" placeholder="아직 없어요 — 정해서 저장해 주세요"></label>' +
+    '<div class="jc-row"><button type="button" id="jcGpS">암호 저장</button><a class="btn-outline" href="' + esc(BASE) + '">← 내 공간</a></div><p class="hint">암호를 바꾸면 그때부터 새 암호로만 새 공간을 만들 수 있어요. 이미 만든 공간은 그대로예요.</p><div id="jcM"></div>' +
+    '<h2 style="margin-top:22px">학교 목록 <span class="hint" style="font-weight:600">' + names.length + '곳 · 만들어진 공간 ' + spaces.length + '개</span></h2>' +
+    '<label>학교 이름을 한 줄에 하나씩 (엑셀의 학교 이름 칸을 그대로 붙여 넣어도 돼요) <textarea id="jcBulk" rows="6" placeholder="햇살초등학교&#10;새싹중학교&#10;푸른고등학교"></textarea></label>' +
     '<label>이름 앞에 붙일 말 (선택) <input id="jcPre" maxlength="10" placeholder="예: 서울"></label>' +
-    '<button type="button" id="jcBulkGo">한꺼번에 발급</button><p class="hint">이미 코드가 있는 학교는 건너뛰어요.</p><div id="jcBm"></div></details>' +
-    (list.length ? '<div class="jc-row" style="margin-top:16px"><input id="jcFind" placeholder="학교 이름으로 찾기" style="flex:1;min-width:160px"><button type="button" class="btn-outline" id="jcCsv">목록 내려받기 (엑셀용)</button></div><p class="hint">발급한 코드 ' + list.length + '개</p>' : '') +
-    (list.length ? '<table id="jcCt" style="margin-top:8px"><tr><th style="text-align:left">학교</th><th style="white-space:nowrap">코드</th><th style="white-space:nowrap">공간 수</th><th></th></tr>' + list.map((c) =>
-      '<tr data-sc="' + esc(c.data.school) + '"><td>' + esc(c.data.school) + (c.data.off ? ' <span class="hint">(중지)</span>' : '') + '</td><td><code style="white-space:nowrap">' + esc(codeShow(c.id)) + '</code></td><td style="text-align:center">' + (c.data.n || 0) + '</td>' +
-      '<td style="text-align:right;white-space:nowrap"><button type="button" class="btn-outline" data-cp="' + esc(c.id) + '">복사</button> <button type="button" class="btn-outline" data-off="' + esc(c.id) + '" data-v="' + (c.data.off ? '0' : '1') + '">' + (c.data.off ? '다시 쓰기' : '중지') + '</button> <button type="button" class="jc-danger" data-del="' + esc(c.id) + '">삭제</button></td></tr>').join('') + '</table>' +
-      '<p class="hint">중지하거나 삭제하면 그 코드로 새 공간을 만들 수 없어요. 이미 만든 공간은 그대로 쓸 수 있어요.</p>'
-      : '<p class="hint" style="margin-top:16px">아직 발급한 코드가 없어요.</p>')));
-  $('#jcIss').onclick = async (e) => {
-    const school = $('#jcSc').value.trim().replace(/\s+/g, ' '); if (!school) return msg('#jcM', '학교 이름을 넣어 주세요.', 'err');
-    if (list.some((c) => c.data.school === school) && !window.confirm('"' + school + '" 코드가 이미 있어요. 하나 더 발급할까요?')) return;
+    '<button type="button" id="jcBulkGo">목록에 더하기</button><p class="hint">이미 있는 학교는 건너뛰어요.</p><div id="jcBm"></div>' +
+    (names.length ? '<input id="jcFind" placeholder="학교 이름으로 찾기" style="margin-top:10px"><table id="jcCt" style="margin-top:8px"><tr><th style="text-align:left">학교</th><th style="white-space:nowrap">공간 수</th><th></th></tr>' + names.map((n) => { const off = sc.off.indexOf(n) >= 0; return '<tr data-sc="' + esc(n) + '"><td>' + esc(n) + (off ? ' <span class="hint">(중지)</span>' : '') + '</td><td style="text-align:center">' + (cnt[n] || 0) + '</td>' +
+      '<td style="text-align:right;white-space:nowrap"><button type="button" class="btn-outline" data-off="' + esc(n) + '" data-v="' + (off ? '0' : '1') + '">' + (off ? '다시 열기' : '중지') + '</button> <button type="button" class="jc-danger" data-del="' + esc(n) + '">빼기</button></td></tr>'; }).join('') + '</table>' +
+      '<p class="hint">중지하거나 빼면 그 학교 이름으로 새 공간을 만들 수 없어요. 이미 만든 공간은 그대로 쓸 수 있어요.</p>' : '')));
+  $('#jcGpS').onclick = async (e) => {
+    const pass = $('#jcGp').value.trim(); if (pass.length < 4) return msg('#jcM', '가입 암호는 4자 이상으로 해 주세요.', 'err');
     busy(e.target, true);
-    try { const code = codeNorm(C.newRecoveryCode()).slice(0, 8); await fb.set('codes/' + code, { school, n: 0, at: fb.NOW, by: S.user.uid }); viewCodes(); }
+    try { await fb.set('gate/main', { pass, hash: await gateHash(pass), at: fb.NOW }); busy(e.target, false); msg('#jcM', '가입 암호를 저장했어요.', 'ok'); }
     catch (err) { busy(e.target, false); msg('#jcM', fb.errText(err), 'err'); }
   };
   $('#jcBulkGo').onclick = async (e) => {
-    const pre = $('#jcPre').value.trim(), have = new Set(list.map((c) => c.data.school)), ids = new Set(list.map((c) => c.id)), names = [];
-    $('#jcBulk').value.split(/[\r\n\t]+/).forEach((l) => { let n = l.trim().replace(/\s+/g, ' '); if (!n) return; if (pre && n.indexOf(pre) !== 0) n = pre + ' ' + n; n = n.slice(0, 30); if (!have.has(n)) { have.add(n); names.push(n); } });
-    if (!names.length) return msg('#jcBm', '새로 발급할 학교가 없어요. (이미 코드가 있거나 칸이 비어 있어요)', 'err');
-    if (!window.confirm(names.length + '개 학교의 코드를 발급할까요?')) return;
+    const pre = $('#jcPre').value.trim(), have = new Set(sc.names), add = [];
+    $('#jcBulk').value.split(/[\r\n\t]+/).forEach((l) => { let n = l.trim().replace(/\s+/g, ' '); if (!n) return; if (pre && n.indexOf(pre) !== 0) n = pre + ' ' + n; n = n.slice(0, 30); if (!have.has(n)) { have.add(n); add.push(n); } });
+    if (!add.length) return msg('#jcBm', '새로 더할 학교가 없어요. (이미 있거나 칸이 비어 있어요)', 'err');
+    if (sc.names.length + add.length > 5000) return msg('#jcBm', '학교 목록은 5,000곳까지 넣을 수 있어요.', 'err');
     busy(e.target, true);
-    try {
-      const ops = names.map((school) => { let code; do { code = codeNorm(C.newRecoveryCode()).slice(0, 8); } while (ids.has(code)); ids.add(code); return ['set', 'codes/' + code, { school, n: 0, at: fb.NOW, by: S.user.uid }]; });
-      await fb.batch(ops); viewCodes();
-    } catch (err) { busy(e.target, false); msg('#jcBm', fb.errText(err), 'err'); }
+    try { await save(sc.names.concat(add), sc.off); viewCodes(); } catch (err) { busy(e.target, false); msg('#jcBm', fb.errText(err), 'err'); }
   };
-  if (list.length) {
-    $('#jcFind').oninput = () => { const q = $('#jcFind').value.trim(); $$('#jcCt tr[data-sc]').forEach((tr) => { tr.style.display = !q || tr.dataset.sc.indexOf(q) >= 0 ? '' : 'none'; }); };
-    $('#jcCsv').onclick = () => {   // 엑셀에서 바로 열리게 (한글이 깨지지 않도록 맨 앞에 표시를 붙임)
-      const q = (v) => '"' + String(v).replace(/"/g, '""') + '"';
-      const rows = [['학교', '가입 코드', '만든 공간 수', '상태']].concat(list.slice().sort((a, b) => a.data.school.localeCompare(b.data.school, 'ko')).map((c) => [c.data.school, codeShow(c.id), c.data.n || 0, c.data.off ? '중지' : '사용']));
-      download('점퍼스_가입코드_' + formatDate(new Date(), '', 'yyyy-MM-dd') + '.csv', new Blob(['\ufeff' + rows.map((r) => r.map(q).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
-    };
-  }
-  $$('[data-cp]').forEach((b) => { b.onclick = async () => { const t = codeShow(b.dataset.cp); try { await navigator.clipboard.writeText(t); msg('#jcM', '코드 ' + t + ' 을(를) 복사했어요.', 'ok'); } catch (e) { msg('#jcM', t, 'warn'); } }; });
-  $$('[data-off]').forEach((b) => { b.onclick = async () => { busy(b, true); try { await fb.update('codes/' + b.dataset.off, { off: b.dataset.v === '1' }); viewCodes(); } catch (e) { busy(b, false); msg('#jcM', fb.errText(e), 'err'); } }; });
-  $$('[data-del]').forEach((b) => { b.onclick = async () => { if (!window.confirm('이 코드를 지울까요? 이 코드로는 더 이상 공간을 만들 수 없어요.')) return; busy(b, true); try { await fb.del('codes/' + b.dataset.del); viewCodes(); } catch (e) { busy(b, false); msg('#jcM', fb.errText(e), 'err'); } }; });
+  if (!names.length) return;
+  $('#jcFind').oninput = () => { const q = $('#jcFind').value.trim(); $$('#jcCt tr[data-sc]').forEach((tr) => { tr.style.display = !q || tr.dataset.sc.indexOf(q) >= 0 ? '' : 'none'; }); };
+  $$('[data-off]').forEach((b) => { b.onclick = async () => { busy(b, true); try { await save(sc.names, b.dataset.v === '1' ? sc.off.concat(b.dataset.off) : sc.off.filter((x) => x !== b.dataset.off)); viewCodes(); } catch (e) { busy(b, false); msg('#jcBm', fb.errText(e), 'err'); } }; });
+  $$('[data-del]').forEach((b) => { b.onclick = async () => { if (!window.confirm('"' + b.dataset.del + '" 을(를) 목록에서 뺄까요? 이 이름으로는 새 공간을 만들 수 없게 돼요.')) return; busy(b, true); try { await save(sc.names.filter((x) => x !== b.dataset.del), sc.off); viewCodes(); } catch (e) { busy(b, false); msg('#jcBm', fb.errText(e), 'err'); } }; });
 }
 function viewRecovery(sid, rc, back) {
   view(shell('복구 코드를 적어 두세요', '공간 비밀번호를 잊었을 때 쓰는 하나뿐인 열쇠',
@@ -577,7 +564,7 @@ async function spacePage() {
     '<div class="jc-row"><button type="button" class="btn-outline" id="jcCp">주소 복사</button><button type="button" class="jc-danger" id="jcRot">새 QR 만들기</button></div>' +
     '<p class="hint">QR이 밖으로 퍼졌다면 새 QR을 만들어요. 예전 QR로는 더 이상 기록을 넣을 수 없어요.</p><div id="jcQm"></div></div></div></div>' +
     '<div class="card"><h2>학교 이름</h2>' + (admin ? '<label>현황판과 화면에 보이는 이름 <input id="jcNm" maxlength="30" value="' + esc(S.pub.name) + '"></label><button type="button" id="jcNmSave">저장</button><div id="jcNmM"></div>'
-      : '<p style="margin:0 0 6px;font-weight:800">' + esc(S.pub.name) + '</p><p class="hint">학교 이름은 가입 코드에 적힌 이름으로 정해져요. 바꿔야 하면 운영자에게 알려 주세요.</p>') + '</div>' +
+      : '<p style="margin:0 0 6px;font-weight:800">' + esc(S.pub.name) + '</p><p class="hint">학교 이름은 학교 목록에서 고른 이름 그대로예요. 바꿔야 하면 운영자에게 알려 주세요.</p>') + '</div>' +
     '<div class="card"><h2>함께 쓰는 선생님</h2><div id="jcMl" class="hint">불러오는 중…</div><p class="hint">초대 코드를 만들어 함께 쓸 선생님께 알려 주세요(7일 동안 쓸 수 있어요). 학생 이름을 열려면 <b>공간 비밀번호</b>도 함께 알려 주셔야 해요.</p><button type="button" id="jcInvMk">초대 코드 만들기</button><div id="jcCode"></div><div id="jcTm"></div></div>' +
     '<div class="card"><h2>기록 내려받기</h2><p class="hint" style="margin-top:0">학생 명단·모든 기록·급수 인증을 이 컴퓨터로 내려받아요. 파일 안의 이름은 암호화되지 않으니 잘 보관해 주세요.</p>' +
     '<div class="jc-row"><button type="button" id="jcXlsx">엑셀 파일로 받기</button><button type="button" class="btn-outline" id="jcBak">백업 파일로 받기</button></div><p class="hint">엑셀 파일은 보고 정리하는 용도, 백업 파일(.json)은 이 공간이나 새 공간에 다시 넣을 때 써요.</p><div id="jcExM"></div></div>' +

@@ -50,11 +50,10 @@ function rules(op, p, auth, raw, after, before, st) {
   const isAdmin = () => google && !!g('admins/' + uid);
   const changed = (a, b, ks) => ks.some((k) => JSON.stringify((a || {})[k]) !== JSON.stringify((b || {})[k]));
   if (seg[0] === 'admins' && seg.length === 2) return op === 'get' && google && uid === seg[1];
-  if (seg[0] === 'codes' && seg.length === 2) {
-    if (op === 'get') return google;
-    if (op === 'list' || op === 'create' || op === 'delete') return isAdmin();
-    if (op === 'update') return isAdmin() || (google && !changed(after, before, Object.keys(Object.assign({}, after, before)).filter((k) => k !== 'n')) && after.n === ((before.n || 0) + 1));
-    return false;
+  if (seg[0] === 'gate' && seg.length === 2) {
+    if (op === 'get') return isAdmin() || (google && seg[1] === 'schools');
+    if (op === 'list') return false;
+    return isAdmin();
   }
   if (seg[0] === 'users' && seg.length === 2) return google && uid === seg[1];
   if (seg[0] === 'invites' && seg.length === 2) {
@@ -70,14 +69,15 @@ function rules(op, p, auth, raw, after, before, st) {
     if (op === 'create') {
       if (!(google && after.owner === uid)) return false;
       if (isAdmin()) return true;
-      const c = typeof after.code === 'string' ? g('codes/' + after.code) : null;
-      return !!c && c.school === after.name && c.off !== true;
+      const m = g('gate/main'), sc = g('gate/schools');
+      return typeof after.gate === 'string' && !!m && after.gate === m.hash && !!sc && (sc.names || []).includes(after.name) && !(sc.off || []).includes(after.name);
     }
     if (op === 'get') return isMember(s);
+    if (op === 'list') return isAdmin();
     if (op === 'update') {
       if (!isMember(s) || after.owner !== before.owner) return false;
       if (!isOwner(s) && JSON.stringify(after.crypto) !== JSON.stringify(before.crypto)) return false;
-      return isAdmin() || !changed(after, before, ['name', 'code']);
+      return isAdmin() || !changed(after, before, ['name', 'code', 'gate']);
     }
     if (op === 'delete') return isOwner(s);
     return false;

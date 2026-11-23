@@ -41,7 +41,7 @@ with sync_playwright() as p:
     # ---------- 준비: 선생님 · 공간 · 학생 3명 ----------
     tc, t = ctx({'uid': 'teacher1', 'name': '김선생', 'email': 't1@example.com'})
     t.goto(APP); t.wait_for_selector('#jcG'); t.click('#jcG'); t.wait_for_selector('#jcNew')
-    t.click('#jcNew'); t.fill('#jcNm', '햇살초등학교'); t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.click('#jcMk'); t.wait_for_selector('#jcRc', timeout=20000)
+    t.click('#jcNew'); t.fill('#jcFind', '햇살초등학교'); t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.click('#jcMk'); t.wait_for_selector('#jcRc', timeout=20000)
     t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm', timeout=20000)
     sid = re.search(r's=([a-z0-9]+)', t.url).group(1)
     t.click('#navAdmin'); t.wait_for_selector('#adminNav', timeout=15000)

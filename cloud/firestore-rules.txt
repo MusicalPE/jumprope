@@ -13,11 +13,12 @@ service cloud.firestore {
     function isOwner(s) { return google() && get(/databases/$(database)/documents/spaces/$(s)).data.owner == request.auth.uid; }
     // 운영자: 파이어베이스 콘솔에서 admins/{계정 UID} 문서를 만들어 둔 계정 (앱에서는 만들 수 없음)
     function isAdmin() { return google() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
-    // 가입 코드로 공간 만들기: 코드가 있고, 중지되지 않았고, 학교 이름이 코드에 적힌 그대로
-    function codeOk(d) {
-      return d.code is string
-        && get(/databases/$(database)/documents/codes/$(d.code)).data.school == d.name
-        && get(/databases/$(database)/documents/codes/$(d.code)).data.get('off', false) != true;
+    // 새 공간 만들기: 학교 이름이 운영자가 올린 학교 목록(gate/schools)에 있고 · 중지되지 않았고 · 가입 암호(gate/main 의 hash)가 맞아야 함
+    function gateOk(d) {
+      return d.gate is string
+        && d.gate == get(/databases/$(database)/documents/gate/main).data.hash
+        && d.name in get(/databases/$(database)/documents/gate/schools).data.names
+        && !(d.name in get(/databases/$(database)/documents/gate/schools).data.get('off', []));
     }
 
     function validEntry(s) {
@@ -44,14 +45,11 @@ service cloud.firestore {
       allow get: if google() && request.auth.uid == uid;
       allow list, write: if false;
     }
-    // 가입 코드(학교마다 운영자가 발급): 코드를 아는 선생님만 하나씩 열어 봄. 만들고 고치는 것은 운영자만
-    // (이 코드로 만든 공간 수 n 은 공간을 만든 선생님이 1씩만 올릴 수 있음)
-    match /codes/{code} {
-      allow get: if google();
-      allow list, create, delete: if isAdmin();
-      allow update: if isAdmin() || (google()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['n'])
-        && request.resource.data.n == resource.data.get('n', 0) + 1);
+    // 가입 문: 학교 목록(schools)은 로그인한 선생님이 읽고, 가입 암호(main)는 운영자만 읽음. 고치는 것은 운영자만
+    match /gate/{g} {
+      allow get: if isAdmin() || (google() && g == 'schools');
+      allow list: if false;
+      allow write: if isAdmin();
     }
 
     // 선생님 초대 코드: 코드를 아는 사람만 하나씩 열어 볼 수 있음 (목록 보기 불가)
@@ -62,15 +60,16 @@ service cloud.firestore {
     }
 
     match /spaces/{s} {
-      // 새 공간은 가입 코드가 있어야 만들 수 있음 (운영자는 코드 없이도)
+      // 새 공간은 학교 목록에 있는 이름 + 가입 암호가 맞아야 만들 수 있음 (운영자는 그냥 만듦)
       allow create: if google() && request.resource.data.owner == request.auth.uid
-        && (isAdmin() || codeOk(request.resource.data));
+        && (isAdmin() || gateOk(request.resource.data));
       allow get: if isMember(s);
-      // 선생님은 쓰기표만 바꿀 수 있고, 주인·잠금 열쇠는 주인만. 학교 이름·가입 코드는 운영자만
+      allow list: if isAdmin();   // 운영자 화면의 학교별 공간 수
+      // 선생님은 쓰기표만 바꿀 수 있고, 주인·잠금 열쇠는 주인만. 학교 이름은 운영자만
       allow update: if isMember(s)
         && request.resource.data.owner == resource.data.owner
         && (isOwner(s) || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['owner', 'crypto']))
-        && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['name', 'code']));
+        && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['name', 'code', 'gate']));
       allow delete: if isOwner(s);
 
       match /members/{uid} {
@@ -89,7 +88,7 @@ service cloud.firestore {
       // meta/flags 는 운영자가 파이어베이스 콘솔에서만 만들고 고침 (live: true → 전용 점프 라이브 사용). 앱에서는 아무도 못 씀
       match /meta/{m} {
         allow get: if signedIn();
-        // 공개 설정의 학교 이름은 공간 문서의 이름과 같아야 함 (가입 코드에 적힌 이름 그대로)
+        // 공개 설정의 학교 이름은 공간 문서의 이름과 같아야 함 (학교 목록에서 고른 이름 그대로)
         allow create, update: if isMember(s) && m != 'flags'
           && (m != 'pub' || isAdmin() || request.resource.data.name == get(/databases/$(database)/documents/spaces/$(s)).data.name);
         allow delete: if isMember(s) && m != 'flags';

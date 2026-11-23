@@ -47,7 +47,7 @@ with sync_playwright() as p:
     tc, t, terr = ctx({'uid': 'teacher1', 'name': '김선생', 'email': 't1@example.com'})
     t.goto(APP); t.wait_for_selector('#jcG'); t.click('#jcG'); t.wait_for_selector('#jcNew')
     check('선생님 로그인 → 내 공간', '아직 공간이 없어요' in t.inner_text('body'))
-    t.click('#jcNew'); t.fill('#jcNm', '햇살초등학교'); t.fill('#jcPw', 'short'); t.fill('#jcPw2', 'short'); t.click('#jcMk')
+    t.click('#jcNew'); t.fill('#jcFind', '햇살초등학교'); t.fill('#jcPw', 'short'); t.fill('#jcPw2', 'short'); t.click('#jcMk')
     check('짧은 비밀번호 막음', '8자 이상' in t.inner_text('#jcM'))
     t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.click('#jcMk'); t.wait_for_selector('#jcRc', timeout=20000)
     rc = t.inner_text('#jcRc').strip()
@@ -224,7 +224,7 @@ with sync_playwright() as p:
     bf = HERE + '/out.json'; dl.value.save_as(bf); bk = json.load(open(bf, encoding='utf-8'))
     check('백업 파일: 학생 3 · 기록 여러 건', bk['app'] == 'jumpus-backup' and len(bk['students']) == 3 and len(bk['records']) >= 5, str(len(bk['records'])))
     # ---------- 11-4. 새 공간에 백업 넣기 · 시트판에서 옮겨 오기 ----------
-    t.goto(APP); t.wait_for_selector('#jcNew'); t.click('#jcNew'); t.fill('#jcNm', '새싹초등학교'); t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.click('#jcMk'); t.wait_for_selector('#jcRc', timeout=20000)
+    t.goto(APP); t.wait_for_selector('#jcNew'); t.click('#jcNew'); t.fill('#jcFind', '새싹초등학교'); t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.click('#jcMk'); t.wait_for_selector('#jcRc', timeout=20000)
     t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm', timeout=20000)
     sid2 = re.search(r's=([a-z0-9]+)', t.url).group(1)
     t.goto(APP + '?s=' + sid2 + '&page=space'); t.wait_for_selector('#jcBakPick')
@@ -236,7 +236,7 @@ with sync_playwright() as p:
     check('새 공간 메인: 학생 3 · 누적이 원래 공간과 같음', t.text_content('#statStudents').strip() == '3' and num(t.text_content('#statTotal')) == tot_t_after, num(t.text_content('#statTotal')) + ' vs ' + tot_t_after)
     try:
         urllib.request.urlopen('http://localhost:8890/exec', timeout=3)
-        t.goto(APP); t.wait_for_selector('#jcNew'); t.click('#jcNew'); t.fill('#jcNm', '옮겨온초등학교'); t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.click('#jcMk'); t.wait_for_selector('#jcRc', timeout=20000)
+        t.goto(APP); t.wait_for_selector('#jcNew'); t.click('#jcNew'); t.fill('#jcFind', '옮겨온초등학교'); t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.click('#jcMk'); t.wait_for_selector('#jcRc', timeout=20000)
         t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm', timeout=20000)
         sid3 = re.search(r's=([a-z0-9]+)', t.url).group(1)
         old = json.loads(urllib.request.urlopen(urllib.request.Request('http://localhost:8890/exec', data=json.dumps({'fn': 'verifyAdminPassword', 'args': ['1234']}).encode())).read())['result']['token']
