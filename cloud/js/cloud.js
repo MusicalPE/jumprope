@@ -487,7 +487,7 @@ async function viewCodes() {
     '<div class="jc-row"><button type="button" id="jcGpS">암호 저장</button><a class="btn-outline" href="' + esc(BASE) + '">← 내 공간</a></div><p class="hint">암호를 바꾸면 그때부터 새 암호로만 새 공간을 만들 수 있어요. 이미 만든 공간은 그대로예요.</p><div id="jcM"></div>' +
     '<h2 style="margin-top:22px">학교 목록 <span class="hint" style="font-weight:600">' + names.length + '곳 · 만들어진 공간 ' + spaces.length + '개</span></h2>' +
     '<label>학교 이름을 한 줄에 하나씩 (엑셀에서 시·군 칸과 학교 이름 칸을 함께 복사해 붙이면 "시·군 학교 이름"으로 들어가요) <textarea id="jcBulk" rows="6" placeholder="햇살초등학교&#10;새싹중학교&#10;푸른고등학교"></textarea></label>' +
-    '<label>앞에 붙일 말 (선택) <input id="jcPre" maxlength="10" placeholder="예: 경기"></label><p class="hint" style="margin-top:-4px">시·군 칸과 함께 붙였으면 학교 이름이 시·군 이름뿐인 학교(예: 수원초등학교)에만 붙고, 학교 이름만 붙였으면 모든 이름 앞에 붙어요.</p>' +
+    '<label>앞에 붙일 말 (선택) <input id="jcPre" maxlength="10" placeholder="예: 경기"></label><p class="hint" style="margin-top:-4px">시·군 칸과 함께 붙였으면 학교 이름이 시·군 이름뿐인 학교(예: 수원초등학교 → 경기 수원초등학교)에만 붙고, 학교 이름만 붙였으면 모든 이름 앞에 붙어요. 수원별빛초등학교처럼 시·군 이름으로 시작하는 학교는 "수원 별빛초등학교"로 들어가요.</p>' +
     '<button type="button" id="jcBulkGo">목록에 더하기</button><p class="hint">이미 있는 학교는 건너뛰어요.</p><div id="jcBm"></div>' +
     (names.length ? '<input id="jcFind" placeholder="학교 이름으로 찾기" style="margin-top:10px"><table id="jcCt" style="margin-top:8px"><tr><th style="text-align:left">학교</th><th style="white-space:nowrap">공간 수</th><th></th></tr>' + names.map((n) => { const off = sc.off.indexOf(n) >= 0; return '<tr data-sc="' + esc(n) + '"><td>' + esc(n) + (off ? ' <span class="hint">(중지)</span>' : '') + '</td><td style="text-align:center">' + (cnt[n] || 0) + '</td>' +
       '<td style="text-align:right;white-space:nowrap"><button type="button" class="btn-outline" data-off="' + esc(n) + '" data-v="' + (off ? '0' : '1') + '">' + (off ? '다시 열기' : '중지') + '</button> <button type="button" class="jc-danger" data-del="' + esc(n) + '">빼기</button></td></tr>'; }).join('') + '</table>' +
@@ -502,10 +502,12 @@ async function viewCodes() {
     const pre = $('#jcPre').value.trim(), have = new Set(sc.names), add = [];
     // 한 줄에 칸이 둘(엑셀에서 '시·군' 칸과 '학교 이름' 칸을 함께 복사)이면 "전주 햇살초등학교"처럼 이어 붙임. 앞 칸의 '시'·'군'은 뗌 (전주시 → 전주)
     // 단, 학교 이름이 시·군 이름뿐인 학교(무주초등학교·전주고등학교)는 시·군 대신 '앞에 붙일 말'을 붙임 (예: 전북 무주초등학교)
+    // 학교 이름이 시·군 이름으로 시작하고 뒤에 다른 말이 있으면 시·군 이름을 한 번만 씀 (수원별빛초등학교 → 수원 별빛초등학교)
     $('#jcBulk').value.split(/[\r\n]+/).forEach((l) => {
       const cols = l.split('\t').map((x) => x.trim().replace(/\s+/g, ' ')).filter(Boolean); if (!cols.length) return;
       let n;
-      if (cols.length > 1) { const r = cols[0].replace(/^(.{2,3})[시군]$/, '$1'), nm = cols.slice(1).join(' '); const only = nm.indexOf(r) === 0 && /^(여자)?(초등|중|고등)학교$/.test(nm.slice(r.length)); n = only ? (pre ? pre + ' ' : '') + nm : r + ' ' + nm; }
+      if (cols.length > 1) { const r = cols[0].replace(/^(.{2,3})[시군]$/, '$1'), nm = cols.slice(1).join(' '); const rest = nm.indexOf(r) === 0 ? nm.slice(r.length).trim() : null, only = rest !== null && /^(초등|중|고등)학교$/.test(rest);
+        n = only ? (pre ? pre + ' ' : '') + nm : r + ' ' + (rest || nm); }   // 전주서곡초등학교 → 전주 서곡초등학교 (시·군 이름이 겹치지 않게)
       else { n = cols[0]; if (pre && n.indexOf(pre) !== 0) n = pre + ' ' + n; }
       n = n.slice(0, 30); if (!have.has(n)) { have.add(n); add.push(n); } });
     if (!add.length) return msg('#jcBm', '새로 더할 학교가 없어요. (이미 있거나 칸이 비어 있어요)', 'err');
