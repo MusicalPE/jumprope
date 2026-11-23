@@ -72,6 +72,7 @@ export function errText(e) {
   const c = (e && e.code) || '';
   if (c.includes('permission-denied')) return '권한이 없어요. 로그인했는지, 이 공간의 선생님인지 확인해 주세요.';
   if (c.includes('unavailable') || c.includes('network')) return '인터넷 연결을 확인해 주세요.';
+  if (c.includes('admin-restricted-operation') || c.includes('operation-not-allowed')) return '학생 입장(익명 로그인)이 아직 켜져 있지 않아요. (운영자: 파이어베이스 Authentication → 로그인 방법 → 익명 사용 설정)';
   if (c.includes('unauthorized-domain')) return '이 주소에서는 구글 로그인을 쓸 수 없어요. (운영자: 파이어베이스 승인된 도메인 확인)';
   return (e && e.message) || String(e);
 }
