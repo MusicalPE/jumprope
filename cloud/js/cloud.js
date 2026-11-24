@@ -597,7 +597,7 @@ async function spacePage() {
     '<p class="hint" style="margin-top:0">학생은 이 QR을 찍으면 로그인 없이 바로 기록 화면이 열려요. 주소 안에 학생 이름을 여는 열쇠가 들어 있으니, 학급 밖으로 퍼지지 않게 해 주세요. 메인 화면의 "접속 QR"도 같은 QR이에요.</p>' +
     '<div class="jc-row"><button type="button" class="btn-outline" id="jcCp">주소 복사</button><button type="button" class="jc-danger" id="jcRot">새 QR 만들기</button></div>' +
     '<p class="hint">QR이 밖으로 퍼졌다면 새 QR을 만들어요. 예전 QR로는 더 이상 기록을 넣을 수 없어요.</p><div id="jcQm"></div></div></div></div>' +
-    '<div class="card"><h2>학교 이름</h2>' + (admin ? '<label>현황판과 화면에 보이는 이름 <input id="jcNm" maxlength="30" value="' + esc(S.pub.name) + '"></label><button type="button" id="jcNmSave">저장</button><div id="jcNmM"></div>'
+    '<div class="card"><h2>학교 이름</h2>' + (admin ? '<label>현황판과 화면에 보이는 이름 (운영자만 고칠 수 있어요 — 가입 관리의 학교 목록에 있는 이름과 똑같이 적으면 그 학교로 묶여요) <input id="jcNm" maxlength="40" value="' + esc(S.pub.name) + '"></label><button type="button" id="jcNmSave">저장</button><div id="jcNmM"></div>'
       : '<p style="margin:0 0 6px;font-weight:800">' + esc(S.pub.name) + '</p><p class="hint">학교 이름은 학교 목록에서 고른 이름 그대로예요. 바꿔야 하면 운영자에게 알려 주세요.</p>') + '</div>' +
     '<div class="card"><h2>함께 쓰는 선생님</h2><div id="jcMl" class="hint">불러오는 중…</div><p class="hint">초대 코드를 만들어 함께 쓸 선생님께 알려 주세요(7일 동안 쓸 수 있어요). 학생 이름을 열려면 <b>공간 비밀번호</b>도 함께 알려 주셔야 해요.</p><button type="button" id="jcInvMk">초대 코드 만들기</button><div id="jcCode"></div><div id="jcTm"></div></div>' +
     '<div class="card"><h2>기록 내려받기</h2><p class="hint" style="margin-top:0">학생 명단·모든 기록·급수 인증을 이 컴퓨터로 내려받아요. 파일 안의 이름은 암호화되지 않으니 잘 보관해 주세요.</p>' +
@@ -626,7 +626,14 @@ async function spacePage() {
   if (admin) $('#jcNmSave').onclick = async (e) => {
     const name = $('#jcNm').value.trim(); if (!name) return msg('#jcNmM', '학교 이름을 넣어 주세요.', 'err');
     busy(e.target, true);
-    try { await fb.set('spaces/' + SID + '/meta/pub', { name }, true); await fb.update('spaces/' + SID, { name }); await fb.set('users/' + S.user.uid, { spaces: { [SID]: name } }, true); S.pub.name = name; S.space.name = name; busy(e.target, false); msg('#jcNmM', '저장했어요.', 'ok'); }
+    try {
+      // 학교 목록에 있는 이름으로 바꾸면 그 학교의 나이스 학교 번호도 함께 적음 (목록에 없는 이름이면 번호를 지움)
+      const sc = await loadSchools(), code = sc.codes[name] ? String(sc.codes[name]) : '';
+      await fb.update('spaces/' + SID, code ? { name, school: code } : { name, school: fb.DEL });
+      await fb.set('spaces/' + SID + '/meta/pub', { name }, true); await fb.set('users/' + S.user.uid, { spaces: { [SID]: name } }, true);
+      S.pub.name = name; S.space.name = name; busy(e.target, false);
+      msg('#jcNmM', sc.names.indexOf(name) >= 0 ? '저장했어요. 학교 목록의 "' + name + '"(으)로 묶였어요.' : '저장했어요. 다만 학교 목록에는 없는 이름이에요.', sc.names.indexOf(name) >= 0 ? 'ok' : 'warn');
+    }
     catch (err) { busy(e.target, false); msg('#jcNmM', fb.errText(err), 'err'); }
   };
   try {
