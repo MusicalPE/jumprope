@@ -821,7 +821,7 @@ async function migrateFromSheet(btn) {
   });
   busy(btn, false); $('#jcMgPw').value = '';
   msg('#jcMgM', '옮겨 왔어요: 학생 ' + r.nS + '명 · 기록 ' + r.nR + '건 · 급수 ' + r.nL + '건' + (r.settings ? ' · 설정(종류·목표·색·승인 절차)' : ' (설정은 이 공간 것을 그대로 둠)') + '. 학생 비밀번호는 1234로 돌아가요.' +
-    (r.nat ? ' 전국 현황판은 같은 학교로 이어져요 — 시트판 쪽의 전국 현황판 참여는 꺼 주세요(두 곳에서 보내면 숫자가 엇갈려요).' : ''), 'ok');
+    (r.nat ? ' 전국 현황판은 같은 학교로 이어져요. 시트판은 이제 쓰지 않고 그대로 두면 됩니다 — 시트판에서 전국 현황판 참여나 승인 절차를 끄지 마세요(끄면 현황판에 쌓인 우리 학교 기록이 지난 달들까지 모두 지워져요).' : ''), 'ok');
 }
 
 window.JRCLOUD = { call, cameraApi, entry: () => entry().catch(viewFail), adminLogin, spacePage, fail: viewFail, version: CLOUD_VERSION, adminToken };
