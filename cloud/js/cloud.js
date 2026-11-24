@@ -7,6 +7,7 @@ import * as fb from './fb.js';
 import * as C from './crypto.js';
 import { sha256Bytes, Sheet } from './gasfake.js';
 import * as L from './lite.js';
+import { SCHOOL_SEARCH_URL } from '../firebase-config.js';
 
 const CLOUD_VERSION = '3.0.0';   // 점퍼스 3.0.0 — 화면에는 '클라우드판'이라 하지 않고 점퍼스 3 으로 부름 (시트로 쓰는 2.x 와 구분)
 const APPV = window.APP, SID = APPV.shellUrl || '';
@@ -425,7 +426,9 @@ let adminP = null;
 function isAdmin() { if (!adminP) adminP = fb.get('admins/' + S.user.uid).then((d) => !!d).catch(() => false); return adminP; }
 // 가입 문: 운영자가 올려 둔 학교 목록(gate/schools)에서 학교를 고르고, 공통 가입 암호(gate/main 의 hash — 운영자만 읽음)를 맞혀야 새 공간을 만듦
 async function gateHash(pass) { const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('jumpus-gate|' + String(pass).trim().normalize('NFC')))); return [...h].map((b) => (b < 16 ? '0' : '') + b.toString(16)).join(''); }
-const loadSchools = async () => { let d = null; try { d = await fb.get('gate/schools'); } catch (e) { d = null; } return { names: (d && d.names) || [], off: (d && d.off) || [] }; };
+// 학교 이름 규칙(schoolname.js — 전국 현황판과 함께 씀)
+function schoolRule() { return window.JRSchool ? Promise.resolve(window.JRSchool) : new Promise((ok, no) => { const t = document.createElement('script'); t.src = new URL('../../schoolname.js', import.meta.url).href; t.onload = () => ok(window.JRSchool); t.onerror = () => no(new Error('학교 이름 규칙을 불러오지 못했어요.')); document.head.appendChild(t); }); }
+const loadSchools = async () => { let d = null; try { d = await fb.get('gate/schools'); } catch (e) { d = null; } return { names: (d && d.names) || [], off: (d && d.off) || [], codes: (d && d.codes) || {} }; };
 async function viewCreate() {
   const admin = await isAdmin(), sc = await loadSchools(), open = sc.names.filter((n) => sc.off.indexOf(n) < 0).sort((a, b) => a.localeCompare(b, 'ko'));
   view(shell('새 학교 공간 만들기', '학교에서 반마다 하나씩 만들 수 있어요',
@@ -462,6 +465,7 @@ async function viewCreate() {
       const qbox = await C.seal(key, { k: await C.exportKeyUrl(key) }, sid + '/qbox');
       const uid = S.user.uid, sp = { owner: uid, name, created: fb.NOW, crypto, qbox, wtok, v: 2 };
       if (!admin) sp.gate = await gateHash(gp);
+      if (sc.codes[name]) sp.school = String(sc.codes[name]);   // 나이스 학교 번호 (전국 현황판에서 같은 학교를 번호로 알아보려고)
       await fb.set('spaces/' + sid, sp);
       await fb.set('spaces/' + sid + '/members/' + uid, { role: 'owner', name: S.user.name || '', joined: fb.NOW });
       await fb.batch([
@@ -481,14 +485,15 @@ async function viewCodes() {
   const [sc, main, spaces] = await Promise.all([loadSchools(), fb.get('gate/main').catch(() => null), fb.list('spaces').catch(() => [])]);
   const cnt = {}; spaces.forEach((x) => { cnt[x.data.name] = (cnt[x.data.name] || 0) + 1; });
   const names = sc.names.slice().sort((a, b) => a.localeCompare(b, 'ko'));
-  const save = (n, off) => fb.set('gate/schools', { names: n, off: off.filter((x) => n.indexOf(x) >= 0), at: fb.NOW });
+  const save = (n, off, codes) => { const c = {}, src = codes || sc.codes; n.forEach((x) => { if (src[x]) c[x] = src[x]; }); return fb.set('gate/schools', { names: n, off: off.filter((x) => n.indexOf(x) >= 0), codes: c, at: fb.NOW }); };
   view(shell('가입 관리', '가입 암호와 학교 목록',
     '<label>가입 암호 (선생님들께 알려 주는 암호 하나) <input id="jcGp" maxlength="40" autocomplete="off" value="' + esc((main && main.pass) || '') + '" placeholder="아직 없어요 — 정해서 저장해 주세요"></label>' +
     '<div class="jc-row"><button type="button" id="jcGpS">암호 저장</button><a class="btn-outline" href="' + esc(BASE) + '">← 내 공간</a></div><p class="hint">암호를 바꾸면 그때부터 새 암호로만 새 공간을 만들 수 있어요. 이미 만든 공간은 그대로예요.</p><div id="jcM"></div>' +
     '<h2 style="margin-top:22px">학교 목록 <span class="hint" style="font-weight:600">' + names.length + '곳 · 만들어진 공간 ' + spaces.length + '개</span></h2>' +
-    '<label>학교 이름을 한 줄에 하나씩 (엑셀에서 시·군 칸과 학교 이름 칸을 함께 복사해 붙이면 "시·군 학교 이름"으로 들어가요) <textarea id="jcBulk" rows="6" placeholder="햇살초등학교&#10;새싹중학교&#10;푸른고등학교"></textarea></label>' +
-    '<label>앞에 붙일 말 (선택) <input id="jcPre" maxlength="10" placeholder="예: 경기"></label><p class="hint" style="margin-top:-4px">시·군 칸과 함께 붙였으면 학교 이름이 시·군 이름뿐인 학교(예: 수원초등학교 → 경기 수원초등학교)에만 붙고, 학교 이름만 붙였으면 모든 이름 앞에 붙어요. 수원별빛초등학교처럼 시·군 이름으로 시작하는 학교는 "수원 별빛초등학교"로 들어가요.</p>' +
-    '<button type="button" id="jcBulkGo">목록에 더하기</button><p class="hint">이미 있는 학교는 건너뛰어요.</p><div id="jcBm"></div>' +
+    '<div class="card" style="box-shadow:none;border:1px solid var(--line);margin:8px 0 14px"><b>나이스에서 불러오기</b><p class="hint" style="margin:4px 0 8px">시·도를 고르면 그 지역의 초·중·고를 모두 가져와 학교 이름 규칙에 맞춰 넣어요. (예: 전주서곡초등학교 · 완주봉동초양화분교 · 전북사대부설고등학교)</p>' +
+    '<div class="jc-row"><select id="jcSido" style="flex:1;min-width:120px"><option value="">시·도 고르기</option>' + ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'].map((x) => '<option>' + x + '</option>').join('') + '</select><button type="button" id="jcNeis">불러오기</button></div><div id="jcNm2"></div></div>' +
+    '<details><summary style="cursor:pointer;font-weight:800">직접 붙여 넣기</summary><label style="margin-top:10px">한 줄에 하나씩. 엑셀에서 시·군 칸과 학교 이름 칸을 함께 복사해 붙이면 규칙에 맞춰 이어 붙여요 (전주시 / 서곡초등학교 → 전주서곡초등학교). 학교 이름만 붙이면 그대로 들어가요. <textarea id="jcBulk" rows="6" placeholder="수원시&#9;햇살초등학교&#10;수원시&#9;수원새싹중학교"></textarea></label>' +
+    '<button type="button" id="jcBulkGo">목록에 더하기</button><p class="hint">이미 있는 학교는 건너뛰어요.</p><div id="jcBm"></div></details>' +
     (names.length ? '<input id="jcFind" placeholder="학교 이름으로 찾기" style="margin-top:10px"><table id="jcCt" style="margin-top:8px"><tr><th style="text-align:left">학교</th><th style="white-space:nowrap">공간 수</th><th></th></tr>' + names.map((n) => { const off = sc.off.indexOf(n) >= 0; return '<tr data-sc="' + esc(n) + '"><td>' + esc(n) + (off ? ' <span class="hint">(중지)</span>' : '') + '</td><td style="text-align:center">' + (cnt[n] || 0) + '</td>' +
       '<td style="text-align:right;white-space:nowrap"><button type="button" class="btn-outline" data-off="' + esc(n) + '" data-v="' + (off ? '0' : '1') + '">' + (off ? '다시 열기' : '중지') + '</button> <button type="button" class="jc-danger" data-del="' + esc(n) + '">빼기</button></td></tr>'; }).join('') + '</table>' +
       '<p class="hint">중지하거나 빼면 그 학교 이름으로 새 공간을 만들 수 없어요. 이미 만든 공간은 그대로 쓸 수 있어요.</p>' : '')));
@@ -498,18 +503,35 @@ async function viewCodes() {
     try { await fb.set('gate/main', { pass, hash: await gateHash(pass), at: fb.NOW }); busy(e.target, false); msg('#jcM', '가입 암호를 저장했어요.', 'ok'); }
     catch (err) { busy(e.target, false); msg('#jcM', fb.errText(err), 'err'); }
   };
+  $('#jcNeis').onclick = async (e) => {
+    const sido = $('#jcSido').value; if (!sido) return msg('#jcNm2', '시·도를 골라 주세요.', 'err');
+    busy(e.target, true); msg('#jcNm2', sido + '의 학교를 불러오는 중이에요…', 'warn');
+    try {
+      const R = await schoolRule(), r = await fetch(SCHOOL_SEARCH_URL + '?sido=' + encodeURIComponent(sido), { redirect: 'follow' }), j = await r.json();
+      if (!j.ok) throw new Error(j.error || '학교 찾기가 거절했어요');
+      const have = new Set(sc.names), add = [], codes = Object.assign({}, sc.codes), kinds = {}, dup = [];
+      j.list.forEach((x) => {
+        const n = R.make({ name: x.name, addr: x.addr, sido: '', region: '' }).slice(0, 40); if (!n) return;
+        if (have.has(n)) { if (codes[n] && codes[n] !== x.code) dup.push(n); else codes[n] = x.code; return; }
+        have.add(n); add.push(n); codes[n] = x.code; kinds[x.kind] = (kinds[x.kind] || 0) + 1;
+      });
+      busy(e.target, false);
+      if (!j.list.length) return msg('#jcNm2', '불러온 학교가 없어요.', 'err');
+      if (!add.length) { await save(sc.names, sc.off, codes); return msg('#jcNm2', sido + ' 학교 ' + j.list.length + '곳은 이미 목록에 있어요.', 'ok'); }
+      if (sc.names.length + add.length > 5000) return msg('#jcNm2', '학교 목록은 5,000곳까지 넣을 수 있어요.', 'err');
+      const sum = ['초등학교', '중학교', '고등학교'].filter((k) => kinds[k]).map((k) => k + ' ' + kinds[k]).join(' · ');
+      if (!window.confirm(sido + '에서 새 학교 ' + add.length + '곳을 목록에 더할까요?\n(' + sum + ')' + (dup.length ? '\n\n이름이 겹쳐 하나만 들어가는 학교: ' + dup.slice(0, 8).join(', ') : ''))) return msg('#jcNm2', '');
+      busy(e.target, true); await save(sc.names.concat(add), sc.off, codes); viewCodes();
+    } catch (err) { busy(e.target, false); msg('#jcNm2', '불러오지 못했어요: ' + ((err && err.message) || err), 'err'); }
+  };
   $('#jcBulkGo').onclick = async (e) => {
-    const pre = $('#jcPre').value.trim(), have = new Set(sc.names), add = [];
-    // 한 줄에 칸이 둘(엑셀에서 '시·군' 칸과 '학교 이름' 칸을 함께 복사)이면 "전주 햇살초등학교"처럼 이어 붙임. 앞 칸의 '시'·'군'은 뗌 (전주시 → 전주)
-    // 단, 학교 이름이 시·군 이름뿐인 학교(무주초등학교·전주고등학교)는 시·군 대신 '앞에 붙일 말'을 붙임 (예: 전북 무주초등학교)
-    // 학교 이름이 시·군 이름으로 시작하고 뒤에 다른 말이 있으면 시·군 이름을 한 번만 씀 (수원별빛초등학교 → 수원 별빛초등학교)
+    const R = await schoolRule(), have = new Set(sc.names), add = [];
+    // 칸이 둘이면 [시·군, 학교 이름], 셋이면 [시·도, 시·군, 학교 이름] — 규칙(schoolname.js)에 맞춰 이어 붙임. 하나면 그대로(띄어쓰기만 뗌)
     $('#jcBulk').value.split(/[\r\n]+/).forEach((l) => {
-      const cols = l.split('\t').map((x) => x.trim().replace(/\s+/g, ' ')).filter(Boolean); if (!cols.length) return;
-      let n;
-      if (cols.length > 1) { const r = cols[0].replace(/^(.{2,3})[시군]$/, '$1'), nm = cols.slice(1).join(' '); const rest = nm.indexOf(r) === 0 ? nm.slice(r.length).trim() : null, only = rest !== null && /^(초등|중|고등)학교$/.test(rest);
-        n = only ? (pre ? pre + ' ' : '') + nm : r + ' ' + (rest || nm); }   // 전주서곡초등학교 → 전주 서곡초등학교 (시·군 이름이 겹치지 않게)
-      else { n = cols[0]; if (pre && n.indexOf(pre) !== 0) n = pre + ' ' + n; }
-      n = n.slice(0, 30); if (!have.has(n)) { have.add(n); add.push(n); } });
+      const c = l.split('\t').map((x) => x.trim()).filter(Boolean); if (!c.length) return;
+      const n = (c.length >= 3 ? R.make({ sido: c[0], region: c[1], name: c.slice(2).join('') }) : c.length === 2 ? R.make({ region: c[0], name: c[1] }) : R.make({ name: c[0] })).slice(0, 40);
+      if (n && !have.has(n)) { have.add(n); add.push(n); }
+    });
     if (!add.length) return msg('#jcBm', '새로 더할 학교가 없어요. (이미 있거나 칸이 비어 있어요)', 'err');
     if (sc.names.length + add.length > 5000) return msg('#jcBm', '학교 목록은 5,000곳까지 넣을 수 있어요.', 'err');
     busy(e.target, true);

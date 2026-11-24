@@ -1,6 +1,6 @@
 # 점퍼스 3 — 가입 문(학교 목록에서 고르기 + 공통 가입 암호) 시험:  node mockserver.js 띄운 뒤  python3 test_gate.py
 from playwright.sync_api import sync_playwright
-import json, re, os, urllib.request
+import json, re, os, urllib.request, urllib.parse
 ROOT = 'http://localhost:8891'; APP = ROOT + '/jumprope/cloud/'
 V = os.path.dirname(os.path.abspath(__file__)) + '/../vendor/'
 ok = True
@@ -13,12 +13,25 @@ def spaces(): return {k: v for k, v in docs().items() if re.fullmatch(r'spaces/[
 fb({'op': 'reset'})
 fb({'op': 'console_set', 'path': 'admins/op1', 'data': {'ok': True}})   # 운영자는 콘솔에서만 지정
 PW = 'sunny-2026!'; GATE = '함께뛰어요2026'
+neis = []
+NEIS = [   # 지어낸 학교 (모양만 진짜와 같음)
+    {'code': '9000001', 'name': '별빛초등학교', 'kind': '초등학교', 'sido': '경기도', 'addr': '경기도 수원시 장안구 어디로 1'},
+    {'code': '9000002', 'name': '수원달빛중학교', 'kind': '중학교', 'sido': '경기도', 'addr': '경기도 수원시 팔달구 어디로 2'},
+    {'code': '9000003', 'name': '수원초등학교', 'kind': '초등학교', 'sido': '경기도', 'addr': '경기도 수원시 권선구 어디로 3'},
+    {'code': '9000004', 'name': '별빛초등학교은하분교장', 'kind': '초등학교', 'sido': '경기도', 'addr': '경기도 가평군 가평읍 어디로 4'},
+    {'code': '9000005', 'name': '한빛대학교사범대학부설고등학교', 'kind': '고등학교', 'sido': '경기도', 'addr': '경기도 수원시 영통구 어디로 5'},
+    {'code': '9000006', 'name': '가평여자고등학교', 'kind': '고등학교', 'sido': '경기도', 'addr': '경기도 가평군 가평읍 어디로 6'},
+    {'code': '9000007', 'name': '광주초등학교', 'kind': '초등학교', 'sido': '경기도', 'addr': '경기도 광주시 어디로 7'},
+]
 with sync_playwright() as p:
     b = p.chromium.launch(); errs = []
     def route(r):
         u = r.request.url
         if 'chart.js' in u: return r.fulfill(path=V + 'chart.umd.js', content_type='application/javascript')
         if 'qrcode' in u: return r.fulfill(path=V + 'qrcode.js', content_type='application/javascript')
+        if u.startswith('https://script.google.com/macros/s/') and 'sido=' in u:   # 학교 찾기 웹앱 흉내 (나이스에서 받은 모양 그대로)
+            neis.append(u)
+            return r.fulfill(body=json.dumps({'ok': True, 'list': NEIS}, ensure_ascii=False), content_type='application/json', headers={'Access-Control-Allow-Origin': '*'})
         return r.fulfill(body='', content_type='application/javascript' if u.endswith('.js') else 'text/css')
     def ctx(g, w=1100):
         c = b.new_context(viewport={'width': w, 'height': 900}); c.route(re.compile(r'^https://.*'), route)
@@ -39,16 +52,16 @@ with sync_playwright() as p:
     op = ctx({'uid': 'op1', 'name': '운영자', 'email': 'op@example.com'})
     check('운영자에게만 [가입 관리] 보임', op.locator('#jcCodes').count() == 1)
     op.click('#jcCodes'); op.wait_for_selector('#jcGpS'); op.fill('#jcGp', GATE); op.click('#jcGpS'); op.wait_for_function("document.getElementById('jcM').innerText.includes('저장했어요')")
-    op.fill('#jcBulk', '햇살초등학교\n새싹중학교\n\n  푸른고등학교  \n햇살초등학교\n하늘초등학교'); op.fill('#jcPre', '서울'); op.click('#jcBulkGo'); op.wait_for_selector('#jcCt')
+    op.click('details summary'); op.fill('#jcBulk', '서울햇살초등학교\n서울새싹중학교\n\n  서울푸른고등학교  \n서울햇살초등학교\n서울특별시\t강남구\t하늘초등학교'); op.click('#jcBulkGo'); op.wait_for_selector('#jcCt')
     d = docs()
-    check('학교 목록: 겹친 줄·빈 줄 빼고 4곳 (앞말 붙임)', sorted(d['gate/schools']['names']) == ['서울 새싹중학교', '서울 푸른고등학교', '서울 하늘초등학교', '서울 햇살초등학교'], str(d['gate/schools']['names']))
+    check('학교 목록: 겹친 줄·빈 줄 빼고 4곳 (띄어쓰기 없이, 특별시는 시 이름)', sorted(d['gate/schools']['names']) == ['서울새싹중학교', '서울푸른고등학교', '서울하늘초등학교', '서울햇살초등학교'], str(d['gate/schools']['names']))
     check('가입 암호는 암호와 그 표시(hash)로 저장', d['gate/main']['pass'] == GATE and len(d['gate/main']['hash']) == 64)
     # ---------- 2. 보통 선생님 ----------
     t = ctx({'uid': 'tA', 'name': '김선생', 'email': 'a@example.com'}, 390)
     check('보통 선생님에게는 [가입 관리] 없음', t.locator('#jcCodes').count() == 0)
     check('보통 선생님은 가입 암호를 못 읽고, 목록·암호·운영자 표시를 못 고침 (규칙)', tryjs(t, "fb.get('gate/main')") == 'permission-denied' and tryjs(t, "fb.set('gate/schools',{names:['가짜초']})") == 'permission-denied' and tryjs(t, "fb.set('gate/main',{hash:'x'})") == 'permission-denied' and tryjs(t, "fb.set('admins/tA',{ok:true})") == 'permission-denied' and tryjs(t, "fb.list('spaces')") == 'permission-denied')
     t.click('#jcNew'); t.wait_for_selector('#jcFind'); t.fill('#jcFind', '초등'); t.wait_for_timeout(200)
-    check('학교 찾기: 몇 글자로 걸러짐 (초등 → 2곳)', t.eval_on_selector_all('#jcList [data-n]', 'e=>e.map(x=>x.dataset.n)') == ['서울 하늘초등학교', '서울 햇살초등학교'])
+    check('학교 찾기: 몇 글자로 걸러짐 (초등 → 2곳)', t.eval_on_selector_all('#jcList [data-n]', 'e=>e.map(x=>x.dataset.n)') == ['서울하늘초등학교', '서울햇살초등학교'])
     t.fill('#jcFind', '없는학교'); t.wait_for_timeout(200)
     check('없는 학교는 고를 수 없음', t.locator('#jcList [data-n]').count() == 0 and '찾는 학교가 없어요' in t.inner_text('#jcList'))
     t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.fill('#jcGp', GATE); t.click('#jcMk'); t.wait_for_timeout(400)
@@ -59,17 +72,17 @@ with sync_playwright() as p:
     check('가입 암호를 비우면 안내', '가입 암호를 넣어 주세요' in t.inner_text('#jcM'))
     h = docs()['gate/main']['hash']
     check('암호 표시를 알아도 목록에 없는 학교 이름으로는 못 만듦 (규칙)', tryjs(t, "fb.set('spaces/hack00000000000000000001',{owner:'tA',name:'아무초등학교',gate:'" + h + "'})") == 'permission-denied')
-    check('암호 없이 규칙을 직접 두드려도 못 만듦', tryjs(t, "fb.set('spaces/hack00000000000000000002',{owner:'tA',name:'서울 햇살초등학교'})") == 'permission-denied')
+    check('암호 없이 규칙을 직접 두드려도 못 만듦', tryjs(t, "fb.set('spaces/hack00000000000000000002',{owner:'tA',name:'서울햇살초등학교'})") == 'permission-denied')
     # ---------- 3. 학교 고르고 암호 맞으면 · 같은 학교에서 반마다 ----------
     make(t, '햇살', GATE, '6학년 1반'); t.wait_for_selector('#jcRc', timeout=20000)
     t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm', timeout=20000)
     sid1 = re.search(r's=([a-z0-9]+)', t.url).group(1); d = docs()
-    check('공간이 고른 학교 이름 그대로 만들어짐', d['spaces/' + sid1]['name'] == '서울 햇살초등학교' and d['spaces/' + sid1 + '/meta/pub']['name'] == '서울 햇살초등학교')
+    check('공간이 고른 학교 이름 그대로 만들어짐', d['spaces/' + sid1]['name'] == '서울햇살초등학교' and d['spaces/' + sid1 + '/meta/pub']['name'] == '서울햇살초등학교')
     t2 = ctx({'uid': 'tB', 'name': '박선생', 'email': 'b@example.com'})
     make(t2, '햇살초', GATE, '6학년 2반'); t2.wait_for_selector('#jcRc', timeout=20000); t2.check('#jcOk'); t2.click('#jcGo'); t2.wait_for_selector('#recordForm', timeout=20000)
-    check('같은 학교의 다른 반도 만듦 (이름은 같은 학교)', sorted(v['name'] for v in spaces().values()) == ['서울 햇살초등학교', '서울 햇살초등학교'])
+    check('같은 학교의 다른 반도 만듦 (이름은 같은 학교)', sorted(v['name'] for v in spaces().values()) == ['서울햇살초등학교', '서울햇살초등학교'])
     t.goto(APP); t.wait_for_selector('#jcNew')
-    check('내 공간 목록에는 학급까지 보임', '서울 햇살초등학교 · 6학년 1반' in t.inner_text('.jc-spaces'))
+    check('내 공간 목록에는 학급까지 보임', '서울햇살초등학교 · 6학년 1반' in t.inner_text('.jc-spaces'))
     # ---------- 4. 학교 이름은 선생님이 못 바꿈 ----------
     t.goto(APP + '?s=' + sid1 + '&page=space'); t.wait_for_selector('#jcForget')
     check('공간 관리: 학교 이름 고치는 칸이 없음', t.locator('#jcNmSave').count() == 0 and '학교 목록에서 고른 이름' in t.inner_text('body'))
@@ -77,13 +90,13 @@ with sync_playwright() as p:
     check('만든 공간은 평소처럼 씀 (승인 절차 바꾸기 · QR 새로 만들기)', tryjs(t, "fb.set('spaces/" + sid1 + "/meta/pub',{approval:false},true)") == 'ok' and tryjs(t, "fb.update('spaces/" + sid1 + "',{wtok:'x'})") == 'ok')
     # ---------- 5. 운영자: 공간 수 · 학교 중지 · 암호 바꾸기 · 빼기 ----------
     op.goto(APP); op.wait_for_selector('#jcCodes'); op.click('#jcCodes'); op.wait_for_selector('#jcCt')
-    check('운영자 화면: 학교별 공간 수 (햇살 2)', op.inner_text('#jcCt tr[data-sc="서울 햇살초등학교"] td:nth-child(2)').strip() == '2' and op.input_value('#jcGp') == GATE)
+    check('운영자 화면: 학교별 공간 수 (햇살 2)', op.inner_text('#jcCt tr[data-sc="서울햇살초등학교"] td:nth-child(2)').strip() == '2' and op.input_value('#jcGp') == GATE)
     op.fill('#jcFind', '새싹'); op.wait_for_timeout(200)
     check('학교 이름으로 찾기', op.locator('#jcCt tr[data-sc]:visible').count() == 1)
-    op.fill('#jcFind', ''); op.click('[data-off="서울 새싹중학교"]'); op.wait_for_function("document.body.innerText.includes('(중지)')")
+    op.fill('#jcFind', ''); op.click('[data-off="서울새싹중학교"]'); op.wait_for_function("document.body.innerText.includes('(중지)')")
     t3 = ctx({'uid': 'tC', 'name': '이선생', 'email': 'c@example.com'})
     t3.click('#jcNew'); t3.wait_for_selector('#jcFind'); t3.fill('#jcFind', '새싹'); t3.wait_for_timeout(200)
-    check('중지한 학교는 목록에 안 나오고 규칙으로도 막힘', t3.locator('#jcList [data-n]').count() == 0 and tryjs(t3, "fb.set('spaces/hack00000000000000000003',{owner:'tC',name:'서울 새싹중학교',gate:'" + h + "'})") == 'permission-denied')
+    check('중지한 학교는 목록에 안 나오고 규칙으로도 막힘', t3.locator('#jcList [data-n]').count() == 0 and tryjs(t3, "fb.set('spaces/hack00000000000000000003',{owner:'tC',name:'서울새싹중학교',gate:'" + h + "'})") == 'permission-denied')
     op.fill('#jcGp', '새암호5678'); op.click('#jcGpS'); op.wait_for_function("document.getElementById('jcM').innerText.includes('저장했어요')")
     make(t3, '푸른', GATE); t3.wait_for_function("document.getElementById('jcM').innerText.length>0")
     check('암호를 바꾸면 예전 암호로는 못 만듦', '가입 암호' in t3.inner_text('#jcM') and len(spaces()) == 2)
@@ -91,12 +104,23 @@ with sync_playwright() as p:
     check('새 암호로는 만듦', len(spaces()) == 3)
     t.goto(APP + '?s=' + sid1); t.wait_for_selector('#recordForm', timeout=20000)
     check('암호가 바뀌어도 이미 만든 공간은 그대로 열림', t.is_visible('#recordForm'))
-    op.click('[data-del="서울 하늘초등학교"]'); op.wait_for_function("!document.querySelector('[data-del=\"서울 하늘초등학교\"]')")
-    check('학교 빼기', '서울 하늘초등학교' not in docs()['gate/schools']['names'])
-    op.fill('#jcPre', '경기'); op.fill('#jcBulk', '수원시\t별빛초등학교\n가평군\t  달빛중학교\n세종\t한빛고등학교\n수원시\t수원초등학교\n가평군\t가평여자고등학교\n수원시\t수원별빛초등학교\n수원시\t수원공업고등학교\n가평군\t가평중학교'); op.click('#jcBulkGo'); op.wait_for_function("document.querySelector('[data-del=\"수원 별빛초등학교\"]')")
+    op.click('[data-del="서울하늘초등학교"]'); op.wait_for_function("!document.querySelector('[data-del=\"서울하늘초등학교\"]')")
+    check('학교 빼기', '서울하늘초등학교' not in docs()['gate/schools']['names'])
+    # ---------- 5-2. 나이스에서 불러오기 · 직접 붙여 넣기 (학교 이름 규칙) ----------
+    op.select_option('#jcSido', '경기'); op.click('#jcNeis'); op.wait_for_function("document.querySelector('[data-del=\"수원별빛초등학교\"]')", timeout=15000)
+    g = docs()['gate/schools']; nm = g['names']
+    want = ['수원별빛초등학교', '수원달빛중학교', '수원초등학교', '가평별빛초은하분교', '한빛사대부설고등학교', '가평여자고등학교', '경기광주초등학교']
+    check('나이스에서 불러오기: 규칙대로 이름을 만들어 넣음', all(x in nm for x in want) and 'sido=' + urllib.parse.quote('경기') in neis[0], str([x for x in want if x not in nm]))
+    check('학교 번호도 함께 저장', g['codes'].get('수원별빛초등학교') == '9000001' and g['codes'].get('경기광주초등학교') == '9000007' and len(g['codes']) == 7, str(len(g.get('codes', {}))))
+    op.select_option('#jcSido', '경기'); op.click('#jcNeis'); op.wait_for_function("document.getElementById('jcNm2').innerText.includes('이미 목록에')")
+    check('다시 불러와도 겹치지 않음', len(docs()['gate/schools']['names']) == len(nm))
+    op.click('details summary'); op.fill('#jcBulk', '수원시\t새싹초등학교\n가평군\t  가평중학교\n경기도\t광주시\t하늘초등학교\n햇님 고등학교\n수원시\t별빛초등학교'); op.click('#jcBulkGo'); op.wait_for_function("document.querySelector('[data-del=\"수원새싹초등학교\"]')")
     nm = docs()['gate/schools']['names']
-    check('시·군 칸과 학교 이름 칸을 함께 붙이면 "시·군 학교 이름"으로 (시·군 글자는 뗌)', all(x in nm for x in ['수원 별빛초등학교', '가평 달빛중학교', '세종 한빛고등학교']), str(nm[-3:]))
-    check('학교 이름이 시·군 이름뿐이면 앞말 (경기 수원초등학교) · 시·군 이름으로 시작하면 한 번만 (수원별빛초 → 수원 별빛초, 이미 있으면 건너뜀)', all(x in nm for x in ['경기 수원초등학교', '가평 여자고등학교', '수원 별빛초등학교', '수원 공업고등학교', '경기 가평중학교']) and '수원 수원초등학교' not in nm and '수원 수원별빛초등학교' not in nm, str(nm[-3:]))
+    check('직접 붙여 넣기도 같은 규칙 (시·군 붙이기 · 시·군 이름뿐이면 그대로 · 도는 겹치는 곳만 · 이미 있으면 건너뜀)', all(x in nm for x in ['수원새싹초등학교', '가평중학교', '경기광주하늘초등학교', '햇님고등학교']) and nm.count('수원별빛초등학교') == 1, str(nm[-5:]))
+    t4 = ctx({'uid': 'tD', 'name': '최선생', 'email': 'd@example.com'})
+    make(t4, '별빛초등', '새암호5678'); t4.wait_for_selector('#jcRc', timeout=20000)
+    sp4 = [v for v in spaces().values() if v.get('name') == '수원별빛초등학교']
+    check('나이스에서 온 학교로 만든 공간에는 학교 번호가 적힘', len(sp4) == 1 and sp4[0].get('school') == '9000001', str(sp4[0].get('school') if sp4 else None))
     # ---------- 6. 운영자는 목록에 없는 이름도 ----------
     op.goto(APP); op.wait_for_selector('#jcNew'); op.click('#jcNew'); op.wait_for_selector('#jcFind')
     check('운영자 화면에는 가입 암호 칸이 없음', op.locator('#jcGp').count() == 0)

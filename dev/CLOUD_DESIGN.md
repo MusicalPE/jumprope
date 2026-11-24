@@ -173,3 +173,11 @@ invites/{code}                  선생님 초대 코드
 - 운영자 화면: 내 공간 → [가입 관리 (운영자)] — 가입 암호 저장, 학교 목록 붙여 넣기(앞말 붙이기), 찾기, 중지/다시 열기, 빼기
 - 한계: 암호를 아는 사람은 목록의 어느 학교 이름으로든 만들 수 있음 (남의 학교 이름으로 만드는 것은 못 막음). 암호가 퍼지면 바꾸면 됨
 - 시험: `dev/cloud/test_gate.py`. 다른 시험은 시작할 때 시험용 선생님을 운영자로 지정함
+
+## 학교 이름 규칙 · 학교 찾기 (2026-11-24)
+
+- 규칙은 `schoolname.js` (시험 `dev/test_schoolname.js`): 시·군 + 학교 이름을 붙여 씀, 이미 시·군 이름으로 시작하면 그대로, 도는 시·군 이름이 겹치는 곳만, 분교·교대 부설·사대 부설 줄임, 좁은 화면용 줄임(short), 예전 이름 읽기(legacy)
+- 학교 찾기 웹앱 `SchoolSearch.gs` (운영자 계정의 Apps Script, 나이스 인증키는 스크립트 속성 NEIS_KEY) — 주소는 `cloud/firebase-config.js` 의 SCHOOL_SEARCH_URL. `?q=이름` · `?sido=전북` · `?raw=1`
+  - 나이스 학교기본정보 응답 모양은 실제 응답으로 확인함 (schoolInfo[head, row] · SD_SCHUL_CODE · SCHUL_NM · SCHUL_KND_SC_NM · LCTN_SC_NM · ORG_RDNMA)
+- 점퍼스 3 가입 관리: [나이스에서 불러오기](시·도 고르기) → 규칙대로 이름을 만들어 `gate/schools.names` 에, 학교 번호는 `gate/schools.codes[이름]` 에. 새 공간 문서에는 `school`(학교 번호)이 적힘
+- 아직: 시트판(2.x) 관리자 메뉴의 학교 고르기, 전국 현황판·기록실의 표기(규칙·줄임)와 학교 번호로 합치기(수집기 — 22판 배포 때)
