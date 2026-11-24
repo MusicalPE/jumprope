@@ -622,9 +622,9 @@ function qrSvg(text) { if (typeof qrcode !== 'function') return '<p class="hint"
 function fixNatShell() { try { const x = JSON.parse(props.EXTRA_SETTINGS || '{}'); if (x.nat && x.nat.key && x.nat.shell !== 'cloud:' + SID) { x.nat.shell = 'cloud:' + SID; props.EXTRA_SETTINGS = JSON.stringify(x); } } catch (e) {} }
 
 // ================= 첫 설정 도우미 (3.1.0) =================
-// 1 공간 만들기 · 2 복구 코드는 이미 지나온 화면. 여기서는 3 학생 → 4 기본 설정 → 5 학생 QR → 6 전국 현황판 → 7 끝
-// 어디까지 했는지는 공간에 적어 둠(props.JC_SETUP: '3'~'6' 또는 'done') → 다른 기기에서 열어도 이어짐. 이 값이 없는 공간(예전에 만든 공간)은 도우미를 띄우지 않음
-const SETUP_STEPS = ['공간 만들기', '복구 코드', '학생 등록', '기본 설정', '학생 QR', '전국 현황판', '끝'];
+// 1 공간 만들기 · 2 복구 코드는 이미 지나온 화면. 여기서는 3 학생 → 4 기본 설정 → 5 국토 대장정 → 6 학생 QR → 7 전국 현황판 → 8 끝
+// 어디까지 했는지는 공간에 적어 둠(props.JC_SETUP: '3'~'7' 또는 'done') → 다른 기기에서 열어도 이어짐. 이 값이 없는 공간(예전에 만든 공간)은 도우미를 띄우지 않음
+const SETUP_STEPS = ['공간 만들기', '복구 코드', '학생 등록', '기본 설정', '국토 대장정', '학생 QR', '전국 현황판', '끝'];
 let nudged = false;
 function setupNudge() {
   const st = props.JC_SETUP; if (nudged || !st || st === 'done') return; const pg = APPV.q.page || '';
@@ -657,19 +657,19 @@ async function setupPage() {
   if (!isTeacher()) return view(shell('선생님만 쓸 수 있어요', '', '<a class="btn-outline" href="' + esc(APPV.base) + '">← 메인으로</a>'));
   let token;
   try { token = await adminToken(); if (!props.JC_SETUP) await withBook(() => { if (!props.JC_SETUP) props.JC_SETUP = '3'; }); } catch (e) { return viewFail(e); }
-  const want = Number(APPV.q.step) || 0, saved = props.JC_SETUP === 'done' ? 7 : (Number(props.JC_SETUP) || 3);
-  return setupStep(token, want >= 3 && want <= 7 ? want : saved);
+  const want = Number(APPV.q.step) || 0, saved = props.JC_SETUP === 'done' ? 8 : (Number(props.JC_SETUP) || 3);
+  return setupStep(token, want >= 3 && want <= 8 ? want : saved);
 }
 async function setupStep(token, n) {
   const mark = (v) => withBook(() => { if (props.JC_SETUP !== 'done' && (v === 'done' || Number(v) > (Number(props.JC_SETUP) || 0))) props.JC_SETUP = String(v); });
-  const go = async (to) => { try { await mark(to >= 7 ? 'done' : to); } catch (e) {} setupStep(token, to); };
+  const go = async (to) => { try { await mark(to >= 8 ? 'done' : to); } catch (e) {} setupStep(token, to); };
   const frame = (title, sub, body, nextText, skip) => {
     view('<div class="container jc-setup"><h1>첫 설정 도우미 · ' + esc(S.pub.name) + '</h1>' +
       '<ol class="jc-steps jc-noprint">' + SETUP_STEPS.map((t, i) => '<li class="' + (i + 1 < n ? 'done' : i + 1 === n ? 'now' : '') + '">' + (i + 1) + ' ' + esc(t) + '</li>').join('') + '</ol>' +
       '<div class="card"><h2>' + esc(title) + '</h2><p class="hint" style="margin-top:0">' + sub + '</p>' + body + '<div id="jcSm"></div>' +
       '<div class="jc-nav jc-noprint"><div class="jc-row">' + (n > 3 ? '<button type="button" class="btn-outline" id="jcPrev">← 이전</button>' : '') + '</div>' +
-      '<div class="jc-row">' + (skip !== false && n < 7 ? '<button type="button" class="btn-outline" id="jcSkip">나중에 하기</button>' : '') + (nextText ? '<button type="button" id="jcNext">' + esc(nextText) + '</button>' : '') + '</div></div></div>' +
-      (n < 7 ? '<p class="hint jc-noprint" style="text-align:center">지금 안 해도 돼요. 모두 관리자 메뉴에서 언제든 바꿀 수 있어요. <a href="' + esc(APPV.base + '&page=adminLogin&next=admin') + '">도우미 닫고 관리자 메뉴로</a></p>' : '') + '</div>');
+      '<div class="jc-row">' + (skip !== false && n < 8 ? '<button type="button" class="btn-outline" id="jcSkip">나중에 하기</button>' : '') + (nextText ? '<button type="button" id="jcNext">' + esc(nextText) + '</button>' : '') + '</div></div></div>' +
+      (n < 8 ? '<p class="hint jc-noprint" style="text-align:center">지금 안 해도 돼요. 모두 관리자 메뉴에서 언제든 바꿀 수 있어요. <a href="' + esc(APPV.base + '&page=adminLogin&next=admin') + '">도우미 닫고 관리자 메뉴로</a></p>' : '') + '</div>');
     if ($('#jcPrev')) $('#jcPrev').onclick = () => setupStep(token, n - 1);
     if ($('#jcSkip')) $('#jcSkip').onclick = () => go(n + 1);
   };
@@ -710,6 +710,22 @@ async function setupStep(token, n) {
           go(5);
         } catch (e) { fail(b, e); } };
     } else if (n === 5) {
+      const J = typeof JOURNEY !== 'undefined' ? JOURNEY : null;   // 메인 화면(index.html)에 있는 국토 대장정 도구
+      if (!J) return go(6);
+      const [extra, sum] = await Promise.all([call('getExtraSettings', []), call('getStudentsSummary', [])]);
+      const total = ((sum && sum.list) || []).reduce((a, x) => a + (Number(x.total) || 0), 0), had = !!(extra && extra.journey);
+      // 출발 도시 짐작: 학교 이름이 시·군으로 시작하면 그 도시 (완주햇살초 → 완주). 못 찾으면 대전
+      let guess = ''; Object.keys(J.CITIES).forEach((g) => J.CITIES[g].forEach((c) => { const k = c[0].split(' ').pop(); if (S.pub.name.indexOf(k) === 0 && k.length > guess.split(' ').pop().length) guess = c[0]; }));
+      const start = had ? J.cfg(extra).start : (guess || '대전'), on = had ? !!extra.journey.on : true;
+      frame('국토 대장정', '우리 반이 뛴 줄넘기를 <b>1회 = 1m</b>로 바꿔 나라를 한 바퀴 도는 여행이에요. 출발 도시에서 떠나 다시 돌아와요.',
+        '<label class="jc-opt"><input type="checkbox" id="jcJr"' + (on ? ' checked' : '') + '><div><b>메인 화면에 보이기 (권장)</b><span>학생들이 함께 얼마나 왔는지 메인 화면에서 봐요.</span></div></label>' +
+        '<label style="max-width:320px">출발 도시 <select id="jcJs">' + J.options(start) + '</select></label>' + (!had && guess ? '<p class="hint">학교 이름을 보고 <b>' + esc(guess) + '</b>(으)로 골라 두었어요. 다르면 바꿔 주세요.</p>' : '') +
+        '<div class="card jr-card" id="jcJp" style="margin-top:12px"></div>', '저장하고 다음');
+      const draw = () => { $('#jcJp').innerHTML = J.html(total, { journey: { on: true, start: $('#jcJs').value, base: J.cfg(extra).base } }); $('#jcJp').style.display = $('#jcJr').checked ? '' : 'none'; };
+      $('#jcJs').onchange = draw; $('#jcJr').onchange = draw; draw();
+      $('#jcNext').onclick = async () => { const b = $('#jcNext'); busy(b, true);
+        try { const r = await call('setExtraSettings', [token, { journey: { on: $('#jcJr').checked, start: $('#jcJs').value, base: J.cfg(extra).base } }]); if (r && r.ok === false) throw new Error(r.message || '저장하지 못했어요.'); go(6); } catch (e) { fail(b, e); } };
+    } else if (n === 6) {
       const link = APPV.stuLink;
       frame('학생 접속 QR', '학생은 로그인하지 않아요. 이 QR 하나만 찍으면 바로 기록 화면이 열려요. 교실에 붙여 두거나 큰 화면에 띄워 주세요.',
         '<div class="jc-row" style="align-items:flex-start;gap:20px"><div class="jc-qr">' + qrSvg(link) + '</div><div style="flex:1;min-width:220px"><p style="margin:0 0 8px;font-weight:800">' + esc(S.pub.name) + ' · 줄넘기 기록</p>' +
@@ -717,8 +733,8 @@ async function setupStep(token, n) {
         '<div class="jc-row jc-noprint"><button type="button" class="btn-outline" onclick="window.print()">인쇄</button><button type="button" class="btn-outline" id="jcCp">주소 복사</button></div></div></div>' +
         '<p class="hint jc-noprint">메인 화면의 [접속 QR]을 눌러도 같은 QR이 크게 떠요.</p>', '다음', false);
       $('#jcCp').onclick = () => { if (navigator.clipboard) navigator.clipboard.writeText(link).then(() => msg('#jcSm', '주소를 복사했어요.', 'ok')); };
-      $('#jcNext').onclick = () => go(6);
-    } else if (n === 6) {
+      $('#jcNext').onclick = () => go(7);
+    } else if (n === 7) {
       const [app, extra] = await Promise.all([call('getAppSettingsPublic', []), call('getExtraSettingsAdmin', [token])]);
       const nat = (extra && extra.nat) || {}, apOn = !!(app && app.approvalOn), on = !!(nat.on && nat.key), pre = on || (apOn && !nat.key);   // 아직 정한 적이 없으면 참여에 미리 체크
       // 담당 교사·연락처: 관리자 화면의 전국 현황판 칸과 같은 곳(이 기기)에 둠. 처음에는 구글 로그인 이름·메일을 채워 둠 (운영자만 보는 칸)
@@ -736,21 +752,21 @@ async function setupStep(token, n) {
         const tn = $('#jcTn').value.trim(), tc = $('#jcTc').value.trim();
         if (want && !tn) { msg('#jcSm', '담당 교사 이름을 넣어 주세요.', 'err'); $('#jcTn').focus(); return; }
         if (want) try { localStorage.setItem(ctKey, JSON.stringify({ teacher: tn, contact: tc })); } catch (e) {}
-        if (want === on && (!want || !!nat.showName === $('#jcShow').checked)) return go(7);
+        if (want === on && (!want || !!nat.showName === $('#jcShow').checked)) return go(8);
         if (!want && on) { msg('#jcSm', '이미 참여 중이에요. 참여를 끄는 것은 관리자 메뉴 → 전국 현황판에서 해 주세요(끄면 현황판 기록이 지워져요).', 'warn'); $('#jcNat').checked = true; sync(); return; }
         busy(b, true);
         try {
           const key = nat.key || (crypto.randomUUID ? crypto.randomUUID() : C.randId(32));
           const r = await call('setExtraSettings', [token, { nat: { on: true, key, name: S.pub.name, showName: $('#jcShow').checked, shell: 'cloud:' + SID } }]);
           if (r && r.ok === false) throw new Error(r.message || '저장하지 못했어요.');
-          go(7);
+          go(8);
         } catch (e) { fail(b, e); } };
     } else {
       const [cur, app, extra] = await Promise.all([call('getAllStudents', [token]), call('getAppSettingsPublic', []), call('getExtraSettingsAdmin', [token])]);
       const nS = (cur || []).length, natOn = !!(extra && extra.nat && extra.nat.on && extra.nat.key);
       frame('준비가 끝났어요', '이제 학생들과 뛰어 보세요.',
-        '<ul style="margin:0 0 12px;padding-left:20px;line-height:1.9"><li>학생 ' + (nS ? '<b>' + nS + '명</b> 등록' : '아직 없음 — <a href="#" data-to="3">학생 등록하기</a>') + '</li><li>승인 절차 <b>' + (app && app.approvalOn ? '켜짐' : '꺼짐') + '</b></li><li>전국 현황판 <b>' + (natOn ? '참여 중' : '참여 안 함') + '</b>' + (natOn ? '' : ' — <a href="#" data-to="6">참여하기</a>') + '</li></ul>' +
-        '<div class="jc-row"><button type="button" id="jcHome">메인 화면 열기</button><a class="btn-outline" href="' + esc(APPV.base + '&page=adminLogin&next=admin') + '">관리자 메뉴</a><a class="btn-outline" href="' + esc(APPV.base + '&page=setup&step=5') + '">학생 QR 다시 보기</a></div>' +
+        '<ul style="margin:0 0 12px;padding-left:20px;line-height:1.9"><li>학생 ' + (nS ? '<b>' + nS + '명</b> 등록' : '아직 없음 — <a href="#" data-to="3">학생 등록하기</a>') + '</li><li>승인 절차 <b>' + (app && app.approvalOn ? '켜짐' : '꺼짐') + '</b></li><li>전국 현황판 <b>' + (natOn ? '참여 중' : '참여 안 함') + '</b>' + (natOn ? '' : ' — <a href="#" data-to="7">참여하기</a>') + '</li><li>국토 대장정 <b>' + (extra && extra.journey && extra.journey.on ? esc(extra.journey.start || '대전') + ' 출발' : '안 씀') + '</b></li></ul>' +
+        '<div class="jc-row"><button type="button" id="jcHome">메인 화면 열기</button><a class="btn-outline" href="' + esc(APPV.base + '&page=adminLogin&next=admin') + '">관리자 메뉴</a><a class="btn-outline" href="' + esc(APPV.base + '&page=setup&step=6') + '">학생 QR 다시 보기</a></div>' +
         '<p class="hint" style="margin-top:14px">더 해 볼 것: 메인 화면의 <b>점프 Live</b>(반 전체가 함께 뛰고 결과를 한 번에 보기), 관리자 메뉴의 <b>급수</b>와 <b>줄넘기 종류</b>, 공간 관리의 <b>함께 쓰는 선생님</b> 초대.</p>', '');
       $('#jcHome').onclick = () => { location.href = APPV.base; };
       $$('[data-to]').forEach((a) => { a.onclick = (e) => { e.preventDefault(); setupStep(token, Number(a.dataset.to)); }; });
