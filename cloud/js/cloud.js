@@ -721,11 +721,11 @@ async function setupStep(token, n) {
     } else if (n === 6) {
       const [app, extra] = await Promise.all([call('getAppSettingsPublic', []), call('getExtraSettingsAdmin', [token])]);
       const nat = (extra && extra.nat) || {}, apOn = !!(app && app.approvalOn), on = !!(nat.on && nat.key);
-      frame('전국 현황판 Jump Earth!', '여러 학교가 뛴 횟수를 모아 함께 지구를 도는 현황판이에요. 참여는 선택이에요.',
-        '<label class="jc-opt"><input type="checkbox" id="jcNat"' + (on ? ' checked' : '') + (apOn ? '' : ' disabled') + '><div><b>전국 현황판에 참여하기</b><span>학교 밖으로 나가는 것은 가린 이름(김*늘) · 학년 · 뛴 횟수와 등록 학생 수뿐이에요. 반 · 번호 · 실명 · 비밀번호는 나가지 않아요.</span></div></label>' +
-        '<label class="jc-opt"><input type="checkbox" id="jcShow"' + (nat.showName || !on ? ' checked' : '') + '><div><b>학교 이름 보이기</b><span>현황판에 "' + esc(S.pub.name) + '"(으)로 보여요. 끄면 이름 없이 숫자만 올라가요.</span></div></label>' +
+      frame('전국 현황판 Jump Earth!', '여러 학교가 뛴 횟수를 모아 함께 지구를 도는 현황판이에요.',
+        '<label class="jc-opt"><input type="checkbox" id="jcNat"' + (on ? ' checked' : '') + (apOn ? '' : ' disabled') + '><div><b>참여하기</b><span>학생 이름은 김*늘처럼 가려서 보내요.</span></div></label>' +
+        '<label class="jc-opt"><input type="checkbox" id="jcShow"' + (nat.showName || !on ? ' checked' : '') + '><div><b>학교 이름 보이기</b><span>끄면 이름 없이 숫자만 올라가요.</span></div></label>' +
         (apOn ? '' : '<div class="jc-msg jc-warn">승인 절차가 꺼져 있어서 참여할 수 없어요. <a href="#" id="jcBack4">기본 설정으로 돌아가 승인 절차를 켜 주세요.</a></div>') +
-        '<p class="hint">같은 학교 이름으로 만든 다른 반 공간과는 현황판에서 한 학교로 묶여요. 나중에 관리자 메뉴 → 전국 현황판에서 켜고 끌 수 있어요.</p>', '저장하고 다음');
+        '', '저장하고 다음');
       if ($('#jcBack4')) $('#jcBack4').onclick = (e) => { e.preventDefault(); setupStep(token, 4); };
       const sync = () => { $('#jcShow').disabled = !$('#jcNat').checked; }; $('#jcNat').onchange = sync; sync();
       $('#jcNext').onclick = async () => { const b = $('#jcNext'), want = $('#jcNat').checked && apOn;
