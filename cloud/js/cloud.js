@@ -573,11 +573,14 @@ function viewRecovery(sid, rc, back) {
     '<p class="hint" style="margin-top:0">공간 비밀번호를 잊으면 이 코드로만 학생 이름과 기록을 다시 열 수 있어요. 운영자도 대신 찾아 줄 수 없어요.</p>' +
     '<div class="jc-recovery" id="jcRc">' + esc(rc) + '</div>' +
     '<div class="jc-row" style="margin:12px 0"><a class="btn-outline" id="jcMail" target="_blank" rel="noopener">내 메일로 보내 두기</a><button type="button" class="btn-outline" id="jcCp">복사</button><button type="button" class="btn-outline" onclick="window.print()">인쇄</button></div>' +
-    '<p class="hint">[내 메일로 보내 두기]를 누르면 로그인한 구글 메일(' + esc((S.user && S.user.email) || '') + ')로 보내는 편지가 열려요. [보내기]를 눌러야 보내져요. 저희 쪽 서버는 이 코드를 보지 않아요.</p>' +
+    '<p class="hint">[내 메일로 보내 두기]를 누르면 로그인한 구글 메일(' + esc((S.user && S.user.email) || '') + ')로 보내는 편지가 열려요. [보내기]를 눌러야 보내져요. 휴대폰에서는 메일 앱이 열려요. 저희 쪽 서버는 이 코드를 보지 않아요.</p>' +
     '<label class="jc-chk"><input type="checkbox" id="jcOk"> 안전한 곳에 적어 두었어요</label><button type="button" id="jcGo" disabled>계속</button>'));
   const em = (S.user && S.user.email) || '', nm = (S.pub && S.pub.name) || (S.space && S.space.name) || ($('#jcNm') ? $('#jcNm').value : '') || '';
   const body = '점퍼스 복구 코드입니다. 이 편지를 지우지 말고 보관해 주세요.\n\n학교 공간: ' + (window.__jcName || nm) + '\n복구 코드: ' + rc + '\n여는 주소: ' + BASE + '?s=' + sid + '\n\n공간 비밀번호를 잊었을 때, 비밀번호 칸에 이 복구 코드를 넣으면 열려요.';
-  $('#jcMail').href = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(em) + '&su=' + encodeURIComponent('[점퍼스] 복구 코드 — ' + (window.__jcName || nm)) + '&body=' + encodeURIComponent(body);
+  const su = '[점퍼스] 복구 코드 — ' + (window.__jcName || nm);
+  // 휴대폰·태블릿은 지메일 웹 주소가 앱으로 넘어가면서 내용이 빠진 채 메일함만 열림 → 메일 앱의 새 편지(mailto)로 엶
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent))) { const a = $('#jcMail'); a.href = 'mailto:' + encodeURIComponent(em) + '?subject=' + encodeURIComponent(su) + '&body=' + encodeURIComponent(body); a.removeAttribute('target'); }
+  else $('#jcMail').href = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(em) + '&su=' + encodeURIComponent(su) + '&body=' + encodeURIComponent(body);
   $('#jcCp').onclick = () => navigator.clipboard && navigator.clipboard.writeText(rc);
   $('#jcOk').onchange = (e) => { $('#jcGo').disabled = !e.target.checked; };
   $('#jcGo').onclick = () => { location.href = back || (BASE + '?s=' + sid); };
