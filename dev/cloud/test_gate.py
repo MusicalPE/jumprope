@@ -14,6 +14,8 @@ fb({'op': 'reset'})
 fb({'op': 'console_set', 'path': 'admins/op1', 'data': {'ok': True}})   # 운영자는 콘솔에서만 지정
 PW = 'sunny-2026!'; GATE = '함께뛰어요2026'
 neis = []
+ONE = [{'code': '9100001', 'name': '무지개고등학교', 'kind': '고등학교', 'sido': '부산광역시', 'addr': '부산광역시 해운대구 어디로 9'},
+       {'code': '9100002', 'name': '무지개초등학교', 'kind': '초등학교', 'sido': '강원특별자치도', 'addr': '강원특별자치도 고성군 어디로 8'}]
 NEIS = [   # 지어낸 학교 (모양만 진짜와 같음)
     {'code': '9000001', 'name': '별빛초등학교', 'kind': '초등학교', 'sido': '경기도', 'addr': '경기도 수원시 장안구 어디로 1'},
     {'code': '9000002', 'name': '수원달빛중학교', 'kind': '중학교', 'sido': '경기도', 'addr': '경기도 수원시 팔달구 어디로 2'},
@@ -29,6 +31,9 @@ with sync_playwright() as p:
         u = r.request.url
         if 'chart.js' in u: return r.fulfill(path=V + 'chart.umd.js', content_type='application/javascript')
         if 'qrcode' in u: return r.fulfill(path=V + 'qrcode.js', content_type='application/javascript')
+        if u.startswith('https://script.google.com/macros/s/') and '?q=' in u:   # 학교 하나 찾기
+            neis.append(u); q = urllib.parse.unquote(u.split('?q=')[1])
+            return r.fulfill(body=json.dumps({'ok': True, 'list': [x for x in ONE if q in x['name']]}, ensure_ascii=False), content_type='application/json', headers={'Access-Control-Allow-Origin': '*'})
         if u.startswith('https://script.google.com/macros/s/') and 'sido=' in u:   # 학교 찾기 웹앱 흉내 (나이스에서 받은 모양 그대로)
             neis.append(u)
             return r.fulfill(body=json.dumps({'ok': True, 'list': NEIS}, ensure_ascii=False), content_type='application/json', headers={'Access-Control-Allow-Origin': '*'})
@@ -117,6 +122,15 @@ with sync_playwright() as p:
     op.click('details summary'); op.fill('#jcBulk', '수원시\t새싹초등학교\n가평군\t  가평중학교\n경기도\t광주시\t하늘초등학교\n햇님 고등학교\n수원시\t별빛초등학교'); op.click('#jcBulkGo'); op.wait_for_function("document.querySelector('[data-del=\"수원새싹초등학교\"]')")
     nm = docs()['gate/schools']['names']
     check('직접 붙여 넣기도 같은 규칙 (시·군 붙이기 · 시·군 이름뿐이면 그대로 · 도는 겹치는 곳만 · 이미 있으면 건너뜀)', all(x in nm for x in ['수원새싹초등학교', '가평중학교', '경기광주하늘초등학교', '햇님고등학교']) and nm.count('수원별빛초등학교') == 1, str(nm[-5:]))
+    op.fill('#jcFind', '무지개고등학교'); op.wait_for_timeout(200)
+    check('목록에서 찾기: 없는 학교면 넣는 곳을 알려 줌', op.is_visible('#jcFindNo') and '학교 하나 찾아서 넣기' in op.inner_text('#jcFindNo'))
+    op.fill('#jcOne', '무지개고'); op.click('#jcOneGo'); op.wait_for_selector('#jcOneR [data-i]')
+    check('학교 하나 찾기: 줄여 적어도 정식 이름으로 물어보고 규칙대로 보여 줌', op.locator('#jcOneR [data-i]').count() == 1 and '부산무지개고등학교' in op.inner_text('#jcOneR') and urllib.parse.quote('무지개고등학교') in neis[-1], op.inner_text('#jcOneR')[:60])
+    op.click('#jcOneR [data-i]'); op.wait_for_function("document.querySelector('[data-del=\"부산무지개고등학교\"]')")
+    g = docs()['gate/schools']
+    check('누르면 목록에 들어가고 학교 번호도 저장', '부산무지개고등학교' in g['names'] and g['codes'].get('부산무지개고등학교') == '9100001')
+    op.fill('#jcOne', '무지개'); op.press('#jcOne', 'Enter'); op.wait_for_function("document.querySelectorAll('#jcOneR [data-i]').length==2")
+    check('이미 넣은 학교는 누를 수 없게 · 도로 구별하는 곳은 도 이름', op.locator('#jcOneR [data-i][disabled]').count() == 1 and '강원고성무지개초등학교' in op.inner_text('#jcOneR'))
     t4 = ctx({'uid': 'tD', 'name': '최선생', 'email': 'd@example.com'})
     t4.click('#jcNew'); t4.wait_for_selector('#jcFind')
     def found(q):

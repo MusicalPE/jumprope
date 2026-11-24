@@ -494,10 +494,12 @@ async function viewCodes() {
     '<div class="jc-row"><button type="button" id="jcGpS">암호 저장</button><a class="btn-outline" href="' + esc(BASE) + '">← 내 공간</a></div><p class="hint">암호를 바꾸면 그때부터 새 암호로만 새 공간을 만들 수 있어요. 이미 만든 공간은 그대로예요.</p><div id="jcM"></div>' +
     '<h2 style="margin-top:22px">학교 목록 <span class="hint" style="font-weight:600">' + names.length + '곳 · 만들어진 공간 ' + spaces.length + '개</span></h2>' +
     '<div class="card" style="box-shadow:none;border:1px solid var(--line);margin:8px 0 14px"><b>나이스에서 불러오기</b><p class="hint" style="margin:4px 0 8px">시·도를 고르면 그 지역의 초·중·고를 모두 가져와 학교 이름 규칙에 맞춰 넣어요. (예: 전주서곡초등학교 · 완주봉동초양화분교 · 전북사대부설고등학교)</p>' +
-    '<div class="jc-row"><select id="jcSido" style="flex:1;min-width:120px"><option value="">시·도 고르기</option>' + ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'].map((x) => '<option>' + x + '</option>').join('') + '</select><button type="button" id="jcNeis">불러오기</button></div><div id="jcNm2"></div></div>' +
+    '<div class="jc-row"><select id="jcSido" style="flex:1;min-width:120px"><option value="">시·도 고르기</option>' + ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'].map((x) => '<option>' + x + '</option>').join('') + '</select><button type="button" id="jcNeis">불러오기</button></div><div id="jcNm2"></div>' +
+    '<b style="display:block;margin-top:14px">학교 하나 찾아서 넣기</b><p class="hint" style="margin:4px 0 8px">다른 지역 선생님이 요청했을 때처럼 학교 하나만 넣을 때 써요. 학교 이름을 두 글자 넘게 적고 [찾기]를 누른 뒤, 나온 학교를 누르면 목록에 들어가요.</p>' +
+    '<div class="jc-row"><input id="jcOne" autocomplete="off" placeholder="예: 햇살초" style="flex:1;min-width:140px"><button type="button" id="jcOneGo">찾기</button></div><div id="jcOneR" class="jc-pick" style="margin-top:8px"></div><div id="jcOneM"></div></div>' +
     '<details><summary style="cursor:pointer;font-weight:800">직접 붙여 넣기</summary><label style="margin-top:10px">한 줄에 하나씩. 엑셀에서 시·군 칸과 학교 이름 칸을 함께 복사해 붙이면 규칙에 맞춰 이어 붙여요 (전주시 / 서곡초등학교 → 전주서곡초등학교). 학교 이름만 붙이면 그대로 들어가요. <textarea id="jcBulk" rows="6" placeholder="수원시&#9;햇살초등학교&#10;수원시&#9;수원새싹중학교"></textarea></label>' +
     '<button type="button" id="jcBulkGo">목록에 더하기</button><p class="hint">이미 있는 학교는 건너뛰어요.</p><div id="jcBm"></div></details>' +
-    (names.length ? '<input id="jcFind" placeholder="학교 이름으로 찾기" style="margin-top:10px"><table id="jcCt" style="margin-top:8px"><tr><th style="text-align:left">학교</th><th style="white-space:nowrap">공간 수</th><th></th></tr>' + names.map((n) => { const off = sc.off.indexOf(n) >= 0; return '<tr data-sc="' + esc(n) + '"><td>' + esc(n) + (off ? ' <span class="hint">(중지)</span>' : '') + '</td><td style="text-align:center">' + (cnt[n] || 0) + '</td>' +
+    (names.length ? '<label style="margin-top:16px">목록에서 찾기 (이미 넣은 학교 중에서) <input id="jcFind" placeholder="학교 이름"></label><p class="hint" id="jcFindNo" style="display:none">목록에 없는 학교예요. 위의 "학교 하나 찾아서 넣기"로 넣을 수 있어요.</p><table id="jcCt" style="margin-top:8px"><tr><th style="text-align:left">학교</th><th style="white-space:nowrap">공간 수</th><th></th></tr>' + names.map((n) => { const off = sc.off.indexOf(n) >= 0; return '<tr data-sc="' + esc(n) + '"><td>' + esc(n) + (off ? ' <span class="hint">(중지)</span>' : '') + '</td><td style="text-align:center">' + (cnt[n] || 0) + '</td>' +
       '<td style="text-align:right;white-space:nowrap"><button type="button" class="btn-outline" data-off="' + esc(n) + '" data-v="' + (off ? '0' : '1') + '">' + (off ? '다시 열기' : '중지') + '</button> <button type="button" class="jc-danger" data-del="' + esc(n) + '">빼기</button></td></tr>'; }).join('') + '</table>' +
       '<p class="hint">중지하거나 빼면 그 학교 이름으로 새 공간을 만들 수 없어요. 이미 만든 공간은 그대로 쓸 수 있어요.</p>' : '')));
   $('#jcGpS').onclick = async (e) => {
@@ -527,6 +529,26 @@ async function viewCodes() {
       busy(e.target, true); await save(sc.names.concat(add), sc.off, codes); viewCodes();
     } catch (err) { busy(e.target, false); msg('#jcNm2', '불러오지 못했어요: ' + ((err && err.message) || err), 'err'); }
   };
+  const findOne = async () => {
+    const q = $('#jcOne').value.replace(/\s+/g, ''), b = $('#jcOneGo'); $('#jcOneR').innerHTML = '';
+    if (q.length < 2) return msg('#jcOneM', '학교 이름을 두 글자 넘게 적어 주세요.', 'err');
+    busy(b, true); msg('#jcOneM', '');
+    try {
+      // 나이스는 정식 이름으로 찾으므로 줄여 적은 말은 풀어서 물어봄 (햇살초 → 햇살초등학교)
+      const ask = q.replace(/초$/, '초등학교').replace(/여중$/, '여자중학교').replace(/여고$/, '여자고등학교').replace(/([^여])중$/, '$1중학교').replace(/([^여])고$/, '$1고등학교');
+      const R = await schoolRule(), r = await fetch(SCHOOL_SEARCH_URL + '?q=' + encodeURIComponent(ask), { redirect: 'follow' }), j = await r.json();
+      busy(b, false);
+      if (!j.ok) throw new Error(j.error || '학교 찾기가 거절했어요');
+      if (!j.list.length) return msg('#jcOneM', '"' + ask + '"(으)로 찾은 초·중·고가 없어요. 이름을 조금 다르게 적어 보세요.', 'warn');
+      const have = new Set(sc.names);
+      $('#jcOneR').innerHTML = j.list.slice(0, 40).map((x, i) => { const n = R.make({ name: x.name, addr: x.addr }).slice(0, 40), on = have.has(n); return '<button type="button" class="btn-outline" data-i="' + i + '"' + (on ? ' disabled' : '') + '><b>' + esc(n) + '</b> <span class="hint" style="font-weight:500">' + esc(x.addr.split(/\s+/).slice(0, 3).join(' ')) + (on ? ' · 이미 목록에 있어요' : '') + '</span></button>'; }).join('');
+      $$('#jcOneR [data-i]').forEach((el) => { el.onclick = async () => {
+        const x = j.list[+el.dataset.i], n = R.make({ name: x.name, addr: x.addr }).slice(0, 40); busy(el, true);
+        try { await save(sc.names.concat(n), sc.off, Object.assign({}, sc.codes, { [n]: x.code })); viewCodes(); } catch (err) { busy(el, false); msg('#jcOneM', fb.errText(err), 'err'); }
+      }; });
+    } catch (err) { busy(b, false); msg('#jcOneM', '찾지 못했어요: ' + ((err && err.message) || err), 'err'); }
+  };
+  $('#jcOneGo').onclick = findOne; $('#jcOne').onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); findOne(); } };
   $('#jcBulkGo').onclick = async (e) => {
     const R = await schoolRule(), have = new Set(sc.names), add = [];
     // 칸이 둘이면 [시·군, 학교 이름], 셋이면 [시·도, 시·군, 학교 이름] — 규칙(schoolname.js)에 맞춰 이어 붙임. 하나면 그대로(띄어쓰기만 뗌)
@@ -542,7 +564,7 @@ async function viewCodes() {
   };
   if (!names.length) return;
   const fkey = (v) => String(v).replace(/\s+/g, '').replace(/초등학교/g, '초').replace(/여자중학교/g, '여중').replace(/여자고등학교/g, '여고').replace(/중학교/g, '중').replace(/고등학교/g, '고').replace(/분교장/g, '분교');
-  $('#jcFind').oninput = () => { const raw = $('#jcFind').value.replace(/\s+/g, ''), q = fkey(raw); $$('#jcCt tr[data-sc]').forEach((tr) => { tr.style.display = !raw || tr.dataset.sc.indexOf(raw) >= 0 || fkey(tr.dataset.sc).indexOf(q) >= 0 ? '' : 'none'; }); };
+  $('#jcFind').oninput = () => { const raw = $('#jcFind').value.replace(/\s+/g, ''), q = fkey(raw); let shown = 0; $$('#jcCt tr[data-sc]').forEach((tr) => { const on = !raw || tr.dataset.sc.indexOf(raw) >= 0 || fkey(tr.dataset.sc).indexOf(q) >= 0; tr.style.display = on ? '' : 'none'; if (on) shown++; }); $('#jcFindNo').style.display = raw && !shown ? '' : 'none'; };
   $$('[data-off]').forEach((b) => { b.onclick = async () => { busy(b, true); try { await save(sc.names, b.dataset.v === '1' ? sc.off.concat(b.dataset.off) : sc.off.filter((x) => x !== b.dataset.off)); viewCodes(); } catch (e) { busy(b, false); msg('#jcBm', fb.errText(e), 'err'); } }; });
   $$('[data-del]').forEach((b) => { b.onclick = async () => { if (!window.confirm('"' + b.dataset.del + '" 을(를) 목록에서 뺄까요? 이 이름으로는 새 공간을 만들 수 없게 돼요.')) return; busy(b, true); try { await save(sc.names.filter((x) => x !== b.dataset.del), sc.off); viewCodes(); } catch (e) { busy(b, false); msg('#jcBm', fb.errText(e), 'err'); } }; });
 }
