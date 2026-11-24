@@ -720,15 +720,22 @@ async function setupStep(token, n) {
       $('#jcNext').onclick = () => go(6);
     } else if (n === 6) {
       const [app, extra] = await Promise.all([call('getAppSettingsPublic', []), call('getExtraSettingsAdmin', [token])]);
-      const nat = (extra && extra.nat) || {}, apOn = !!(app && app.approvalOn), on = !!(nat.on && nat.key);
+      const nat = (extra && extra.nat) || {}, apOn = !!(app && app.approvalOn), on = !!(nat.on && nat.key), pre = on || (apOn && !nat.key);   // 아직 정한 적이 없으면 참여에 미리 체크
+      // 담당 교사·연락처: 관리자 화면의 전국 현황판 칸과 같은 곳(이 기기)에 둠. 처음에는 구글 로그인 이름·메일을 채워 둠 (운영자만 보는 칸)
+      const ctKey = 'jr_nat_contact|' + SID; let ct = {}; try { ct = JSON.parse(localStorage.getItem(ctKey) || 'null') || {}; } catch (e) {}
+      if (!ct.teacher) ct = { teacher: (S.user && S.user.name) || '', contact: (S.user && S.user.email) || '' };
       frame('전국 현황판 Jump Earth!', '여러 학교가 뛴 횟수를 모아 함께 지구를 도는 현황판이에요.',
-        '<label class="jc-opt"><input type="checkbox" id="jcNat"' + (on ? ' checked' : '') + (apOn ? '' : ' disabled') + '><div><b>참여하기</b><span>학생 이름은 김*늘처럼 가려서 보내요.</span></div></label>' +
+        '<label class="jc-opt"><input type="checkbox" id="jcNat"' + (pre ? ' checked' : '') + (apOn ? '' : ' disabled') + '><div><b>참여하기</b><span>학생 이름은 김*늘처럼 가려서 보내요.</span></div></label>' +
         '<label class="jc-opt"><input type="checkbox" id="jcShow"' + (nat.showName || !on ? ' checked' : '') + '><div><b>학교 이름 보이기</b><span>끄면 이름 없이 숫자만 올라가요.</span></div></label>' +
+        '<div id="jcCt" class="jc-row" style="align-items:flex-end;margin-top:10px"><label style="flex:1;min-width:140px;margin:0">담당 교사 <input id="jcTn" maxlength="30" value="' + esc(ct.teacher || '') + '"></label><label style="flex:2;min-width:200px;margin:0">연락처 <input id="jcTc" maxlength="80" value="' + esc(ct.contact || '') + '"></label></div><p class="hint" id="jcCtH">담당 교사와 연락처는 운영자만 봐요. 현황판에는 나오지 않아요.</p>' +
         (apOn ? '' : '<div class="jc-msg jc-warn">승인 절차가 꺼져 있어서 참여할 수 없어요. <a href="#" id="jcBack4">기본 설정으로 돌아가 승인 절차를 켜 주세요.</a></div>') +
         '', '저장하고 다음');
       if ($('#jcBack4')) $('#jcBack4').onclick = (e) => { e.preventDefault(); setupStep(token, 4); };
-      const sync = () => { $('#jcShow').disabled = !$('#jcNat').checked; }; $('#jcNat').onchange = sync; sync();
+      const sync = () => { const c = $('#jcNat').checked; $('#jcShow').disabled = !c; $('#jcCt').style.display = $('#jcCtH').style.display = c ? '' : 'none'; }; $('#jcNat').onchange = sync; sync();
       $('#jcNext').onclick = async () => { const b = $('#jcNext'), want = $('#jcNat').checked && apOn;
+        const tn = $('#jcTn').value.trim(), tc = $('#jcTc').value.trim();
+        if (want && !tn) { msg('#jcSm', '담당 교사 이름을 넣어 주세요.', 'err'); $('#jcTn').focus(); return; }
+        if (want) try { localStorage.setItem(ctKey, JSON.stringify({ teacher: tn, contact: tc })); } catch (e) {}
         if (want === on && (!want || !!nat.showName === $('#jcShow').checked)) return go(7);
         if (!want && on) { msg('#jcSm', '이미 참여 중이에요. 참여를 끄는 것은 관리자 메뉴 → 전국 현황판에서 해 주세요(끄면 현황판 기록이 지워져요).', 'warn'); $('#jcNat').checked = true; sync(); return; }
         busy(b, true);

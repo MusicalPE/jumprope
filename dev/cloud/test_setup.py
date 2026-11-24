@@ -76,9 +76,14 @@ with sync_playwright() as p:
     t.click('#jcPrev'); t.wait_for_selector('#jcAp'); check('← 이전: 4단계로, 저장한 값이 그대로', t.input_value('#jcGoal') == '150' and t.is_checked('#jcCam'))
     t.click('#jcSkip'); t.wait_for_selector('.jc-qr svg'); t.click('#jcNext'); t.wait_for_selector('#jcNat')
     # ---------- 6. 전국 현황판 ----------
-    check('6단계: 참여는 꺼진 채 시작', step(t) == '6 전국 현황판' and not t.is_checked('#jcNat') and t.is_disabled('#jcShow'))
+    check('6단계: 참여·학교 이름 보이기에 미리 체크', step(t) == '6 전국 현황판' and t.is_checked('#jcNat') and t.is_checked('#jcShow'))
+    check('담당 교사·연락처에 구글 로그인 이름·메일이 채워져 있음', t.input_value('#jcTn') == '김선생' and t.input_value('#jcTc') == 't1@example.com', [t.input_value('#jcTn'), t.input_value('#jcTc')])
     shot(t, 's6')
-    t.check('#jcNat'); t.uncheck('#jcShow'); t.click('#jcNext'); t.wait_for_selector('#jcHome')
+    t.uncheck('#jcNat'); check('참여를 끄면 담당 교사 칸은 숨김', not t.is_visible('#jcTn')); t.check('#jcNat')
+    t.fill('#jcTn', ''); t.click('#jcNext'); t.wait_for_timeout(200); check('담당 교사가 비면 막음', '담당 교사' in t.inner_text('#jcSm') and step(t) == '6 전국 현황판')
+    t.fill('#jcTn', '김선생'); t.fill('#jcTc', '교무실 063-000-0000')
+    t.uncheck('#jcShow'); t.click('#jcNext'); t.wait_for_selector('#jcHome')
+    check('담당 교사·연락처는 이 기기에 저장 (관리자 화면이 현황판에 보낼 때 씀)', json.loads(t.evaluate("sid=>localStorage.getItem('jr_nat_contact|'+sid)", sid)) == {'teacher': '김선생', 'contact': '교무실 063-000-0000'})
     nat = call(t, 'getExtraSettingsAdmin')['nat']
     check('참여 저장: 켜짐 · 학교 이름은 공간 이름 · 이름 안 보이기 · 설치 표시 cloud:', nat['on'] and nat['name'] == '햇살초등학교' and nat['showName'] is False and nat['shell'] == 'cloud:' + sid and len(nat['key']) >= 16, {k: v for k, v in nat.items() if k != 'key'})
     # ---------- 7. 끝 ----------
@@ -104,6 +109,9 @@ with sync_playwright() as p:
     # 관리자 화면의 전국 현황판 칸도 "옮긴 시트"로 보지 않아야 함
     t.goto(APP + '?s=' + sid + '&page=adminLogin&next=admin'); t.wait_for_selector('.admin-nav', timeout=20000); t.wait_for_timeout(1500)
     check('관리자 화면: 참여 번호가 "옮겨 온 시트"로 뜨지 않음', t.evaluate("NAT.load().then(()=>NAT.active() && !NAT.moved())"))
+    check('관리자 화면의 전국 현황판 칸에도 담당 교사가 들어가 있음', t.evaluate("NAT.contact().teacher") == '김선생')
+    sent = [x for x in posts if x.get('fn') == 'report' and (x.get('args') or [{}])[0].get('teacher')]
+    check('관리자 화면이 현황판에 보낼 때 담당 교사·연락처가 함께 감', len(sent) >= 1 and sent[-1]['args'][0]['teacher'] == '김선생' and sent[-1]['args'][0]['contact'] == '교무실 063-000-0000', len(sent))
     # ---------- 9. 예전 공간(도우미 없이 쓰던 공간)에는 알림이 안 뜸 · 참여 번호 표시 고쳐 줌 ----------
     t.evaluate("sid=>window.JRCLOUD.adminToken().then(t=>window.JRCLOUD.call('setExtraSettings',[t,{nat:{on:true,key:'old-key-0123456789abcdef',name:'햇살초등학교',showName:true,shell:sid}}]))", sid)
     rep = t.evaluate("window.JRCLOUD.call('natReportToday',['setup-test'])")
