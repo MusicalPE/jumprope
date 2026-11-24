@@ -808,7 +808,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '3.0.0', requiredShell: 1, latestShell: 9, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: false, cloud: true, q: {}, settings: {}, shell: {} };
+const APP = { version: '3.1.0', requiredShell: 1, latestShell: 9, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: false, cloud: true, q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -988,7 +988,7 @@ const NAT = {
   myPid: function(){ return this.cfg.pid ? Promise.resolve(this.cfg.pid) : (this.cfg.key ? this.publicId(this.cfg.key) : Promise.resolve('')); },
   serverReport: function(){ return !!(APP.shell && APP.shell.shell >= 4); },
   /* 이 시트의 배포 번호 (…/s/<번호>/exec). 참여 번호를 만들 때 함께 저장해 두고, 다르면 복사한 시트일 수 있음 */
-  deployId: function(u){ const m = String(u == null ? APP.shellUrl : u).match(/\/s\/([A-Za-z0-9_-]{20,})\//); return m ? m[1] : String(u == null ? APP.shellUrl : u); },
+  deployId: function(u){ return 'cloud:' + String(u == null ? APP.shellUrl : u); },
   /* 다른 시트에서 복사된(또는 새 배포로 주소가 바뀐) 시트면 true → 선생님이 고르기 전까지 보고하지 않음 (다른 반 기록을 덮어쓰지 않게) */
   moved: function(){ return !!(this.cfg && this.cfg.on && this.cfg.shell && this.cfg.shell !== this.deployId()); },
   /* 전국 현황판은 승인 절차가 켜진 학교만 보고 (학생이 마구 넣은 숫자가 바로 순위에 오르지 않게) */
@@ -1315,6 +1315,7 @@ function showSetup(msg){
 document.addEventListener('DOMContentLoaded', function(){
   if (!APP.shellUrl) return window.JRCLOUD.entry();
   if (APP.q.page === 'space' && !APP.demo) return window.JRCLOUD.spacePage();
+  if (APP.q.page === 'setup' && !APP.demo) return window.JRCLOUD.setupPage();
   document.getElementById('app').innerHTML = '<div class="loading">학교 기록을 불러오는 중…<div id="bootSlow" class="hint" style="display:none;margin-top:10px;"></div></div>';
   /* 구글 시트가 늦게 답할 때: 8초 뒤 안내, 25초 뒤 다시 시도 버튼 */
   const slowT = [setTimeout(function(){ const el = document.getElementById('bootSlow'); if (el) { el.style.display = ''; el.textContent = '구글 시트가 평소보다 늦게 답하고 있어요. 조금만 기다려 주세요.'; } }, 8000),

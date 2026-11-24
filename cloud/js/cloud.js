@@ -9,7 +9,7 @@ import { sha256Bytes, Sheet } from './gasfake.js';
 import * as L from './lite.js';
 import { SCHOOL_SEARCH_URL } from '../firebase-config.js';
 
-const CLOUD_VERSION = '3.0.0';   // 점퍼스 3.0.0 — 화면에는 '클라우드판'이라 하지 않고 점퍼스 3 으로 부름 (시트로 쓰는 2.x 와 구분)
+const CLOUD_VERSION = '3.1.0';   // 점퍼스 3.0.0 — 화면에는 '클라우드판'이라 하지 않고 점퍼스 3 으로 부름 (시트로 쓰는 2.x 와 구분)
 const APPV = window.APP, SID = APPV.shellUrl || '';
 const BASE = location.origin + location.pathname;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -36,7 +36,10 @@ style.textContent = '.jc-msg{padding:10px 12px;border-radius:10px;margin:10px 0;
   '.jc-recovery{font-family:ui-monospace,Menlo,monospace;font-size:1.3em;font-weight:800;letter-spacing:.05em;background:#FEF3C7;padding:14px;border-radius:12px;text-align:center;word-break:break-all;color:#78350F}' +
   '.jc-spaces a{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);font-weight:800;margin-bottom:8px;background:#fff}.jc-spaces a:hover{border-color:var(--coral)}' +
   '.jc-chk{display:flex;gap:8px;align-items:center;color:var(--ink);font-size:.92em}.jc-qr{background:#fff;padding:12px;border:1px solid var(--line);border-radius:14px;width:220px}.jc-qr svg{width:100%;height:auto;display:block}' +
-  '.jc-pick{display:flex;flex-direction:column;gap:6px;margin:0 0 8px}.jc-pick button{text-align:left;justify-content:flex-start}.admin-nav a.jc-space{display:block!important;white-space:nowrap;flex:0 0 auto}button.jc-danger{background:#fff;color:#DC2626;border:1px solid #FEE2E2;box-shadow:none}button.jc-danger:hover{background:#FEE2E2}';
+  '.jc-pick{display:flex;flex-direction:column;gap:6px;margin:0 0 8px}.jc-pick button{text-align:left;justify-content:flex-start}.admin-nav a.jc-space{display:block!important;white-space:nowrap;flex:0 0 auto}button.jc-danger{background:#fff;color:#DC2626;border:1px solid #FEE2E2;box-shadow:none}button.jc-danger:hover{background:#FEE2E2}' +
+  '.jc-steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px;padding:0;list-style:none;font-size:.82em;font-weight:800}.jc-steps li{padding:5px 10px;border-radius:999px;background:var(--bg);color:#94A3B8;border:1px solid var(--line)}.jc-steps li.done{color:#15803D;background:#DCFCE7;border-color:#BBF7D0}.jc-steps li.now{color:#fff;background:var(--coral);border-color:var(--coral)}' +
+  '.jc-setup textarea{width:100%;min-height:150px;font-family:inherit;font-size:.95em;padding:10px;border:1px solid var(--line);border-radius:10px;box-sizing:border-box}.jc-setup .jc-nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;margin-top:18px}.jc-setup h2{margin:0 0 6px}.jc-setup .jc-opt{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;margin:8px 0;background:#fff}.jc-setup .jc-opt input[type=checkbox]{margin-top:4px;flex:0 0 auto}.jc-setup .jc-opt b{display:block}.jc-setup .jc-opt span{font-size:.88em;color:#64748B}' +
+  '.jc-todo{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:50;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.14);padding:10px 12px;display:flex;gap:8px;align-items:center;font-weight:800;font-size:.9em;max-width:calc(100vw - 24px)}.jc-todo a{color:var(--coral);white-space:nowrap}.jc-todo button{background:none;border:0;box-shadow:none;color:#94A3B8;padding:4px 6px;font-weight:800;cursor:pointer}@media print{.jc-todo,.jc-noprint{display:none!important}}';
 document.head.appendChild(style);
 
 function view(html) { const el = $('#app'); if (!el) return; el.innerHTML = html; window.scrollTo(0, 0); }
@@ -329,6 +332,7 @@ async function callNow(fn, args, retried) {
   if (fn === 'getSheetUrlAdmin') return '';
   if (fn === 'natReportToday' && !isTeacher()) return { skipped: 'student' };
   if (Date.now() - loadedAt > FRESH_MS[S.mode]) await loadBook();
+  if (isTeacher() && (fn === 'natReportToday' || fn === 'getExtraSettingsAdmin' || fn === 'getExtraSettings')) fixNatShell();
   let out;
   try { out = SH[fn].apply(null, args); }
   catch (e) { if (!isTeacher()) await loadBook().catch(() => {}); throw e; }
@@ -345,7 +349,7 @@ async function callNow(fn, args, retried) {
     throw new Error(fb.errText(e));
   }
   out = out === undefined ? null : JSON.parse(JSON.stringify(out));
-  if (fn === 'ping') { out.lite = out.lite || 1; out.live = S.flags && S.flags.live === true ? 1 : 0; out.title = book.getName(); out.cloud = CLOUD_VERSION; }
+  if (fn === 'ping') { out.lite = out.lite || 1; out.live = S.flags && S.flags.live === true ? 1 : 0; out.title = book.getName(); out.cloud = CLOUD_VERSION; if (isTeacher() && !BRIDGE) setupNudge(); }
   saveCache();
   return out;
 }
@@ -583,7 +587,7 @@ function viewRecovery(sid, rc, back) {
   else $('#jcMail').href = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(em) + '&su=' + encodeURIComponent(su) + '&body=' + encodeURIComponent(body);
   $('#jcCp').onclick = () => navigator.clipboard && navigator.clipboard.writeText(rc);
   $('#jcOk').onchange = (e) => { $('#jcGo').disabled = !e.target.checked; };
-  $('#jcGo').onclick = () => { location.href = back || (BASE + '?s=' + sid); };
+  $('#jcGo').onclick = () => { location.href = back || (BASE + '?s=' + sid + '&page=setup'); };   // 새로 만든 공간은 첫 설정 도우미로 이어짐
 }
 function viewNotMember() {
   view(shell('이 공간의 선생님이 아니에요', S.user.email || '', '<p class="hint" style="margin-top:0">함께 쓰려면 이 공간의 선생님께 초대 코드를 받아 [내 공간]에서 넣어 주세요. 학생이라면 선생님 QR을 찍어 주세요.</p><div class="jc-row"><a class="btn-outline" href="' + esc(BASE) + '">내 공간</a><button type="button" class="btn-outline" id="jcOut">다른 계정으로 로그인</button></div>'));
@@ -613,6 +617,140 @@ function viewUnlock() {
 
 // ================= 공간 관리 (QR · 선생님 · 비밀번호) =================
 function qrSvg(text) { if (typeof qrcode !== 'function') return '<p class="hint">QR 도구를 불러오지 못했어요.</p>'; const q = qrcode(0, 'M'); q.addData(text); q.make(); return q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); }
+
+// 전국 현황판 참여 번호에 딸린 '어느 설치인지' 표시: 점퍼스 3은 늘 cloud:<공간> (예전에 공간 번호만 적힌 것은 고쳐 둠 → 껍데기가 "복사한 시트"로 보고 보내기를 건너뛰지 않게)
+function fixNatShell() { try { const x = JSON.parse(props.EXTRA_SETTINGS || '{}'); if (x.nat && x.nat.key && x.nat.shell !== 'cloud:' + SID) { x.nat.shell = 'cloud:' + SID; props.EXTRA_SETTINGS = JSON.stringify(x); } } catch (e) {} }
+
+// ================= 첫 설정 도우미 (3.1.0) =================
+// 1 공간 만들기 · 2 복구 코드는 이미 지나온 화면. 여기서는 3 학생 → 4 기본 설정 → 5 학생 QR → 6 전국 현황판 → 7 끝
+// 어디까지 했는지는 공간에 적어 둠(props.JC_SETUP: '3'~'6' 또는 'done') → 다른 기기에서 열어도 이어짐. 이 값이 없는 공간(예전에 만든 공간)은 도우미를 띄우지 않음
+const SETUP_STEPS = ['공간 만들기', '복구 코드', '학생 등록', '기본 설정', '학생 QR', '전국 현황판', '끝'];
+let nudged = false;
+function setupNudge() {
+  const st = props.JC_SETUP; if (nudged || !st || st === 'done') return; const pg = APPV.q.page || '';
+  if (pg && pg !== 'admin') return; nudged = true;
+  try { if (sessionStorage.getItem('jc_nudge_off:' + SID)) return; } catch (e) {}
+  const d = document.createElement('div'); d.className = 'jc-todo';
+  d.innerHTML = '<span>첫 설정이 남아 있어요</span><a href="' + esc(APPV.base + '&page=setup') + '">이어서 하기 →</a><button type="button" aria-label="닫기">닫기</button>';
+  d.querySelector('button').onclick = () => { d.remove(); try { sessionStorage.setItem('jc_nudge_off:' + SID, '1'); } catch (e) {} };
+  document.body.appendChild(d);
+}
+function parseStudents(raw, have) {
+  const out = [];
+  String(raw || '').split('\n').forEach((line) => {
+    const t = line.replace(/\r/g, ''); if (!t.trim()) return;
+    let p = t.split('\t'); if (p.length < 4) p = t.split(','); if (p.length < 4) p = t.trim().split(/\s+/);
+    p = p.map((x) => x.trim()); [0, 1, 2].forEach((i) => { if (p[i]) p[i] = p[i].replace(/^(\d+)\s*(학년|반|번)$/, '$1'); });
+    if (/^학년$|^grade$/i.test(p[0] || '')) return;
+    const r = { grade: p[0] || '', cls: p[1] || '', number: p[2] || '', name: p[3] || '', ok: true, why: '' }, k = [r.grade, r.cls, r.number, r.name].join('|');
+    if (p.length < 4 || !r.name) { r.ok = false; r.why = '학년·반·번호·이름 순서를 확인해 주세요'; }
+    else if (!r.grade || !r.cls) { r.ok = false; r.why = '학년 또는 반이 비었어요'; }
+    else if (have[k]) { r.ok = false; r.why = '이미 등록됨'; }
+    else if (out.some((o) => o.ok && [o.grade, o.cls, o.number, o.name].join('|') === k)) { r.ok = false; r.why = '붙여 넣은 내용 안에서 겹침'; }
+    out.push(r);
+  });
+  return out;
+}
+async function setupPage() {
+  view('<div class="loading">불러오는 중…</div>');
+  try { await open(); } catch (e) { return viewFail(e); }
+  if (!isTeacher()) return view(shell('선생님만 쓸 수 있어요', '', '<a class="btn-outline" href="' + esc(APPV.base) + '">← 메인으로</a>'));
+  let token;
+  try { token = await adminToken(); if (!props.JC_SETUP) await withBook(() => { if (!props.JC_SETUP) props.JC_SETUP = '3'; }); } catch (e) { return viewFail(e); }
+  const want = Number(APPV.q.step) || 0, saved = props.JC_SETUP === 'done' ? 7 : (Number(props.JC_SETUP) || 3);
+  return setupStep(token, want >= 3 && want <= 7 ? want : saved);
+}
+async function setupStep(token, n) {
+  const mark = (v) => withBook(() => { if (props.JC_SETUP !== 'done' && (v === 'done' || Number(v) > (Number(props.JC_SETUP) || 0))) props.JC_SETUP = String(v); });
+  const go = async (to) => { try { await mark(to >= 7 ? 'done' : to); } catch (e) {} setupStep(token, to); };
+  const frame = (title, sub, body, nextText, skip) => {
+    view('<div class="container jc-setup"><h1>첫 설정 도우미 · ' + esc(S.pub.name) + '</h1>' +
+      '<ol class="jc-steps jc-noprint">' + SETUP_STEPS.map((t, i) => '<li class="' + (i + 1 < n ? 'done' : i + 1 === n ? 'now' : '') + '">' + (i + 1) + ' ' + esc(t) + '</li>').join('') + '</ol>' +
+      '<div class="card"><h2>' + esc(title) + '</h2><p class="hint" style="margin-top:0">' + sub + '</p>' + body + '<div id="jcSm"></div>' +
+      '<div class="jc-nav jc-noprint"><div class="jc-row">' + (n > 3 ? '<button type="button" class="btn-outline" id="jcPrev">← 이전</button>' : '') + '</div>' +
+      '<div class="jc-row">' + (skip !== false && n < 7 ? '<button type="button" class="btn-outline" id="jcSkip">나중에 하기</button>' : '') + (nextText ? '<button type="button" id="jcNext">' + esc(nextText) + '</button>' : '') + '</div></div></div>' +
+      (n < 7 ? '<p class="hint jc-noprint" style="text-align:center">지금 안 해도 돼요. 모두 관리자 메뉴에서 언제든 바꿀 수 있어요. <a href="' + esc(APPV.base + '&page=adminLogin&next=admin') + '">도우미 닫고 관리자 메뉴로</a></p>' : '') + '</div>');
+    if ($('#jcPrev')) $('#jcPrev').onclick = () => setupStep(token, n - 1);
+    if ($('#jcSkip')) $('#jcSkip').onclick = () => go(n + 1);
+  };
+  const fail = (b, e) => { busy(b, false); msg('#jcSm', esc(fb.errText(e)), 'err'); };
+  try {
+    if (n === 3) {
+      const cur = await call('getAllStudents', [token]), have = {}; (cur || []).forEach((x) => { have[[x.grade, x.cls, x.number == null ? '' : x.number, x.name].map((v) => String(v).trim()).join('|')] = 1; });
+      frame('학생 등록', '엑셀이나 한글 표에서 <b>학년 · 반 · 번호 · 이름</b> 네 칸을 그대로 복사해 붙여 넣어요. 한 줄에 한 명이에요.' + (cur && cur.length ? ' 지금 ' + cur.length + '명이 등록되어 있어요.' : ''),
+        '<textarea id="jcSt" placeholder="6\t1\t1\t김하늘\n6\t1\t2\t박준우\n6\t1\t3\t한소율"></textarea><div class="jc-row" style="margin-top:8px"><button type="button" class="btn-outline" id="jcEx">예시 넣어 보기</button><span class="hint" id="jcCnt" style="margin:0"></span></div><div id="jcBad"></div>' +
+        '<p class="hint">학생 비밀번호는 모두 <b>1234</b>로 시작해요. 학생이 자기 화면에서 바꿀 수 있어요. 시트판 점퍼스를 쓰던 학교라면 <a href="' + esc(APPV.base + '&page=space') + '">공간 관리 → 기록 옮겨 오기</a>로 학생과 기록을 한꺼번에 가져와요.</p>', '등록하고 다음');
+      let rows = [];
+      const draw = () => { rows = parseStudents($('#jcSt').value, have); const ok = rows.filter((r) => r.ok), bad = rows.filter((r) => !r.ok);
+        $('#jcCnt').textContent = rows.length ? ok.length + '명 등록 예정' + (bad.length ? ' · ' + bad.length + '줄 제외' : '') : '';
+        $('#jcBad').innerHTML = bad.length ? '<div class="jc-msg jc-warn">' + bad.slice(0, 5).map((r) => esc([r.grade, r.cls, r.number, r.name].filter(Boolean).join(' ') + ' — ' + r.why)).join('<br>') + (bad.length > 5 ? '<br>… 외 ' + (bad.length - 5) + '줄' : '') + '</div>' : '';
+        $('#jcNext').textContent = ok.length ? ok.length + '명 등록하고 다음' : (cur && cur.length ? '다음' : '등록하고 다음'); };
+      $('#jcSt').oninput = () => { msg('#jcSm', ''); draw(); }; draw();
+      $('#jcEx').onclick = () => { $('#jcSt').value = '6\t1\t1\t김하늘\n6\t1\t2\t박준우\n6\t1\t3\t한소율'; draw(); };
+      $('#jcNext').onclick = async () => { const ok = rows.filter((r) => r.ok), b = $('#jcNext');
+        if (!ok.length) { if (cur && cur.length && !$('#jcSt').value.trim()) return go(4); return msg('#jcSm', '등록할 학생이 없어요. 붙여 넣은 내용을 확인하거나 [나중에 하기]를 눌러 주세요.', 'err'); }
+        busy(b, true); try { await call('addStudentsBulk', [token, ok.map((r) => ({ grade: r.grade, cls: r.cls, number: r.number, name: r.name }))]); go(4); } catch (e) { fail(b, e); } };
+    } else if (n === 4) {
+      const [app, goal, cam0] = await Promise.all([call('getAppSettingsPublic', []), call('getDailyGoal', []), call('getCameraSettingsAdmin', [token])]);
+      const first = Number(props.JC_SETUP) <= 4, cam = first ? Object.assign({}, cam0, { enabled: true, autoApprove: true }) : cam0;   // 이 단계를 처음 지날 때는 권장값(카메라 켬 · 바로 인정)을 미리 골라 둠
+      frame('기본 설정', '권장하는 값으로 맞춰 두었어요. 그대로 [저장하고 다음]을 눌러도 돼요.',
+        '<label class="jc-opt"><input type="checkbox" id="jcAp"' + (app && app.approvalOn ? ' checked' : '') + '><div><b>승인 절차 켜기 (권장)</b><span>학생이 손으로 넣은 기록은 선생님이 승인해야 반영돼요. 전국 현황판에 참여하려면 켜져 있어야 해요.</span></div></label>' +
+        '<label class="jc-opt"><input type="checkbox" id="jcCam"' + (cam && cam.enabled ? ' checked' : '') + '><div><b>카메라 판정기 쓰기 (권장)</b><span>학생 기기의 카메라가 실제로 뛴 횟수를 세어 줘요. 영상은 저장하거나 보내지 않아요.</span></div></label>' +
+        '<label class="jc-opt"><input type="checkbox" id="jcAuto"' + (cam && cam.autoApprove ? ' checked' : '') + '><div><b>카메라로 센 기록은 바로 인정</b><span>카메라가 센 기록은 승인을 기다리지 않고 바로 들어가요.</span></div></label>' +
+        '<label>하루 목표 횟수 (학생 한 명) <input type="number" id="jcGoal" min="1" max="100000" value="' + esc(goal && goal.goal != null ? goal.goal : (goal || 100)) + '" style="max-width:160px"></label>', '저장하고 다음');
+      const sync = () => { $('#jcAuto').disabled = !$('#jcCam').checked; }; $('#jcCam').onchange = sync; sync();
+      $('#jcNext').onclick = async () => { const b = $('#jcNext'), g = Math.round(Number($('#jcGoal').value));
+        if (!(g >= 1)) return msg('#jcSm', '하루 목표는 1 이상의 숫자로 넣어 주세요.', 'err');
+        busy(b, true);
+        try {
+          await call('setAppSettings', [token, { approvalOn: $('#jcAp').checked }]);
+          await call('setDailyGoal', [token, g]);
+          const r = await call('setCameraSettings', [token, Object.assign({}, cam, { enabled: $('#jcCam').checked, autoApprove: $('#jcCam').checked && $('#jcAuto').checked })]);
+          if (r && r.ok === false) throw new Error(r.message || '카메라 설정을 저장하지 못했어요.');
+          go(5);
+        } catch (e) { fail(b, e); } };
+    } else if (n === 5) {
+      const link = APPV.stuLink;
+      frame('학생 접속 QR', '학생은 로그인하지 않아요. 이 QR 하나만 찍으면 바로 기록 화면이 열려요. 교실에 붙여 두거나 큰 화면에 띄워 주세요.',
+        '<div class="jc-row" style="align-items:flex-start;gap:20px"><div class="jc-qr">' + qrSvg(link) + '</div><div style="flex:1;min-width:220px"><p style="margin:0 0 8px;font-weight:800">' + esc(S.pub.name) + ' · 줄넘기 기록</p>' +
+        '<p class="hint" style="margin-top:0">주소 안에 학생 이름을 여는 열쇠가 들어 있어요. 학급 밖으로 퍼지지 않게 해 주세요. 퍼졌다면 공간 관리에서 새 QR을 만들 수 있어요.</p>' +
+        '<div class="jc-row jc-noprint"><button type="button" class="btn-outline" onclick="window.print()">인쇄</button><button type="button" class="btn-outline" id="jcCp">주소 복사</button></div></div></div>' +
+        '<p class="hint jc-noprint">메인 화면의 [접속 QR]을 눌러도 같은 QR이 크게 떠요.</p>', '다음', false);
+      $('#jcCp').onclick = () => { if (navigator.clipboard) navigator.clipboard.writeText(link).then(() => msg('#jcSm', '주소를 복사했어요.', 'ok')); };
+      $('#jcNext').onclick = () => go(6);
+    } else if (n === 6) {
+      const [app, extra] = await Promise.all([call('getAppSettingsPublic', []), call('getExtraSettingsAdmin', [token])]);
+      const nat = (extra && extra.nat) || {}, apOn = !!(app && app.approvalOn), on = !!(nat.on && nat.key);
+      frame('전국 현황판 Jump Earth!', '여러 학교가 뛴 횟수를 모아 함께 지구를 도는 현황판이에요. 참여는 선택이에요.',
+        '<label class="jc-opt"><input type="checkbox" id="jcNat"' + (on ? ' checked' : '') + (apOn ? '' : ' disabled') + '><div><b>전국 현황판에 참여하기</b><span>학교 밖으로 나가는 것은 가린 이름(김*늘) · 학년 · 뛴 횟수와 등록 학생 수뿐이에요. 반 · 번호 · 실명 · 비밀번호는 나가지 않아요.</span></div></label>' +
+        '<label class="jc-opt"><input type="checkbox" id="jcShow"' + (nat.showName || !on ? ' checked' : '') + '><div><b>학교 이름 보이기</b><span>현황판에 "' + esc(S.pub.name) + '"(으)로 보여요. 끄면 이름 없이 숫자만 올라가요.</span></div></label>' +
+        (apOn ? '' : '<div class="jc-msg jc-warn">승인 절차가 꺼져 있어서 참여할 수 없어요. <a href="#" id="jcBack4">기본 설정으로 돌아가 승인 절차를 켜 주세요.</a></div>') +
+        '<p class="hint">같은 학교 이름으로 만든 다른 반 공간과는 현황판에서 한 학교로 묶여요. 나중에 관리자 메뉴 → 전국 현황판에서 켜고 끌 수 있어요.</p>', '저장하고 다음');
+      if ($('#jcBack4')) $('#jcBack4').onclick = (e) => { e.preventDefault(); setupStep(token, 4); };
+      const sync = () => { $('#jcShow').disabled = !$('#jcNat').checked; }; $('#jcNat').onchange = sync; sync();
+      $('#jcNext').onclick = async () => { const b = $('#jcNext'), want = $('#jcNat').checked && apOn;
+        if (want === on && (!want || !!nat.showName === $('#jcShow').checked)) return go(7);
+        if (!want && on) { msg('#jcSm', '이미 참여 중이에요. 참여를 끄는 것은 관리자 메뉴 → 전국 현황판에서 해 주세요(끄면 현황판 기록이 지워져요).', 'warn'); $('#jcNat').checked = true; sync(); return; }
+        busy(b, true);
+        try {
+          const key = nat.key || (crypto.randomUUID ? crypto.randomUUID() : C.randId(32));
+          const r = await call('setExtraSettings', [token, { nat: { on: true, key, name: S.pub.name, showName: $('#jcShow').checked, shell: 'cloud:' + SID } }]);
+          if (r && r.ok === false) throw new Error(r.message || '저장하지 못했어요.');
+          go(7);
+        } catch (e) { fail(b, e); } };
+    } else {
+      const [cur, app, extra] = await Promise.all([call('getAllStudents', [token]), call('getAppSettingsPublic', []), call('getExtraSettingsAdmin', [token])]);
+      const nS = (cur || []).length, natOn = !!(extra && extra.nat && extra.nat.on && extra.nat.key);
+      frame('준비가 끝났어요', '이제 학생들과 뛰어 보세요.',
+        '<ul style="margin:0 0 12px;padding-left:20px;line-height:1.9"><li>학생 ' + (nS ? '<b>' + nS + '명</b> 등록' : '아직 없음 — <a href="#" data-to="3">학생 등록하기</a>') + '</li><li>승인 절차 <b>' + (app && app.approvalOn ? '켜짐' : '꺼짐') + '</b></li><li>전국 현황판 <b>' + (natOn ? '참여 중' : '참여 안 함') + '</b>' + (natOn ? '' : ' — <a href="#" data-to="6">참여하기</a>') + '</li></ul>' +
+        '<div class="jc-row"><button type="button" id="jcHome">메인 화면 열기</button><a class="btn-outline" href="' + esc(APPV.base + '&page=adminLogin&next=admin') + '">관리자 메뉴</a><a class="btn-outline" href="' + esc(APPV.base + '&page=setup&step=5') + '">학생 QR 다시 보기</a></div>' +
+        '<p class="hint" style="margin-top:14px">더 해 볼 것: 메인 화면의 <b>점프 Live</b>(반 전체가 함께 뛰고 결과를 한 번에 보기), 관리자 메뉴의 <b>급수</b>와 <b>줄넘기 종류</b>, 공간 관리의 <b>함께 쓰는 선생님</b> 초대.</p>', '');
+      $('#jcHome').onclick = () => { location.href = APPV.base; };
+      $$('[data-to]').forEach((a) => { a.onclick = (e) => { e.preventDefault(); setupStep(token, Number(a.dataset.to)); }; });
+      mark('done').catch(() => {});
+    }
+  } catch (e) { viewFail(e); }
+}
 async function spacePage() {
   view('<div class="loading">불러오는 중…</div>');
   try { await open(); } catch (e) { return viewFail(e); }
@@ -819,6 +957,7 @@ async function migrateFromSheet(btn) {
       if (cam) { props.CAMERA_ENABLED = cam.enabled ? '1' : '0'; props.CAMERA_AUTO_APPROVE = cam.autoApprove ? '1' : '0'; props.CAMERA_SENS = String(cam.sens || 10); }
       if (extra && typeof extra === 'object') { const x = JSON.parse(JSON.stringify(extra)); if (x.nat && x.nat.key) x.nat.shell = 'cloud:' + SID; props.EXTRA_SETTINGS = JSON.stringify(x); out.nat = !!(x.nat && x.nat.on && x.nat.key); }
       out.settings = true;
+      if (props.JC_SETUP) props.JC_SETUP = 'done';   // 시트판에서 통째로 옮겨 왔으면 첫 설정 도우미는 끝난 것으로
     }
     return out;
   });
@@ -827,4 +966,4 @@ async function migrateFromSheet(btn) {
     (r.nat ? ' 전국 현황판은 같은 학교로 이어져요. 시트판은 이제 쓰지 않고 그대로 두면 됩니다 — 시트판에서 전국 현황판 참여나 승인 절차를 끄지 마세요(끄면 현황판에 쌓인 우리 학교 기록이 지난 달들까지 모두 지워져요).' : ''), 'ok');
 }
 
-window.JRCLOUD = { call, cameraApi, entry: () => entry().catch(viewFail), adminLogin, spacePage, fail: viewFail, version: CLOUD_VERSION, adminToken };
+window.JRCLOUD = { call, cameraApi, entry: () => entry().catch(viewFail), adminLogin, spacePage, setupPage, fail: viewFail, version: CLOUD_VERSION, adminToken };

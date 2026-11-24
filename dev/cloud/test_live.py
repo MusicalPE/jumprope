@@ -1,6 +1,11 @@
 # 점퍼스 클라우드판 — 점프 Live(수업 방·학생 방) · 전용 라이브 표시 · 공간 삭제 시험
 #   node mockserver.js 띄운 뒤  python3 test_live.py   (옆 폴더에 jumpropelive · jump-rope-checker 저장소가 있어야 함)
 from playwright.sync_api import sync_playwright
+def skipsetup(pg):   # 새 공간은 첫 설정 도우미로 이어짐 → 시험은 메인 화면으로 건너감
+    pg.wait_for_selector('.jc-setup, #recordForm', timeout=20000)
+    if pg.locator('.jc-setup').count():
+        pg.evaluate("sessionStorage.setItem('jc_nudge_off:' + new URLSearchParams(location.search).get('s'), '1')")   # 아래에 뜨는 '첫 설정이 남아 있어요' 알림은 끔
+        pg.goto(re.sub(r'&page=setup.*$', '', pg.url)); pg.wait_for_selector('#recordForm', timeout=20000)
 import json, re, os, urllib.request, urllib.parse
 ROOT = 'http://localhost:8891'
 APP = ROOT + '/jumprope/cloud/'
@@ -42,7 +47,7 @@ with sync_playwright() as p:
     tc, t = ctx({'uid': 'teacher1', 'name': '김선생', 'email': 't1@example.com'})
     t.goto(APP); t.wait_for_selector('#jcG'); t.click('#jcG'); t.wait_for_selector('#jcNew')
     t.click('#jcNew'); t.fill('#jcFind', '햇살초등학교'); t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.click('#jcMk'); t.wait_for_selector('#jcRc', timeout=20000)
-    t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm', timeout=20000)
+    t.check('#jcOk'); t.click('#jcGo'); skipsetup(t)
     sid = re.search(r's=([a-z0-9]+)', t.url).group(1)
     t.click('#navAdmin'); t.wait_for_selector('#adminNav', timeout=15000)
     t.click('#adminNav button[data-tab="register"]'); t.fill('#bulkText', '4\t1\t1\t김하늘\n4\t1\t2\t박준우\n4\t2\t1\t이서연'); t.wait_for_timeout(300); t.click('#bulkAddBtn'); t.wait_for_timeout(2000)

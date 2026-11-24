@@ -1,6 +1,11 @@
 # 점퍼스 클라우드판 전체 시험:  node mockserver.js 띄운 뒤  python3 test_cloud.py
 # 가짜 파이어베이스(규칙 흉내 포함)로, 진짜 점퍼스 화면을 선생님·학생·두 번째 선생님으로 끝까지 밟음
 from playwright.sync_api import sync_playwright
+def skipsetup(pg):   # 새 공간은 첫 설정 도우미로 이어짐 → 시험은 메인 화면으로 건너감
+    pg.wait_for_selector('.jc-setup, #recordForm', timeout=20000)
+    if pg.locator('.jc-setup').count():
+        pg.evaluate("sessionStorage.setItem('jc_nudge_off:' + new URLSearchParams(location.search).get('s'), '1')")   # 아래에 뜨는 '첫 설정이 남아 있어요' 알림은 끔
+        pg.goto(re.sub(r'&page=setup.*$', '', pg.url)); pg.wait_for_selector('#recordForm', timeout=20000)
 import json, re, os, urllib.request, urllib.parse
 ROOT = 'http://localhost:8891'
 APP = ROOT + '/jumprope/cloud/'
@@ -55,7 +60,7 @@ with sync_playwright() as p:
     mail = urllib.parse.unquote(t.get_attribute('#jcMail', 'href'))
     check('내 메일로 보내 두기: 로그인한 메일·복구 코드·학교 이름', 'to=t1@example.com' in mail and rc in mail and '햇살초등학교' in mail)
     check('적어 두기 전에는 계속 못 누름', t.is_disabled('#jcGo'))
-    t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm', timeout=20000)
+    t.check('#jcOk'); t.click('#jcGo'); skipsetup(t)
     sid = re.search(r's=([a-z0-9]+)', t.url).group(1)
     check('공간 만들고 → 진짜 점퍼스 메인 화면', t.is_visible('#statStudents') and t.is_visible('.topbar-nav .jrhelp-btn'), sid)
     # ---------- 2. 관리자 메뉴: 비밀번호 없이 통과 · 학생 등록 ----------
@@ -225,7 +230,7 @@ with sync_playwright() as p:
     check('백업 파일: 학생 3 · 기록 여러 건', bk['app'] == 'jumpus-backup' and len(bk['students']) == 3 and len(bk['records']) >= 5, str(len(bk['records'])))
     # ---------- 11-4. 새 공간에 백업 넣기 · 시트판에서 옮겨 오기 ----------
     t.goto(APP); t.wait_for_selector('#jcNew'); t.click('#jcNew'); t.fill('#jcFind', '새싹초등학교'); t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.click('#jcMk'); t.wait_for_selector('#jcRc', timeout=20000)
-    t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm', timeout=20000)
+    t.check('#jcOk'); t.click('#jcGo'); skipsetup(t)
     sid2 = re.search(r's=([a-z0-9]+)', t.url).group(1)
     t.goto(APP + '?s=' + sid2 + '&page=space'); t.wait_for_selector('#jcBakPick')
     t.set_input_files('#jcBakFile', bf); t.wait_for_function("/넣었어요/.test(document.getElementById('jcBkM').textContent)", timeout=20000)
@@ -237,7 +242,7 @@ with sync_playwright() as p:
     try:
         urllib.request.urlopen('http://localhost:8890/exec', timeout=3)
         t.goto(APP); t.wait_for_selector('#jcNew'); t.click('#jcNew'); t.fill('#jcFind', '옮겨온초등학교'); t.fill('#jcPw', PW); t.fill('#jcPw2', PW); t.click('#jcMk'); t.wait_for_selector('#jcRc', timeout=20000)
-        t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm', timeout=20000)
+        t.check('#jcOk'); t.click('#jcGo'); skipsetup(t)
         sid3 = re.search(r's=([a-z0-9]+)', t.url).group(1)
         old = json.loads(urllib.request.urlopen(urllib.request.Request('http://localhost:8890/exec', data=json.dumps({'fn': 'verifyAdminPassword', 'args': ['1234']}).encode())).read())['result']['token']
         oall = json.loads(urllib.request.urlopen(urllib.request.Request('http://localhost:8890/exec', data=json.dumps({'fn': 'getAllDataAdmin', 'args': [old]}).encode())).read())['result']

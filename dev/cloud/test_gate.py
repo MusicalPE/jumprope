@@ -1,5 +1,10 @@
 # 점퍼스 3 — 가입 문(학교 목록에서 고르기 + 공통 가입 암호) 시험:  node mockserver.js 띄운 뒤  python3 test_gate.py
 from playwright.sync_api import sync_playwright
+def skipsetup(pg):   # 새 공간은 첫 설정 도우미로 이어짐 → 시험은 메인 화면으로 건너감
+    pg.wait_for_selector('.jc-setup, #recordForm', timeout=20000)
+    if pg.locator('.jc-setup').count():
+        pg.evaluate("sessionStorage.setItem('jc_nudge_off:' + new URLSearchParams(location.search).get('s'), '1')")   # 아래에 뜨는 '첫 설정이 남아 있어요' 알림은 끔
+        pg.goto(re.sub(r'&page=setup.*$', '', pg.url)); pg.wait_for_selector('#recordForm', timeout=20000)
 import json, re, os, urllib.request, urllib.parse
 ROOT = 'http://localhost:8891'; APP = ROOT + '/jumprope/cloud/'
 V = os.path.dirname(os.path.abspath(__file__)) + '/../vendor/'
@@ -80,11 +85,11 @@ with sync_playwright() as p:
     check('암호 없이 규칙을 직접 두드려도 못 만듦', tryjs(t, "fb.set('spaces/hack00000000000000000002',{owner:'tA',name:'서울햇살초등학교'})") == 'permission-denied')
     # ---------- 3. 학교 고르고 암호 맞으면 · 같은 학교에서 반마다 ----------
     make(t, '햇살', GATE, '6학년 1반'); t.wait_for_selector('#jcRc', timeout=20000)
-    t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm', timeout=20000)
+    t.check('#jcOk'); t.click('#jcGo'); skipsetup(t)
     sid1 = re.search(r's=([a-z0-9]+)', t.url).group(1); d = docs()
     check('공간이 고른 학교 이름 그대로 만들어짐', d['spaces/' + sid1]['name'] == '서울햇살초등학교' and d['spaces/' + sid1 + '/meta/pub']['name'] == '서울햇살초등학교')
     t2 = ctx({'uid': 'tB', 'name': '박선생', 'email': 'b@example.com'})
-    make(t2, '햇살초', GATE, '6학년 2반'); t2.wait_for_selector('#jcRc', timeout=20000); t2.check('#jcOk'); t2.click('#jcGo'); t2.wait_for_selector('#recordForm', timeout=20000)
+    make(t2, '햇살초', GATE, '6학년 2반'); t2.wait_for_selector('#jcRc', timeout=20000); t2.check('#jcOk'); t2.click('#jcGo'); skipsetup(t2)
     check('같은 학교의 다른 반도 만듦 (이름은 같은 학교)', sorted(v['name'] for v in spaces().values()) == ['서울햇살초등학교', '서울햇살초등학교'])
     t.goto(APP); t.wait_for_selector('#jcNew')
     check('내 공간 목록에는 학급까지 보임', '서울햇살초등학교 · 6학년 1반' in t.inner_text('.jc-spaces'))
@@ -144,7 +149,7 @@ with sync_playwright() as p:
     check('운영자 화면에는 가입 암호 칸이 없음', op.locator('#jcGp').count() == 0)
     op.fill('#jcFind', '시험용 학교'); op.fill('#jcPw', PW); op.fill('#jcPw2', PW); op.click('#jcMk'); op.wait_for_selector('#jcRc', timeout=20000)
     check('운영자는 목록에 없는 이름으로도 공간을 만듦', any(v.get('name') == '시험용 학교' for v in spaces().values()))
-    op.check('#jcOk'); op.click('#jcGo'); op.wait_for_selector('#recordForm', timeout=20000); sidO = re.search(r's=([a-z0-9]+)', op.url).group(1)
+    op.check('#jcOk'); op.click('#jcGo'); skipsetup(op); sidO = re.search(r's=([a-z0-9]+)', op.url).group(1)
     op.goto(APP + '?s=' + sidO + '&page=space'); op.wait_for_selector('#jcNmSave'); op.fill('#jcNm', '수원별빛초등학교'); op.click('#jcNmSave'); op.wait_for_function("document.getElementById('jcNmM').innerText.includes('묶였어요')")
     d = docs()
     check('먼저 만든 공간: 운영자가 이름을 목록의 학교 이름으로 바꾸면 그 학교로 묶임 (학교 번호까지)', d['spaces/' + sidO]['name'] == '수원별빛초등학교' and d['spaces/' + sidO].get('school') == '9000001' and d['spaces/' + sidO + '/meta/pub']['name'] == '수원별빛초등학교')

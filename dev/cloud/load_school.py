@@ -1,5 +1,10 @@
 # 300명 학교가 한 달(20일) 쓴 크기를 재 봄 — 가짜 서버
 from playwright.sync_api import sync_playwright
+def skipsetup(pg):   # 새 공간은 첫 설정 도우미로 이어짐 → 시험은 메인 화면으로 건너감
+    pg.wait_for_selector('.jc-setup, #recordForm', timeout=20000)
+    if pg.locator('.jc-setup').count():
+        pg.evaluate("sessionStorage.setItem('jc_nudge_off:' + new URLSearchParams(location.search).get('s'), '1')")   # 아래에 뜨는 '첫 설정이 남아 있어요' 알림은 끔
+        pg.goto(re.sub(r'&page=setup.*$', '', pg.url)); pg.wait_for_selector('#recordForm', timeout=20000)
 import re,json,urllib.request,sys
 ROOT='http://localhost:8891'; APP=ROOT+'/jumprope/cloud/'
 def fb(b): return json.loads(urllib.request.urlopen(urllib.request.Request(ROOT+'/__fb',data=json.dumps(b).encode(),headers={'Content-Type':'application/json'})).read())
@@ -13,7 +18,7 @@ with sync_playwright() as p:
         pg=c.new_page(); pg.set_default_timeout(120000); pg.on('dialog',lambda d:d.accept()); return pg
     t=ctx(); t.goto(APP); t.evaluate("localStorage.setItem('mock-google', JSON.stringify({uid:'t1',name:'김선생',email:'t@example.com'}))")
     t.goto(APP); t.click('#jcG'); t.click('#jcNew'); t.fill('#jcFind','햇살초등학교'); t.fill('#jcPw','sunny-2026!'); t.fill('#jcPw2','sunny-2026!'); t.click('#jcMk'); t.wait_for_selector('#jcRc')
-    t.check('#jcOk'); t.click('#jcGo'); t.wait_for_selector('#recordForm'); sid=re.search(r's=([a-z0-9]+)',t.url).group(1)
+    t.check('#jcOk'); t.click('#jcGo'); skipsetup(t); sid=re.search(r's=([a-z0-9]+)',t.url).group(1)
     tok=t.evaluate("window.JRCLOUD.adminToken()")
     rows=[[str(1+i//100+3),str(1+(i%100)//25),str(1+i%25),'학생%03d'%i] for i in range(300)]
     t.evaluate("([tok,rows])=>window.JRCLOUD.call('addStudentsBulk',[tok,rows.map(r=>({grade:r[0],cls:r[1],number:r[2],name:r[3]}))]).catch(e=>String(e.message||e))",[tok,rows])

@@ -29,7 +29,7 @@ s = must(s, '<head>', '<head>\n<base href="../">')
 s = must(s, "club: /\\/club\\//.test(location.pathname),", "club: false, cloud: true,")
 s = must(s, "  else try { if (s) localStorage.setItem('jr_shell', s); else s = localStorage.getItem('jr_shell') || ''; } catch (e) {}\n", "  // 클라우드판: 주소에 공간이 없으면 [내 공간] 화면 (지난 공간으로 저절로 가지 않음)\n")
 s = must(s, "  if (APP.demo) return demoRpc(fn, args);\n", "  if (APP.demo) return demoRpc(fn, args);\n  return window.JRCLOUD.call(fn, args);   // 클라우드판: 학교 시트 대신 파이어베이스\n")
-s = must(s, "  if (!APP.shellUrl) return showSetup('');\n", "  if (!APP.shellUrl) return window.JRCLOUD.entry();\n  if (APP.q.page === 'space' && !APP.demo) return window.JRCLOUD.spacePage();\n")
+s = must(s, "  if (!APP.shellUrl) return showSetup('');\n", "  if (!APP.shellUrl) return window.JRCLOUD.entry();\n  if (APP.q.page === 'space' && !APP.demo) return window.JRCLOUD.spacePage();\n  if (APP.q.page === 'setup' && !APP.demo) return window.JRCLOUD.setupPage();\n")
 s = must(s, "    showSetup('학교 시트에 연결하지 못했어요: ' + (err.message || err) + '<br>· 배포 설정의 \"액세스 권한\"이 <b>모든 사용자</b>인지 · 주소가 맞는지 확인해 주세요.');\n  });\n});", "    window.JRCLOUD.fail(err);\n  });\n});")
 s = must(s, "'jumpropeAdminSession'", "('jumpropeCloud:' + APP.shellUrl)", s.count("'jumpropeAdminSession'"))
 s = must(s, 'const nextPage = APP.q.next || "admin";\n', 'const nextPage = APP.q.next || "admin";\nif (!APP.demo) window.JRCLOUD.adminLogin(nextPage);   // 클라우드판: 선생님(구글 로그인)이면 비밀번호 없이 통과\n')
@@ -43,6 +43,8 @@ s = must(s, "s=' + encodeURIComponent(APP.shellUrl)", "s=' + encodeURIComponent(
 s = must(s, '<h2>점프 Live (Lite) <span style="font-size:13px;font-weight:600;color:var(--coral-dark);">학교 시트만으로</span></h2>', '<h2>점프 Live (Lite)</h2>')
 s = must(s, "바깥 서버 없이 이 학교 시트만으로 수업 방을 열어요.", "이 공간에서 바로 수업 방을 열어요.")
 s = must(s, " 껍데기 <b>6판</b>부터 쓸 수 있어요.</p>", "</p>")
+# 전국 현황판 참여 번호에 딸린 설치 표시: 껍데기(cloud.js 의 ScriptApp)와 같은 값 'cloud:<공간>' 을 씀 (다르면 서로 "복사한 시트"로 봄)
+s = must(s, "  deployId: function(u){ const m = String(u == null ? APP.shellUrl : u).match(/\\/s\\/([A-Za-z0-9_-]{20,})\\//); return m ? m[1] : String(u == null ? APP.shellUrl : u); },", "  deployId: function(u){ return 'cloud:' + String(u == null ? APP.shellUrl : u); },")
 # ---- 클라우드판에 맞춘 안내 글 ----
 i = s.index("  items: [\n"); j = s.index("  esc: function(t)", i)
 HELP = [
