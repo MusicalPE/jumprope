@@ -725,8 +725,8 @@ async function setupStep(token, n) {
       const ctKey = 'jr_nat_contact|' + SID; let ct = {}; try { ct = JSON.parse(localStorage.getItem(ctKey) || 'null') || {}; } catch (e) {}
       if (!ct.teacher) ct = { teacher: (S.user && S.user.name) || '', contact: (S.user && S.user.email) || '' };
       frame('전국 현황판 Jump Earth!', '여러 학교가 뛴 횟수를 모아 함께 지구를 도는 현황판이에요.',
-        '<label class="jc-opt"><input type="checkbox" id="jcNat"' + (pre ? ' checked' : '') + (apOn ? '' : ' disabled') + '><div><b>참여하기</b><span>학생 이름은 김*늘처럼 가려서 보내요.</span></div></label>' +
-        '<label class="jc-opt"><input type="checkbox" id="jcShow"' + (nat.showName || !on ? ' checked' : '') + '><div><b>학교 이름 보이기</b><span>끄면 이름 없이 숫자만 올라가요.</span></div></label>' +
+        '<label class="jc-opt"><input type="checkbox" id="jcNat"' + (pre ? ' checked' : '') + (apOn ? '' : ' disabled') + '><div><b>참여하기 (권장)</b><span>학생 이름은 김*늘처럼 가려서 보내요.</span></div></label>' +
+        '<label class="jc-opt"><input type="checkbox" id="jcShow"' + (nat.showName || !on ? ' checked' : '') + '><div><b>학교 이름 보이기 (권장)</b><span>끄면 이름 없이 숫자만 올라가요.</span></div></label>' +
         '<div id="jcCt" class="jc-row" style="align-items:flex-end;margin-top:10px"><label style="flex:1;min-width:140px;margin:0">담당 교사 <input id="jcTn" maxlength="30" value="' + esc(ct.teacher || '') + '"></label><label style="flex:2;min-width:200px;margin:0">연락처 <input id="jcTc" maxlength="80" value="' + esc(ct.contact || '') + '"></label></div><p class="hint" id="jcCtH">담당 교사와 연락처는 운영자만 봐요. 현황판에는 나오지 않아요.</p>' +
         (apOn ? '' : '<div class="jc-msg jc-warn">승인 절차가 꺼져 있어서 참여할 수 없어요. <a href="#" id="jcBack4">기본 설정으로 돌아가 승인 절차를 켜 주세요.</a></div>') +
         '', '저장하고 다음');
