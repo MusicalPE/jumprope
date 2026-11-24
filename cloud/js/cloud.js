@@ -445,8 +445,10 @@ async function viewCreate() {
   const pick = (n) => { picked = n; $('#jcNmT').textContent = n; $('#jcSel').style.display = n ? '' : 'none'; $('#jcFind').closest('label').style.display = n ? 'none' : ''; $('#jcList').innerHTML = ''; $('#jcNo').style.display = n ? 'none' : ''; if (!n) { $('#jcFind').value = ''; $('#jcFind').focus(); } };
   $('#jcRe').onclick = () => pick('');
   $('#jcFind').oninput = () => {
-    const q = $('#jcFind').value.trim().replace(/\s+/g, ''), hit = q ? open.filter((n) => n.replace(/\s+/g, '').indexOf(q) >= 0) : [];
-    $('#jcList').innerHTML = hit.slice(0, 30).map((n) => '<button type="button" class="btn-outline" data-n="' + esc(n) + '">' + esc(n) + '</button>').join('') + (hit.length > 30 ? '<p class="hint">더 있어요. 이름을 조금 더 적어 주세요.</p>' : '') + (q && !hit.length ? '<p class="hint">찾는 학교가 없어요.</p>' : '');
+    // 줄여 쓰든 길게 쓰든 찾아지게: 초등학교=초 · 중학교=중 · 고등학교=고 · 분교장=분교, 띄어쓰기 무시 ("봉동초등학교 양화분교" → 완주봉동초양화분교)
+    const key = (v) => String(v).replace(/\s+/g, '').replace(/초등학교/g, '초').replace(/여자중학교/g, '여중').replace(/여자고등학교/g, '여고').replace(/중학교/g, '중').replace(/고등학교/g, '고').replace(/분교장/g, '분교');
+    const raw = $('#jcFind').value.replace(/\s+/g, ''), q = key(raw), hit = raw ? open.filter((n) => n.replace(/\s+/g, '').indexOf(raw) >= 0 || key(n).indexOf(q) >= 0) : [];
+    $('#jcList').innerHTML = hit.slice(0, 30).map((n) => '<button type="button" class="btn-outline" data-n="' + esc(n) + '">' + esc(n) + '</button>').join('') + (hit.length > 30 ? '<p class="hint">더 있어요. 이름을 조금 더 적어 주세요.</p>' : '') + (raw && !hit.length ? '<p class="hint">찾는 학교가 없어요.</p>' : '');
     $$('#jcList [data-n]').forEach((b) => { b.onclick = () => pick(b.dataset.n); });
   };
   $('#jcMk').onclick = async () => {
@@ -538,7 +540,8 @@ async function viewCodes() {
     try { await save(sc.names.concat(add), sc.off); viewCodes(); } catch (err) { busy(e.target, false); msg('#jcBm', fb.errText(err), 'err'); }
   };
   if (!names.length) return;
-  $('#jcFind').oninput = () => { const q = $('#jcFind').value.trim(); $$('#jcCt tr[data-sc]').forEach((tr) => { tr.style.display = !q || tr.dataset.sc.indexOf(q) >= 0 ? '' : 'none'; }); };
+  const fkey = (v) => String(v).replace(/\s+/g, '').replace(/초등학교/g, '초').replace(/여자중학교/g, '여중').replace(/여자고등학교/g, '여고').replace(/중학교/g, '중').replace(/고등학교/g, '고').replace(/분교장/g, '분교');
+  $('#jcFind').oninput = () => { const raw = $('#jcFind').value.replace(/\s+/g, ''), q = fkey(raw); $$('#jcCt tr[data-sc]').forEach((tr) => { tr.style.display = !raw || tr.dataset.sc.indexOf(raw) >= 0 || fkey(tr.dataset.sc).indexOf(q) >= 0 ? '' : 'none'; }); };
   $$('[data-off]').forEach((b) => { b.onclick = async () => { busy(b, true); try { await save(sc.names, b.dataset.v === '1' ? sc.off.concat(b.dataset.off) : sc.off.filter((x) => x !== b.dataset.off)); viewCodes(); } catch (e) { busy(b, false); msg('#jcBm', fb.errText(e), 'err'); } }; });
   $$('[data-del]').forEach((b) => { b.onclick = async () => { if (!window.confirm('"' + b.dataset.del + '" 을(를) 목록에서 뺄까요? 이 이름으로는 새 공간을 만들 수 없게 돼요.')) return; busy(b, true); try { await save(sc.names.filter((x) => x !== b.dataset.del), sc.off); viewCodes(); } catch (e) { busy(b, false); msg('#jcBm', fb.errText(e), 'err'); } }; });
 }

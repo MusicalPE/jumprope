@@ -118,7 +118,11 @@ with sync_playwright() as p:
     nm = docs()['gate/schools']['names']
     check('직접 붙여 넣기도 같은 규칙 (시·군 붙이기 · 시·군 이름뿐이면 그대로 · 도는 겹치는 곳만 · 이미 있으면 건너뜀)', all(x in nm for x in ['수원새싹초등학교', '가평중학교', '경기광주하늘초등학교', '햇님고등학교']) and nm.count('수원별빛초등학교') == 1, str(nm[-5:]))
     t4 = ctx({'uid': 'tD', 'name': '최선생', 'email': 'd@example.com'})
-    make(t4, '별빛초등', '새암호5678'); t4.wait_for_selector('#jcRc', timeout=20000)
+    t4.click('#jcNew'); t4.wait_for_selector('#jcFind')
+    def found(q):
+        t4.fill('#jcFind', q); t4.wait_for_timeout(200); return t4.eval_on_selector_all('#jcList [data-n]', 'e=>e.map(x=>x.dataset.n)')
+    check('학교 찾기: 길게 적어도 · 띄어 써도 · 줄여 적어도 찾음', found('별빛초등학교 은하분교장') == ['가평별빛초은하분교'] and found('가평여고') == ['가평여자고등학교'] and found('수원 달빛중') == ['수원달빛중학교'] and '가평별빛초은하분교' in found('은하'), str(found('별빛초등학교 은하분교장')))
+    make(t4, '수원별빛', '새암호5678'); t4.wait_for_selector('#jcRc', timeout=20000)
     sp4 = [v for v in spaces().values() if v.get('name') == '수원별빛초등학교']
     check('나이스에서 온 학교로 만든 공간에는 학교 번호가 적힘', len(sp4) == 1 and sp4[0].get('school') == '9000001', str(sp4[0].get('school') if sp4 else None))
     # ---------- 6. 운영자는 목록에 없는 이름도 ----------
