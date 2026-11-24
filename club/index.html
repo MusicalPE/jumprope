@@ -814,6 +814,7 @@ new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
   APP.demo = s === 'demo' || 'demo' in APP.q;
   if (APP.demo) s = 'demo';
   else try { if (s) localStorage.setItem('jrc_shell', s); else s = localStorage.getItem('jrc_shell') || ''; } catch (e) {}
+  if (!APP.demo && s) try { localStorage.setItem('jrc_home', location.origin + location.pathname + '?s=' + encodeURIComponent(s)); } catch (e) {}   // 현황판·기록실의 [우리 클럽]가 돌아올 곳 (마지막으로 연 클럽)
   APP.shellUrl = s;
   APP.base = location.origin + location.pathname + '?s=' + encodeURIComponent(s);
 })();

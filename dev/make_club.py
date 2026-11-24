@@ -54,6 +54,7 @@ def page(s):
     s = words(s)
     s = s.replace('url(fonts/', 'url(../fonts/').replace('src="img/', 'src="../img/').replace('href="icons/', 'href="../icons/')
     s = s.replace("'jr_shell'", "'jrc_shell'")
+    s = s.replace("'jr_home'", "'jrc_home'")   # 현황판·기록실의 [우리 학교]가 돌아올 곳도 학교판과 따로
     s = s.replace('Jump Earth (점퍼스)', 'Jump Earth! 클럽 리그').replace('Jump Earth(점퍼스)', 'Jump Earth! 클럽 리그')
     # 링크 미리보기(썸네일): 클럽판 그림·이름·주소
     for x, y in [('img/og-app.jpg', 'img/og-club-app.jpg'), ('img/og-board.jpg', 'img/og-club-board.jpg'), ('img/og-hall.jpg', 'img/og-club-hall.jpg'),

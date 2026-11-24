@@ -85,6 +85,7 @@ async function doOpen() {
 async function afterOpen() {
   S.pub = await fb.get('spaces/' + SID + '/meta/pub');
   if (!S.pub) throw new Error('이 공간을 찾을 수 없어요. 주소나 QR을 확인해 주세요.');
+  if (!BRIDGE) try { localStorage.setItem('jr_home', BASE + '?s=' + SID); } catch (e) {}   // 전국 현황판·기록실의 [우리 학교]가 이 공간으로 돌아오게
   try { S.flags = await fb.get('spaces/' + SID + '/meta/flags'); } catch (e) { S.flags = null; }   // 운영자가 콘솔에서만 켜는 표시 (live: 전용 점프 라이브)
   if (S.mode === 'teacher') { const q = await C.open(S.key, S.space.qbox, SID + '/qbox'); APPV.stuLink = BASE + '?s=' + SID + '#k=' + q.k + '&w=' + S.space.wtok; }
   await bootShell();

@@ -376,7 +376,8 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
   const kst = function(){ return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }); };
 
   // 우리 학교 프로그램으로 돌아가는 링크 (이 기기에서 쓰던 학교)
-  try { const s = localStorage.getItem('jr_shell'); if (s) $('homeLink').href = './?s=' + encodeURIComponent(s); } catch (e) {}
+  try { const h = localStorage.getItem('jr_home'), s = localStorage.getItem('jr_shell');   // 마지막으로 연 학교(시트판이든 점퍼스 3 공간이든)로. 예전 기기는 jr_shell 만 있음
+    if (h && h.indexOf(location.origin + '/') === 0) $('homeLink').href = h; else if (s) $('homeLink').href = './?s=' + encodeURIComponent(s); } catch (e) {}
   if (me) $('hallLink').href = 'hall.html?me=' + encodeURIComponent(me);
 
   function load(month){

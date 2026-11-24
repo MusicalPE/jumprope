@@ -816,6 +816,7 @@ new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
   APP.demo = s === 'demo' || 'demo' in APP.q;
   if (APP.demo) s = 'demo';
   // 클라우드판: 주소에 공간이 없으면 [내 공간] 화면 (지난 공간으로 저절로 가지 않음)
+  if (!APP.demo && s) try { localStorage.setItem('jr_home', location.origin + location.pathname + '?s=' + encodeURIComponent(s)); } catch (e) {}   // 현황판·기록실의 [우리 학교]가 돌아올 곳 (마지막으로 연 학교)
   APP.shellUrl = s;
   APP.base = location.origin + location.pathname + '?s=' + encodeURIComponent(s);
 })();

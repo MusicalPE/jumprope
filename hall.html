@@ -247,7 +247,8 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
   }
   function escClose(e){ if (e.key === 'Escape') closeModal(); }
   function closeModal(){ const m = document.getElementById('rankModal'); if (m) m.remove(); document.body.style.overflow = ''; document.removeEventListener('keydown', escClose); }
-  try { const s = localStorage.getItem('jr_shell'); if (s) $('homeLink').href = './?s=' + encodeURIComponent(s); } catch (e) {}
+  try { const h = localStorage.getItem('jr_home'), s = localStorage.getItem('jr_shell');   // 마지막으로 연 학교(시트판이든 점퍼스 3 공간이든)로. 예전 기기는 jr_shell 만 있음
+    if (h && h.indexOf(location.origin + '/') === 0) $('homeLink').href = h; else if (s) $('homeLink').href = './?s=' + encodeURIComponent(s); } catch (e) {}
   if (me) $('boardLink').href = 'board.html?me=' + encodeURIComponent(me);
 
   function stuTable50(list){
