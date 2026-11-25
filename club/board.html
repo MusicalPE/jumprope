@@ -91,6 +91,8 @@
   .ej-card { overflow: hidden; }
   .ej-scene { position: relative; margin: 10px -20px 0; height: 232px; }
   .ej-scene svg { display: block; position: absolute; inset: 0; overflow: hidden; }
+  .ej-globe { cursor: pointer; filter: drop-shadow(0 2px 4px rgba(20,80,127,.25)); }
+  .ej-globe:hover { filter: drop-shadow(0 3px 7px rgba(20,80,127,.4)); }
   .ej-kid { animation: ejHop .9s ease-in-out infinite; }
   .ej-pin b, .ej-lbl { font-family: inherit; }
   @keyframes ejHop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
@@ -311,13 +313,41 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
   const EJ_PLACE = [['asia',150,28,.85,.9],['euro',300,26,.85,.85],['afr',462,22,1.55,1],['mad',548,98,1,1],['sam',745,24,1.15,1],['nam',875,30,.72,.85],['grn',958,22,.9,.9],['aus',1030,92,.9,.9],['jpn',1100,26,1.2,1.2]];
   function ejSmooth(p){ const L = p.length, m = function(i){ const A = p[i % L], B = p[(i + 1) % L]; return [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2]; };
     let d = 'M' + m(0).join(' '); for (let i = 1; i <= L; i++) { const q = p[i % L], e = m(i); d += 'Q' + q[0] + ' ' + q[1] + ' ' + e[0] + ' ' + e[1]; } return d + 'Z'; }
+  // 작은 지구본: 지금 있는 곳을 가운데로 돌린 지구 (img/journey/globe-tex.webp = 정거원통 지도 1024x512 를 정사영으로 그림). 누르면 코스 지도
+  let ejTex = null, ejTexLoading = false;
+  function ejLoadTex(){ if (ejTex || ejTexLoading) return; ejTexLoading = true;
+    const im = new Image(); im.onload = function(){ try { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const g = c.getContext('2d'); g.drawImage(im, 0, 0); ejTex = { w: im.width, h: im.height, d: g.getImageData(0, 0, im.width, im.height).data }; ejDraw(); } catch (e) {} };
+    im.src = EJ_IMG + 'journey/globe-tex.webp'; }
+  function ejPos(cur){ let i = 0; EJ.forEach(function(c, j){ if (cur >= EJ_KM[j] * 1000) i = j; }); const j = Math.min(EJ.length - 1, i + 1), a = EJ[i], b = EJ[j];
+    const f = j === i ? 0 : Math.max(0, Math.min(1, (cur / 1000 - EJ_KM[i]) / (EJ_KM[j] - EJ_KM[i]))); let dl = b[2] - a[2]; if (dl > 180) dl -= 360; if (dl < -180) dl += 360;
+    return [a[1] + (b[1] - a[1]) * f, a[2] + dl * f]; }
+  function ejGlobe(size, lat, lon){
+    const r = Math.PI / 180, l0 = lon * r, p0 = Math.max(-35, Math.min(35, lat - 8)) * r, sp = Math.sin(p0), cp = Math.cos(p0);
+    const proj = function(la, lo){ const p = la * r, d = lo * r - l0, cc = sp * Math.sin(p) + cp * Math.cos(p) * Math.cos(d); return [Math.cos(p) * Math.sin(d), cp * Math.sin(p) - sp * Math.cos(p) * Math.cos(d), cc]; };
+    let img = '';
+    if (ejTex) { const dpr = Math.min(2, window.devicePixelRatio || 1), N = Math.round(size * dpr), c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), o = g.createImageData(N, N), T = ejTex;
+      for (let py = 0; py < N; py++) for (let px = 0; px < N; px++) { const x = (px + .5) / N * 2 - 1, y = 1 - (py + .5) / N * 2, rho = Math.sqrt(x * x + y * y); if (rho > 1) continue;
+        const cc = Math.asin(rho), sc = Math.sin(cc), co = Math.cos(cc), la = rho ? Math.asin(co * sp + y * sc * cp / rho) : p0, lo = l0 + (rho ? Math.atan2(x * sc, rho * co * cp - y * sc * sp) : 0);
+        let u = ((lo / r + 180) % 360 + 360) % 360 / 360, v = (90 - la / r) / 180; const tx = Math.min(T.w - 1, Math.floor(u * T.w)), ty = Math.min(T.h - 1, Math.max(0, Math.floor(v * T.h))), ti = (ty * T.w + tx) * 4, oi = (py * N + px) * 4;
+        o.data[oi] = T.d[ti]; o.data[oi + 1] = T.d[ti + 1]; o.data[oi + 2] = T.d[ti + 2]; o.data[oi + 3] = rho > .985 ? Math.round(255 * (1 - rho) / .015) : 255; }
+      g.putImageData(o, 0, 0); img = '<image href="' + c.toDataURL() + '" x="0" y="0" width="' + size + '" height="' + size + '"/>'; }
+    else { ejLoadTex(); img = '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + size / 2 + '" fill="#4FA8DE"/>'; }
+    // 코스: 앞면에 보이는 구간만
+    const R = size / 2, at = function(q){ return (R + q[0] * R).toFixed(1) + ' ' + (R - q[1] * R).toFixed(1); };
+    let route = ''; for (let i = 1; i < EJ.length; i++) { const a = proj(EJ[i - 1][1], EJ[i - 1][2]), b = proj(EJ[i][1], EJ[i][2]); if (a[2] > .05 && b[2] > .05) route += 'M' + at(a) + 'L' + at(b); }
+    const me = proj(lat, lon);
+    return img + '<circle cx="' + R + '" cy="' + R + '" r="' + R + '" fill="url(#ejGlobeShade)"/>' +
+      (route ? '<path d="' + route + '" fill="none" stroke="#fff" stroke-width="1.4" stroke-dasharray="1.5 2.5" stroke-linecap="round" opacity=".9"/>' : '') +
+      (me[2] > 0 ? '<circle cx="' + (R + me[0] * R).toFixed(1) + '" cy="' + (R - me[1] * R).toFixed(1) + '" r="' + Math.max(3, size / 18).toFixed(1) + '" fill="#F26A3D" stroke="#fff" stroke-width="1.6"/>' : '') +
+      '<circle cx="' + R + '" cy="' + R + '" r="' + (R - .6) + '" fill="none" stroke="#fff" stroke-width="1.2" opacity=".8"/>';
+  }
   function ejDraw(){
     const el = $('ejScene'); if (!el || !ejState) return;
     const W = el.clientWidth, H = el.clientHeight, narrow = W < 640, k = H / 232, kx = W / 1200;
     const cx = W / 2, rx = W * (narrow ? 0.95 : 0.6833), cy = 473 * k, ry = 403 * k, tr = 24 * k;
     const X0 = narrow ? 30 : 70 * Math.max(kx, .6), X1 = W - X0, goalKm = EJ_KM[EJ_KM.length - 1];
-    // 바다 그림(img/journey/world-sea.webp, 1584x640)의 수평선: 가운데가 높고 양 끝이 조금 낮은 완만한 곡선. o = 수평선에서 아래로 내려온 만큼
-    const yAt = function(x, o){ const t = (x - cx) / (W / 2); return H * (252 / 640) + H * (32 / 640) * t * t + o; };
+    // 바다 그림(img/journey/world-sea.webp, 1584x640)의 수평선: 가운데가 높고 양 끝이 낮은 둥근 곡선(둥근 지구 느낌). o = 수평선에서 아래로 내려온 만큼
+    const yAt = function(x, o){ const t = (x - cx) / (W / 2); return H * (252 / 640) + H * (76 / 640) * t * t + o; };
     const xOf = function(km){ return X0 + (X1 - X0) * km / goalKm; };
     const xMap = function(x){ return X0 + (X1 - X0) * (x - 70) / 1060; };
     const arc = function(xa, xb, o){ let d = ''; for (let x = xa; x < xb; x += 6) d += (d ? 'L' : 'M') + x.toFixed(1) + ' ' + yAt(x, o).toFixed(1); return d + (d ? 'L' : 'M') + xb.toFixed(1) + ' ' + yAt(xb, o).toFixed(1); };
@@ -366,12 +396,16 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     const ni = Math.min(EJ.length - 1, ai + 1), ls = narrow ? 54 : 78, right = xc < W * .62, lx = right ? W - ls - (narrow ? 10 : 22) : (narrow ? 10 : 22), ly = narrow ? 6 : 10;
     const boat = EJ_LM[EJ[ni][0]] ? '<g class="ej-lm"><image href="' + EJ_IMG + 'journey/w-' + EJ_LM[EJ[ni][0]] + '.webp" x="' + lx + '" y="' + ly + '" width="' + ls + '" height="' + ls + '" preserveAspectRatio="xMidYMax meet"/>' +
       '<text x="' + (right ? lx + ls : lx) + '" y="' + (ly + ls + (narrow ? 15 : 18)) + '" text-anchor="' + (right ? 'end' : 'start') + '" font-size="' + (narrow ? 11 : 13) + '" font-weight="800" fill="#14507F">' + (cur >= EJ_KM[ni] * 1000 ? '도착 · ' : '다음 · ') + EJ[ni][0] + '</text></g>' : '';
-    el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">' +
+    // 작은 지구본: 랜드마크 바로 안쪽(아이와 먼 쪽) 하늘에 (누르면 코스 지도)
+    const gs = narrow ? 44 : 62, gx = right ? lx - gs - (narrow ? 8 : 14) : lx + ls + (narrow ? 8 : 14), gy = narrow ? 10 : 14, gp = ejPos(cur);
+    const globe = '<defs><radialGradient id="ejGlobeShade" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#0B3E6B" stop-opacity=".45"/></radialGradient></defs>' +
+      '<g class="ej-globe" transform="translate(' + gx + ' ' + gy + ')" role="button" aria-label="코스 지도 보기"><title>코스 지도 보기</title>' + ejGlobe(gs, gp[0], gp[1]) + '</g>';
+    el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">' +
       '<image href="' + EJ_IMG + 'journey/world-sea.webp" x="0" y="0" width="' + W + '" height="' + H + '" preserveAspectRatio="none"/>' +
       land +
       '<path d="' + arc(X0, X1, tr) + '" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="5" stroke-dasharray="2 9" stroke-linecap="round"/>' +
       (xc > X0 + .5 ? '<path d="' + arc(X0, xc, tr) + '" fill="none" stroke="#F26A3D" stroke-width="6" stroke-linecap="round"/>' : '') +
-      pins + lbls + boat +
+      pins + lbls + boat + globe +
       '<g class="ej-kid"><image href="' + EJ_IMG + 'journey/' + (sea ? 'kid-boat' : 'kid') + '.webp" x="' + (xc - kw / 2).toFixed(1) + '" y="' + (ky - kh + (sea ? 6 : -2)).toFixed(1) + '" width="' + kw + '" height="' + kh.toFixed(1) + '"/></g></svg>';
   }
   let ejRT = 0; window.addEventListener('resize', function(){ clearTimeout(ejRT); ejRT = setTimeout(ejDraw, 120); });
@@ -773,6 +807,7 @@ const LAUREL_W = '<path d="M 74.7 169.5 L 53.9 157.9 L 37.8 140.1 L 28.3 118.3 L
     html += '<p class="hint o-end" style="text-align:center;">집계는 몇 분마다 새로 고쳐져요 · 마지막 갱신 ' + new Date(data.updated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + '</p>';
     $('body').innerHTML = html;
     if ($('ejMapBtn')) $('ejMapBtn').onclick = showEarthMap;
+    if ($('ejScene')) $('ejScene').onclick = function(e){ if (e.target.closest && e.target.closest('.ej-globe')) showEarthMap(); };
     ejDraw();
 
     const subOf = function(t){ return mLabel(data.month) + (data.grade ? ' · ' + esc(data.grade) + '학년' : '') + t; };
