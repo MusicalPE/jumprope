@@ -641,8 +641,12 @@
   .jr-ferry { position: absolute; bottom: 17px; width: 50px; height: 22px; margin-left: -25px; background: center / contain no-repeat; opacity: .92; }
   .jr-isle { position: absolute; bottom: -2px; width: 120px; height: 62px; transform: translateX(-50%); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 62'%3E%3Cellipse cx='60' cy='52' rx='58' ry='9' fill='%23F2DFB0'/%3E%3Cpath d='M6 52 Q30 34 50 24 Q60 12 70 24 Q90 34 114 52 Z' fill='%237DAF66'/%3E%3Cpath d='M50 24 Q60 12 70 24 Q64 21 60 25 Q56 21 50 24Z' fill='%235E9850'/%3E%3Cpath d='M22 52 Q40 40 60 42 Q80 40 98 52Z' fill='%239CC77F'/%3E%3Cellipse cx='60' cy='18.5' rx='5' ry='1.6' fill='%23B7DFF2'/%3E%3Crect x='93' y='38' width='1.6' height='12' fill='%238B6B4A' transform='rotate(8 94 44)'/%3E%3Cpath d='M95 38 q-6 -3 -10 1 M95 38 q6 -4 10 0 M95 38 q-2 -6 -7 -6 M95 38 q3 -6 8 -5' stroke='%234E9A45' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cpath d='M0 58 Q15 54 30 58 T60 58 T90 58 T120 58' stroke='%23fff' stroke-width='1.6' fill='none' opacity='.85'/%3E%3C/svg%3E") center bottom / contain no-repeat; }
   .jr-track { position: relative; height: 12px; }
-  .jr-rope { position: absolute; inset: 0; border-radius: 999px; background: repeating-linear-gradient(-60deg, rgba(255,255,255,.38) 0 2px, transparent 2px 6px), linear-gradient(90deg, #EF4444, #F97316, #EAB308, #22C55E, #06B6D4, #6366F1, #D946EF); box-shadow: 0 2px 0 rgba(110,70,30,.28), inset 0 -2px 0 rgba(0,0,0,.12); }
-  .jr-rest { position: absolute; top: 0; bottom: 0; right: 0; border-radius: 0 999px 999px 0; background: rgba(247,236,220,.72); }
+  .jr-rope { position: absolute; inset: 0; border-radius: 3px; background: repeating-linear-gradient(-60deg, rgba(255,255,255,.38) 0 2px, transparent 2px 6px), linear-gradient(90deg, #EF4444, #F97316, #EAB308, #22C55E, #06B6D4, #6366F1, #D946EF); box-shadow: 0 2px 0 rgba(110,70,30,.28), inset 0 -2px 0 rgba(0,0,0,.12); }
+  .jr-rest { position: absolute; top: 0; bottom: 0; right: 0; border-radius: 0 3px 3px 0; background: rgba(247,236,220,.72); }
+  /* 줄넘기 손잡이 (줄 길의 양 끝): 나무 손잡이 + 주황 이음쇠 */
+  .jr-track::before, .jr-track::after { content: ''; position: absolute; top: 50%; width: 28px; height: 16px; margin-top: -8px; box-sizing: border-box; border: 1px solid #9C6A34; border-radius: 8px; box-shadow: 0 2px 0 rgba(110,70,30,.25); }
+  .jr-track::before { right: calc(100% - 2px); background: linear-gradient(90deg, transparent calc(100% - 7px), #F26A3D calc(100% - 7px)), linear-gradient(#F7DCBA 0, #E9C089 22%, #CC985C 60%, #A8743B); }
+  .jr-track::after { left: calc(100% - 2px); background: linear-gradient(270deg, transparent calc(100% - 7px), #F26A3D calc(100% - 7px)), linear-gradient(#F7DCBA 0, #E9C089 22%, #CC985C 60%, #A8743B); }
   .jr-sea { position: absolute; top: -9px; bottom: -9px; z-index: 1; border-radius: 10px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 30'%3E%3Cpath d='M0 15 Q7 9 14 15 T28 15' stroke='%23fff' stroke-width='2' fill='none' opacity='.85'/%3E%3C/svg%3E") repeat-x center / 24px 100%, linear-gradient(#93DBFB, #38BDF8); box-shadow: inset 0 0 0 2px rgba(255,255,255,.55), 0 2px 0 rgba(14,116,144,.25); }
   .jr-sea.later { filter: saturate(.55) brightness(1.08); }
   .jr-stop { position: absolute; top: 6px; transform: translateX(-50%); z-index: 2; }
@@ -667,7 +671,7 @@
   @media (prefers-reduced-motion: reduce) { .jr-me img, .jr-me::after { animation: none; } }
   .jr-msg { margin: 34px 0 0; font-size: 0.85em; color: #4B5E3A; }
   .jr-msg b { color: #2F3D22; }
-  @media (max-width: 640px) { .jr-scene { padding: 100px 24px 12px; } .jr-land { left: 24px; right: 24px; top: 14px; } .jr-stop b { display: none; } .jr-stop.first b, .jr-stop.last b { display: block; } .jr-isle { width: 84px; height: 44px; } .jr-ferry { display: none; } }
+  @media (max-width: 640px) { .jr-scene { padding: 100px 24px 12px; } .jr-land { left: 24px; right: 24px; top: 14px; } .jr-stop b { display: none; } .jr-stop.first b, .jr-stop.last b { display: block; } .jr-isle { width: 84px; height: 44px; } .jr-ferry { display: none; } .jr-track::before, .jr-track::after { width: 20px; height: 14px; margin-top: -7px; } }
   .nat-kpis { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .nat-kpis div { background: var(--bg); border-radius: var(--r-sm); padding: 8px 12px; font-size: 0.88em; color: var(--muted); }
   .nat-kpis b { display: block; color: var(--ink); font-size: 1.25em; }
