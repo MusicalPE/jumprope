@@ -58,7 +58,7 @@ with sync_playwright() as p:
         inner=pg.evaluate("()=>{const s=document.querySelector('.jrhelp-sheet');return [s.scrollHeight>s.clientHeight, s.getBoundingClientRect().bottom<=innerHeight+1, getComputedStyle(s).overflowY];}")
         check(name+' 길면 창 안에서 스크롤', inner[1] and inner[2]=='auto' and (inner[0] or not kw), str(inner))
         href=pg.get_attribute('#jrhelpDemo','href'); tgt=pg.get_attribute('#jrhelpDemo','target')
-        check(name+' 미리보기 단추: 새 탭 · ?demo', tgt=='_blank' and href==(('../' if 'beta' in CH else '')+'?demo'), href)
+        check(name+' 미리보기 단추: 새 탭 · ?demo', tgt=='_blank' and href=='?demo', href)
         # 다른 팝업(QR) 위에서 Esc → 안내 창만 닫힘
         pg.keyboard.press('Escape'); pg.click('#navQr'); pg.wait_for_timeout(400)
         qr=pg.locator('#qrOverlay').count()
