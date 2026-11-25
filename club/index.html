@@ -4178,9 +4178,14 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
     const next = Object.assign({}, NAT.cfg, { shell: NAT.deployId() });
     if (newKey) next.key = NAT.newKey();
     msg.textContent = '저장 중...';
-    rpc('setExtraSettings', [token, { nat: next }]).then(function(r){
+    // 껍데기(6판부터)는 이미 있는 참여 번호를 화면이 무엇을 보내든 지킨다 → 일부러 바꿀 때는 먼저 참여 설정을 비운 뒤 새 번호로 저장 (안 그러면 번호가 그대로 남아, 복사한 시트가 원래 반의 줄을 덮어씀)
+    (newKey ? rpc('setExtraSettings', [token, { nat: null }]) : Promise.resolve({ ok: true })).then(function(r0){
+      if (!r0 || !r0.ok) throw new Error((r0 && r0.message) || '저장 실패');
+      return rpc('setExtraSettings', [token, { nat: next }]);
+    }).then(function(r){
       if (!r || !r.ok) throw new Error((r && r.message) || '저장 실패');
       NAT.cfg = (r.settings && r.settings.nat) || next; fill();
+      if (newKey && NAT.cfg.key !== next.key) throw new Error('참여 번호가 바뀌지 않았어요. 잠시 뒤 다시 눌러 주세요.');
       msg.textContent = newKey ? '새 참여 번호를 만들었어요. 현황판에 우리 반이 새로 올라가요.' : '그대로 쓸게요.';
       return sync(true);
     }).catch(function(err){ msg.textContent = '저장하지 못했어요: ' + (err.message || err); });

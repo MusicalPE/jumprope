@@ -82,7 +82,7 @@ with sync_playwright() as p:
     check('지난 달 보기', '최종 기록' in pg.text_content('#heroSub'), pg.text_content('#heroSub'))
     # 기록실
     pg.goto(H+'/jumprope/'+CH+'hall.html?me='+pid); pg.wait_for_timeout(1500)
-    check('기록실 달 카드', pg.locator('.month').count()==1, pg.text_content('.month-head h2'))
+    check('기록실 달 카드', pg.locator('.month-head').count()==1, pg.text_content('.month-head h2'))
     check('학교 1~3등', pg.locator('.podiums .podium').first.locator('.pl').count()==3)
     check('학생 1~3등', pg.locator('.podium.stars .pl').count()>=3)
     pg.click('details.ins summary'); pg.wait_for_timeout(200)
@@ -91,7 +91,7 @@ with sync_playwright() as p:
     check('기록실 달 고르기 최근 12개월', len(hopts)==12 and hopts==sorted(hopts, reverse=True), str(hopts))
     pg.select_option('#monthSel', hopts[5]); pg.wait_for_timeout(1200)
     h2=pg.text_content('.month-head h2')
-    check('다른 달 고르면 그 달만 표시', pg.locator('.month').count()==1 and h2==f'{int(hopts[5][:4])}년 {int(hopts[5][5:])}월', h2)
+    check('다른 달 고르면 그 달만 표시', pg.locator('.month-head').count()==1 and h2==f'{int(hopts[5][:4])}년 {int(hopts[5][5:])}월', h2)
     check('주소에 달 남김', 'month='+hopts[5] in pg.url, pg.url)
     pg.reload(); pg.wait_for_timeout(1500)
     check('새로고침해도 고른 달 유지', pg.input_value('#monthSel')==hopts[5])
@@ -121,6 +121,7 @@ with sync_playwright() as p:
     after=[r[0] for r in col_state()['schools']]
     newp=[x for x in after if x not in before]
     check('새 참여 번호 → 새 줄로 올라가고 예전 줄은 그대로', len(newp)==1 and pid in after and not pg.is_visible('#natMovedWarn'), pg.text_content('#natMsg'))
+    check('새 참여 번호: 시트에 저장된 번호가 실제로 바뀜', pg.evaluate("NAT.load().then(()=>NAT.myPid())") != pid)
     pid_old=pid; pid=newp[0] if newp else pid
     # 참여 끄기 → 기록 삭제
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
