@@ -101,3 +101,9 @@ python3 test_site.py                              # playwright 전체 흐름 시
 5-1. **클라우드판**: index.html·demo.js·Shell.gs 를 고쳤으면 `python3 dev/make_cloud.py` → `cd dev/cloud && node mockserver.js` 띄우고 `python3 test_cloud.py` (설계·구조는 dev/CLOUD_DESIGN.md)
 6. `python3 test_help.py` (`CH=club/`, `CH=beta/` 도) — 사용 안내(2.9.0): 다섯 화면(메인·학생 기록 조회·관리자 로그인·기록 승인·관리자 메뉴)마다 단추가 위쪽 줄 오른쪽 끝(메인은 다른 단추와 띄어서, 관리자는 왼쪽 메뉴 맨 아래)에 하나, 창 제목·항목 9개, 닫기·확인·Esc·바깥으로 닫힘, QR 위에서 Esc 는 안내 창만, 미리보기 안에서는 미리보기 단추 숨김. **안내 항목을 늘리거나 줄이면 test_help.py 의 N 도 같이 고칠 것.** 안내 글은 index.html 의 `HELP.items` (단추 이름은 화면 글자 그대로)
 7. 고친 기능에 맞는 시험을 따로 더 돌리고, 결과에 "무엇을 시험했고 무엇은 못 했는지" 적는다
+
+
+## beta/ 정리 (2026-11-25)
+- beta/index.html · board.html · hall.html 은 정식판으로 넘기는 한 줄짜리 화면(주소의 ?s=… 는 그대로 넘김). 껍데기 첫 화면의 '베타 열기' 링크로 들어와도 정식판이 뜸.
+- beta/Shell.gs · changelog.json 은 루트와 같은 파일. 더는 beta 에 먼저 올리지 않음 — 시험(dev/test_*.py, dev/cloud/test_*.py)을 거쳐 정식판에 바로.
+- 시험의 `CH=beta/` 는 이제 정식판을 한 번 더 도는 것과 같아서 돌릴 필요 없음.
