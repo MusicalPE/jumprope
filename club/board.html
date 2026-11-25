@@ -316,17 +316,16 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     const W = el.clientWidth, H = el.clientHeight, narrow = W < 640, k = H / 232, kx = W / 1200;
     const cx = W / 2, rx = W * (narrow ? 0.95 : 0.6833), cy = 473 * k, ry = 403 * k, tr = 24 * k;
     const X0 = narrow ? 30 : 70 * Math.max(kx, .6), X1 = W - X0, goalKm = EJ_KM[EJ_KM.length - 1];
-    const yAt = function(x, o){ return cy - (ry - o) * Math.sqrt(Math.max(0, 1 - Math.pow((x - cx) / (rx - o), 2))); };
+    // 바다 그림(img/journey/world-sea.webp, 1584x640)의 수평선: 가운데가 높고 양 끝이 조금 낮은 완만한 곡선. o = 수평선에서 아래로 내려온 만큼
+    const yAt = function(x, o){ const t = (x - cx) / (W / 2); return H * (252 / 640) + H * (32 / 640) * t * t + o; };
     const xOf = function(km){ return X0 + (X1 - X0) * km / goalKm; };
     const xMap = function(x){ return X0 + (X1 - X0) * (x - 70) / 1060; };
     const arc = function(xa, xb, o){ let d = ''; for (let x = xa; x < xb; x += 6) d += (d ? 'L' : 'M') + x.toFixed(1) + ' ' + yAt(x, o).toFixed(1); return d + (d ? 'L' : 'M') + xb.toFixed(1) + ' ' + yAt(xb, o).toFixed(1); };
     const cur = ejState.cur, ai = ejState.ai, curKm = cur / 1000, xc = xOf(curKm);
     let land = '';
     EJ_PLACE.forEach(function(p){ const x = xMap(p[1]), y = yAt(x, 0) + p[2] * k, ang = Math.atan2(yAt(x + 1, 0) - yAt(x - 1, 0), 2) * 180 / Math.PI, sx = p[3] * (narrow ? kx * 1.3 : kx), sy = p[4] * k * (narrow ? .8 : 1);
-      land += '<path d="' + ejSmooth(EJ_C[p[0]]) + '" transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + ang.toFixed(1) + ') scale(' + sx.toFixed(3) + ' ' + sy.toFixed(3) + ')" fill="#62B86A" stroke="#4E9F5A" stroke-width="1.5" vector-effect="non-scaling-stroke" opacity=".88"/>'; });
-    const hx = xOf(EJ_KM[24]) - 14 * kx; [[0, 0, 4], [9, 4, 3], [16, 9, 2.5]].forEach(function(h){ const x = hx + h[0] * kx; land += '<circle cx="' + x.toFixed(1) + '" cy="' + (yAt(x, 0) + (52 + h[1]) * k).toFixed(1) + '" r="' + h[2] + '" fill="#62B86A"/>'; });
-    let grid = ''; [-.75, -.5, -.25, 0, .25, .5, .75].forEach(function(f){ grid += '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + (Math.abs(f) * rx || 1) + '" ry="' + ry + '" fill="none" stroke="#fff" stroke-opacity=".13" stroke-width="1.2"/>'; });
-    [60, 130, 210].forEach(function(o){ grid += '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + (rx - o * .6 * kx) + '" ry="' + (ry - o * k) + '" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="1.2"/>'; });
+      land += '<path d="' + ejSmooth(EJ_C[p[0]]) + '" transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + ang.toFixed(1) + ') scale(' + sx.toFixed(3) + ' ' + sy.toFixed(3) + ')" fill="url(#ejLand)" stroke="#F3E3B3" stroke-width="3" stroke-linejoin="round" paint-order="stroke" vector-effect="non-scaling-stroke"/>'; });
+    const hx = xOf(EJ_KM[24]) - 14 * kx; [[0, 0, 4], [9, 4, 3], [16, 9, 2.5]].forEach(function(h){ const x = hx + h[0] * kx; land += '<circle cx="' + x.toFixed(1) + '" cy="' + (yAt(x, 0) + (52 + h[1]) * k).toFixed(1) + '" r="' + h[2] + '" fill="#7DB86C" stroke="#F3E3B3" stroke-width="2"/>'; });
     const fs = narrow ? 12 : 14;
     let pins = '', lbls = '';
     EJ.forEach(function(c, i){ const x = xOf(EJ_KM[i]), y = yAt(x, tr), on = cur >= EJ_KM[i] * 1000, big = c[5];
@@ -339,18 +338,10 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     const ni = Math.min(EJ.length - 1, ai + 1), ls = narrow ? 54 : 78, right = xc < W * .62, lx = right ? W - ls - (narrow ? 10 : 22) : (narrow ? 10 : 22), ly = narrow ? 6 : 10;
     const boat = EJ_LM[EJ[ni][0]] ? '<g class="ej-lm"><image href="' + EJ_IMG + 'journey/w-' + EJ_LM[EJ[ni][0]] + '.webp" x="' + lx + '" y="' + ly + '" width="' + ls + '" height="' + ls + '" preserveAspectRatio="xMidYMax meet"/>' +
       '<text x="' + (right ? lx + ls : lx) + '" y="' + (ly + ls + (narrow ? 15 : 18)) + '" text-anchor="' + (right ? 'end' : 'start') + '" font-size="' + (narrow ? 11 : 13) + '" font-weight="800" fill="#14507F">' + (cur >= EJ_KM[ni] * 1000 ? '도착 · ' : '다음 · ') + EJ[ni][0] + '</text></g>' : '';
-    el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><defs>' +
-      '<linearGradient id="ejSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EAF4FF"/></linearGradient>' +
-      '<linearGradient id="ejSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4FB4F0"/><stop offset=".45" stop-color="#2E86D1"/><stop offset="1" stop-color="#1D5FA3"/></linearGradient>' +
-      '<radialGradient id="ejShine" cx=".5" cy=".18" r=".45"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
-      '<filter id="ejGlow" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>' +
-      '<clipPath id="ejEarth"><ellipse cx="' + cx + '" cy="' + cy + '" rx="' + rx + '" ry="' + ry + '"/></clipPath></defs>' +
-      '<rect width="' + W + '" height="' + H + '" fill="url(#ejSky)"/>' +
-      '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + (rx + 6) + '" ry="' + (ry + 6) + '" fill="none" stroke="#9ED6FF" stroke-width="18" filter="url(#ejGlow)" opacity=".9"/>' +
-      '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + rx + '" ry="' + ry + '" fill="url(#ejSea)"/>' +
-      '<g clip-path="url(#ejEarth)">' + grid + land + '<rect width="' + W + '" height="' + H + '" fill="url(#ejShine)"/></g>' +
-      '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + rx + '" ry="' + ry + '" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2"/>' +
-      '<path d="' + arc(X0, X1, tr) + '" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="5" stroke-dasharray="2 9" stroke-linecap="round"/>' +
+    el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">' +
+      '<image href="' + EJ_IMG + 'journey/world-sea.webp" x="0" y="0" width="' + W + '" height="' + H + '" preserveAspectRatio="none"/>' +
+      '<defs><linearGradient id="ejLand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#93C97F"/><stop offset="1" stop-color="#6FAE60"/></linearGradient></defs>' + land +
+      '<path d="' + arc(X0, X1, tr) + '" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="5" stroke-dasharray="2 9" stroke-linecap="round"/>' +
       (xc > X0 + .5 ? '<path d="' + arc(X0, xc, tr) + '" fill="none" stroke="#F26A3D" stroke-width="6" stroke-linecap="round"/>' : '') +
       pins + lbls + boat +
       '<g class="ej-kid"><image href="' + EJ_IMG + 'journey/' + (sea ? 'kid-boat' : 'kid') + '.webp" x="' + (xc - kw / 2).toFixed(1) + '" y="' + (ky - kh + (sea ? 6 : -2)).toFixed(1) + '" width="' + kw + '" height="' + kh.toFixed(1) + '"/></g></svg>';
