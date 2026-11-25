@@ -335,8 +335,12 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     // 코스: 앞면에 보이는 구간만
     const R = size / 2, at = function(q){ return (R + q[0] * R).toFixed(1) + ' ' + (R - q[1] * R).toFixed(1); };
     let route = ''; for (let i = 1; i < EJ.length; i++) { const a = proj(EJ[i - 1][1], EJ[i - 1][2]), b = proj(EJ[i][1], EJ[i][2]); if (a[2] > .05 && b[2] > .05) route += 'M' + at(a) + 'L' + at(b); }
+    // 위도·경도 선 (30도마다)
+    let grid = ''; const seg = function(q1, q2){ if (q1[2] > 0 && q2[2] > 0) grid += 'M' + at(q1) + 'L' + at(q2); };
+    for (let lo = -180; lo < 180; lo += 30) for (let la = -90; la < 90; la += 6) seg(proj(la, lo), proj(la + 6, lo));
+    for (let la = -60; la <= 60; la += 30) for (let lo = -180; lo < 180; lo += 6) seg(proj(la, lo), proj(la, lo + 6));
     const me = proj(lat, lon);
-    return img + '<circle cx="' + R + '" cy="' + R + '" r="' + R + '" fill="url(#ejGlobeShade)"/>' +
+    return img + '<path d="' + grid + '" fill="none" stroke="#fff" stroke-width=".7" opacity=".45"/>' + '<circle cx="' + R + '" cy="' + R + '" r="' + R + '" fill="url(#ejGlobeShade)"/>' +
       (route ? '<path d="' + route + '" fill="none" stroke="#fff" stroke-width="1.4" stroke-dasharray="1.5 2.5" stroke-linecap="round" opacity=".9"/>' : '') +
       (me[2] > 0 ? '<circle cx="' + (R + me[0] * R).toFixed(1) + '" cy="' + (R - me[1] * R).toFixed(1) + '" r="' + Math.max(3, size / 18).toFixed(1) + '" fill="#F26A3D" stroke="#fff" stroke-width="1.6"/>' : '') +
       '<circle cx="' + R + '" cy="' + R + '" r="' + (R - .6) + '" fill="none" stroke="#fff" stroke-width="1.2" opacity=".8"/>';
