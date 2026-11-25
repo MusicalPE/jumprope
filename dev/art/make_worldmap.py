@@ -3,7 +3,8 @@
 #   python3 dev/art/make_worldmap.py <바탕.png> [미리보기 폴더]
 import sys, os, math, json, re
 from playwright.sync_api import sync_playwright
-BASE = os.path.abspath(sys.argv[1]); OUTDIR = sys.argv[2] if len(sys.argv) > 2 else None
+BASE = os.path.abspath(sys.argv[1]); OUTDIR = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] != '-' else None
+CITIES = json.load(open(sys.argv[3])) if len(sys.argv) > 3 else None   # 새로 그린 바탕(draw_worldmap.mjs)이면 도시 위치를 거기서 받음
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 BW, BH = 2752, 1536; OW = 1600; K = OW / BW; OH = round(BH * K)
 # 바탕 지도에 맞춘 투영 (밀러 도법, 해안 9곳으로 맞춤)
@@ -22,7 +23,8 @@ OFF = {'인천항': (30, -40, -40, -10), '칭다오': (-50, 60, -36, 18), '베�
        '이스탄불': (34, -58, 30, 4), '로마': (6, -64, -2, 24), '파리': (-6, -14, 0, 22), '마드리드': (-44, -30, -14, 22), '탕헤르': (-62, 36, -40, 20), '카이로': (34, 50, 36, 20), '테헤란': (10, 54, 0, 24),
        '다카르': (-56, 14, 0, 22), '라고스': (-44, 52, 0, 22), '킨샤사': (44, 26, 22, 22), '케이프타운': (0, 6, 0, 26), '부에노스아이레스': (48, 24, 40, 24), '산티아고': (-56, 26, -18, 22), '리마': (-54, -4, -12, 22),
        '보고타': (36, -32, 8, 22), '멕시코시티': (10, 12, 0, 24), '로스앤젤레스': (-48, -10, -10, 22), '호놀룰루': (0, 4, 0, 26), '우루무치': (14, -8, 22, 22), '알마티': (6, 50, 4, -12), '타슈켄트': (-24, -50, -10, 22)}
-pts = [PK(c[1], c[2]) if c[0] in ('인천항', '부산항') else P(c[1], c[2]) for c in EJ]
+if CITIES: OFF.update({'인천항': (34, -44, 48, -12), '베이징': (-6, -56, -40, -8), '칭다오': (-52, 58, -34, 24), '부산항': (60, 74, 16, 30)})   # 새 바탕은 동아시아가 더 촘촘
+pts = [tuple(CITIES[c[0]]) for c in EJ] if CITIES else [PK(c[1], c[2]) if c[0] in ('인천항', '부산항') else P(c[1], c[2]) for c in EJ]
 # 코스: 땅 길은 도시를 부드럽게 잇고, 뱃길은 바다 쪽으로 휘게
 def seg(i):
     (x0, y0), (x1, y1) = pts[i - 1], pts[i]; c = EJ[i]
@@ -55,7 +57,7 @@ def poly(ll, f=P):
     for i in range(len(q)):   # 부드럽게 (가운데 점을 이은 2차 곡선)
         a, b = q[i], q[(i + 1) % len(q)]; s += ' Q%.1f %.1f %.1f %.1f' % (a[0], a[1], (a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
     return '<path d="%s Z" class="land"/>' % s
-land = poly(KOR, PK) + poly(JEJU, PK) + ''.join(poly(p) for p in JPN + HAW)
+land = '' if CITIES else poly(KOR, PK) + poly(JEJU, PK) + ''.join(poly(p) for p in JPN + HAW)
 html = '''<!doctype html><meta charset="utf-8"><style>body{margin:0}svg{display:block}
 .land{fill:#8DBE6C;stroke:#F5E7BD;stroke-width:3.2;stroke-linejoin:round;paint-order:stroke}
 path.r{fill:none;stroke:#F26A3D;stroke-width:3.6;stroke-linecap:round;stroke-dasharray:1 8}
