@@ -9,7 +9,7 @@ import { sha256Bytes, Sheet } from './gasfake.js';
 import * as L from './lite.js';
 import { SCHOOL_SEARCH_URL } from '../firebase-config.js';
 
-const CLOUD_VERSION = '3.1.0';   // 점퍼스 3.0.0 — 화면에는 '클라우드판'이라 하지 않고 점퍼스 3 으로 부름 (시트로 쓰는 2.x 와 구분)
+const CLOUD_VERSION = '3.1.1';   // 점퍼스 3.0.0 — 화면에는 '클라우드판'이라 하지 않고 점퍼스 3 으로 부름 (시트로 쓰는 2.x 와 구분)
 const APPV = window.APP, SID = APPV.shellUrl || '';
 const BASE = location.origin + location.pathname;
 const $ = (s, r) => (r || document).querySelector(s);

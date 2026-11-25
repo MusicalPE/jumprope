@@ -332,8 +332,8 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
       if (narrow && !big && i !== ai) return;   // 휴대폰: 큰 도시와 지금 도시만
       pins += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (narrow ? (big ? 5 : 4) : (big ? 6 : 4)) + '" fill="' + (on ? '#F26A3D' : '#fff') + '" stroke="' + (on ? '#fff' : '#1F6FB5') + '" stroke-width="2"><title>' + c[0] + ' · ' + EJ_KM[i].toLocaleString('ko-KR') + 'km</title></circle>';
       if (show) lbls += '<text class="ej-lbl" x="' + Math.min(W - 26, Math.max(26, x)).toFixed(1) + '" y="' + (y + 24).toFixed(1) + '" text-anchor="middle" font-size="' + fs + '" font-weight="800" fill="#fff" stroke="#14507F" stroke-width="3" paint-order="stroke">' + c[0] + '</text>'; });
-    const ky = yAt(xc, tr), kw = narrow ? 46 : 56, kh = kw * 72 / 56;
-    const boat = ejState.onSea ? '<path d="M' + (xc - kw * .45) + ' ' + (ky - 4) + ' H' + (xc + kw * .45) + ' L' + (xc + kw * .32) + ' ' + (ky + 4) + ' H' + (xc - kw * .32) + ' Z" fill="#B45309" stroke="#7C2D12" stroke-width="1.2"/>' : '';
+    const sea = ejState.onSea, ky = yAt(xc, tr), kw = sea ? (narrow ? 56 : 68) : (narrow ? 36 : 44), kh = kw * (sea ? 480 / 405 : 480 / 243);   // 뭍: 줄넘기 하는 아이(243x480) · 바다: 배 탄 아이(405x480)
+    const boat = '';   // 배는 그림(journey/kid-boat.webp)에 들어 있음
     el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><defs>' +
       '<linearGradient id="ejSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EAF4FF"/></linearGradient>' +
       '<linearGradient id="ejSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4FB4F0"/><stop offset=".45" stop-color="#2E86D1"/><stop offset="1" stop-color="#1D5FA3"/></linearGradient>' +
@@ -348,7 +348,7 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
       '<path d="' + arc(X0, X1, tr) + '" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="5" stroke-dasharray="2 9" stroke-linecap="round"/>' +
       (xc > X0 + .5 ? '<path d="' + arc(X0, xc, tr) + '" fill="none" stroke="#F26A3D" stroke-width="6" stroke-linecap="round"/>' : '') +
       pins + lbls + boat +
-      '<g class="ej-kid"><image href="' + EJ_IMG + 'journey-kid.webp" x="' + (xc - kw / 2).toFixed(1) + '" y="' + (ky - kh - (ejState.onSea ? 4 : 2)).toFixed(1) + '" width="' + kw + '" height="' + kh.toFixed(1) + '"/></g></svg>';
+      '<g class="ej-kid"><image href="' + EJ_IMG + 'journey/' + (sea ? 'kid-boat' : 'kid') + '.webp" x="' + (xc - kw / 2).toFixed(1) + '" y="' + (ky - kh + (sea ? 6 : -2)).toFixed(1) + '" width="' + kw + '" height="' + kh.toFixed(1) + '"/></g></svg>';
   }
   let ejRT = 0; window.addEventListener('resize', function(){ clearTimeout(ejRT); ejRT = setTimeout(ejDraw, 120); });
   function showEarthMap(){
