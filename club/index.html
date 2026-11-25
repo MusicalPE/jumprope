@@ -661,7 +661,7 @@
   .jr-stop.near.on i { background: #F26A3D; }
   .jr-me { position: absolute; bottom: 2px; width: 64px; height: 102px; transform: translateX(-50%); z-index: 3; pointer-events: none; }
   .jr-me img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; animation: jrHop .9s ease-in-out infinite; filter: drop-shadow(0 1px 1.5px rgba(60,40,20,.28)); }
-  .jr-me.sea { bottom: -2px; width: 74px; height: 88px; }
+  .jr-me.sea { bottom: 9px; width: 74px; height: 88px; }
   .jr-me.sea img { animation: jrBob 2.4s ease-in-out infinite; }
   @keyframes jrBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-3px) rotate(1.5deg); } }
   .jr-me::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 30px; height: 7px; margin-left: -15px; border-radius: 50%; background: rgba(40,60,30,.22); animation: jrShadow .9s ease-in-out infinite; }
@@ -1247,7 +1247,7 @@ const JOURNEY = {
     R.forEach(function(s){ if (cur >= s[1] * 1000) at = s[0]; });
     for (let i = 0; i < R.length; i++) if (R[i][1] * 1000 > cur) { next = R[i]; break; }
     const P = function(km){ return (km / goalKm * 100).toFixed(3) + '%'; };
-    const seas = R.map(function(s, i){ return s[2] && i ? '<span class="jr-sea' + (cur < s[1] * 1000 ? ' later' : '') + '" style="left:' + P(R[i - 1][1]) + ';width:' + P(s[1] - R[i - 1][1]) + '" title="배를 타고 가요"></span>' : ''; }).join('');
+    const seas = '';   // 바닷길도 줄 길은 그대로 무지개 줄 — 바다는 배경 그림이 보여 주고, 그 위에 배가 뜸
     // 이름이 겹칠 만큼 가까운 도시: 출발 도시(처음·끝)를 먼저 보이고, 바로 옆 도시는 동그라미만
     const pos = R.map(function(s){ return s[1] / goalKm * 100; }), shown = [0, R.length - 1], near = {};
     for (let i = 1; i < R.length - 1; i++) { if (shown.some(function(j){ return Math.abs(pos[i] - pos[j]) < 3.5; })) near[i] = 1; else shown.push(i); }
