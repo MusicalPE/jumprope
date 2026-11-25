@@ -277,6 +277,8 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     ['멕시코시티', 19.43, -99.13, 0, 'j', 1], ['로스앤젤레스', 34.05, -118.24, 0, 'd'], ['호놀룰루', 21.31, -157.86, 1, 's', 1, 'isle'], ['도쿄', 35.68, 139.69, 1, 's'], ['부산항', 35.1, 129.04, 1, 's', 1]];
   const EJ_KM = (function(){ let km = 0; const r = Math.PI / 180; return EJ.map(function(c, i){ if (i) { const a = EJ[i - 1], dLa = (c[1] - a[1]) * r, dLo = (c[2] - a[2]) * r;
     const h = Math.sin(dLa / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(c[1] * r) * Math.sin(dLo / 2) ** 2; km += Math.round(2 * 6371 * Math.asin(Math.sqrt(h))); } return km; }); })();
+  // 도시마다 랜드마크 그림 (img/journey/w-*.webp) — 다음에 닿을 도시 위에 띄움
+  const EJ_LM = { '인천항': 'incheon', '칭다오': 'qingdao', '베이징': 'beijing', '울란바토르': 'ulaanbaatar', '우루무치': 'urumqi', '알마티': 'almaty', '타슈켄트': 'tashkent', '테헤란': 'tehran', '카이로': 'cairo', '이스탄불': 'istanbul', '로마': 'rome', '파리': 'paris', '마드리드': 'madrid', '탕헤르': 'tangier', '다카르': 'dakar', '라고스': 'lagos', '킨샤사': 'kinshasa', '케이프타운': 'capetown', '부에노스아이레스': 'buenosaires', '산티아고': 'santiago', '리마': 'lima', '보고타': 'bogota', '멕시코시티': 'mexicocity', '로스앤젤레스': 'losangeles', '호놀룰루': 'honolulu', '도쿄': 'tokyo', '부산항': 'busanport' };
   const EJ_GOAL = EJ_KM[EJ_KM.length - 1] * 1000;   // 한 바퀴 = 이만큼 회
   const EJ_IMG = (/\/beta\//.test(location.pathname) ? '../' : '') + 'img/';
   function earthHTML(t, title, prev){
@@ -333,7 +335,10 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
       pins += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (narrow ? (big ? 5 : 4) : (big ? 6 : 4)) + '" fill="' + (on ? '#F26A3D' : '#fff') + '" stroke="' + (on ? '#fff' : '#1F6FB5') + '" stroke-width="2"><title>' + c[0] + ' · ' + EJ_KM[i].toLocaleString('ko-KR') + 'km</title></circle>';
       if (show) lbls += '<text class="ej-lbl" x="' + Math.min(W - 26, Math.max(26, x)).toFixed(1) + '" y="' + (y + 24).toFixed(1) + '" text-anchor="middle" font-size="' + fs + '" font-weight="800" fill="#fff" stroke="#14507F" stroke-width="3" paint-order="stroke">' + c[0] + '</text>'; });
     const sea = ejState.onSea, ky = yAt(xc, tr), kw = sea ? (narrow ? 56 : 68) : (narrow ? 36 : 44), kh = kw * (sea ? 480 / 405 : 480 / 243);   // 뭍: 줄넘기 하는 아이(243x480) · 바다: 배 탄 아이(405x480)
-    const boat = '';   // 배는 그림(journey/kid-boat.webp)에 들어 있음
+    // 다음 도시의 랜드마크: 도시가 촘촘해서 핀 위에 두면 아이에게 가려짐 → 하늘 오른쪽 위에 "다음 도시" 로 띄움 (아이가 오른쪽 끝에 가면 왼쪽 위로)
+    const ni = Math.min(EJ.length - 1, ai + 1), ls = narrow ? 54 : 78, right = xc < W * .62, lx = right ? W - ls - (narrow ? 10 : 22) : (narrow ? 10 : 22), ly = narrow ? 6 : 10;
+    const boat = EJ_LM[EJ[ni][0]] ? '<g class="ej-lm"><image href="' + EJ_IMG + 'journey/w-' + EJ_LM[EJ[ni][0]] + '.webp" x="' + lx + '" y="' + ly + '" width="' + ls + '" height="' + ls + '" preserveAspectRatio="xMidYMax meet"/>' +
+      '<text x="' + (right ? lx + ls : lx) + '" y="' + (ly + ls + (narrow ? 15 : 18)) + '" text-anchor="' + (right ? 'end' : 'start') + '" font-size="' + (narrow ? 11 : 13) + '" font-weight="800" fill="#14507F">' + (cur >= EJ_KM[ni] * 1000 ? '도착 · ' : '다음 · ') + EJ[ni][0] + '</text></g>' : '';
     el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><defs>' +
       '<linearGradient id="ejSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EAF4FF"/></linearGradient>' +
       '<linearGradient id="ejSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4FB4F0"/><stop offset=".45" stop-color="#2E86D1"/><stop offset="1" stop-color="#1D5FA3"/></linearGradient>' +

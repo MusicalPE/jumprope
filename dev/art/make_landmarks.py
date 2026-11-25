@@ -32,3 +32,17 @@ for k, pre in SRC.items():
     o = cut(im, 22 if k != 'daejeon' else 6)
     o = o.crop(o.getchannel('A').point(lambda v: 255 if v > 24 else 0).getbbox()); w, h = o.size; s = 220 / max(w, h)
     o = o.resize((max(1, round(w * s)), max(1, round(h * s))), Image.LANCZOS); o.save(os.path.join(OUT, 'lm-%s.webp' % k), 'WEBP', quality=86, method=6); print(k, o.size)
+
+# ---- 지구 대장정 도시 랜드마크 (27개, 1024x1024 JPEG 흰 바탕):  python3 dev/art/make_landmarks.py <국내 그림 폴더> <세계 그림 폴더> → img/journey/w-*.webp
+WORLD = {'1': 'mexicocity', '10': 'madrid', '11': 'tashkent', '12': 'tangier', '13': 'lagos', '14': 'tehran', '15': 'istanbul', '16': 'qingdao', '17': 'rome', '18': 'urumqi', '19': 'capetown',
+         '2': 'honolulu', '20': 'dakar', '21': 'beijing', '22': 'ulaanbaatar', '23': 'paris', '24': 'cairo', '25': 'tokyo', '27': 'incheon', '3': 'busanport', '4': 'losangeles', '5': 'bogota',
+         '6': 'lima', '7': 'santiago', '8': 'buenosaires', '9': 'almaty', '': 'kinshasa'}
+if len(sys.argv) > 2:
+    import re
+    for f in sorted(os.listdir(sys.argv[2])):
+        m = re.match(r'Gemini_Generated_Image(?: \((\d+)\))?\.jpe?g$', f); k = WORLD.get(m.group(1) or '') if m else None
+        if not k: continue
+        o = cut(Image.open(os.path.join(sys.argv[2], f)), 26)
+        o = o.crop(o.getchannel('A').point(lambda v: 255 if v > 24 else 0).getbbox()); w, h = o.size; s = 200 / max(w, h)
+        o = o.resize((max(1, round(w * s)), max(1, round(h * s))), Image.LANCZOS); o.save(os.path.join(OUT, 'w-%s.webp' % k), 'WEBP', quality=84, method=6)
+    print('world', len([x for x in os.listdir(OUT) if x.startswith('w-')]))
