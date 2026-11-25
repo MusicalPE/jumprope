@@ -640,6 +640,8 @@
   .jr-land { position: absolute; left: 38px; right: 38px; top: 20px; height: 90px; }
   /* 지형 띠(img/journey/terrain-*.svg): 높이에 맞춰 옆으로 이어 그림. 이웃 띠와는 양 끝 72px를 흐리게 겹쳐 넘기고, 띠마다 층 높이·색이 비슷해서 경계가 자연스럽게 섞임 (그림: dev/art/make_terrain.py) */
   .jr-t { position: absolute; top: 0; bottom: 0; background-repeat: repeat-x; background-position: left bottom; background-size: auto 100%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 72px, #000 calc(100% - 72px), transparent); mask-image: linear-gradient(90deg, transparent, #000 72px, #000 calc(100% - 72px), transparent); }
+  .jr-lm { position: absolute; bottom: 9px; height: 38px; max-width: 56px; object-fit: contain; object-position: center bottom; transform: translateX(-50%); filter: drop-shadow(0 1px 1px rgba(60,80,60,.25)); }
+  .jr-lm.next { height: 60px; max-width: 92px; z-index: 1; }
   .jr-ferry { position: absolute; bottom: 17px; width: 50px; height: 22px; margin-left: -25px; background: center / contain no-repeat; opacity: .92; }
   .jr-isle { position: absolute; bottom: -2px; width: 120px; height: 62px; transform: translateX(-50%); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 62'%3E%3Cellipse cx='60' cy='52' rx='58' ry='9' fill='%23F2DFB0'/%3E%3Cpath d='M6 52 Q30 34 50 24 Q60 12 70 24 Q90 34 114 52 Z' fill='%237DAF66'/%3E%3Cpath d='M50 24 Q60 12 70 24 Q64 21 60 25 Q56 21 50 24Z' fill='%235E9850'/%3E%3Cpath d='M22 52 Q40 40 60 42 Q80 40 98 52Z' fill='%239CC77F'/%3E%3Cellipse cx='60' cy='18.5' rx='5' ry='1.6' fill='%23B7DFF2'/%3E%3Crect x='93' y='38' width='1.6' height='12' fill='%238B6B4A' transform='rotate(8 94 44)'/%3E%3Cpath d='M95 38 q-6 -3 -10 1 M95 38 q6 -4 10 0 M95 38 q-2 -6 -7 -6 M95 38 q3 -6 8 -5' stroke='%234E9A45' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cpath d='M0 58 Q15 54 30 58 T60 58 T90 58 T120 58' stroke='%23fff' stroke-width='1.6' fill='none' opacity='.85'/%3E%3C/svg%3E") center bottom / contain no-repeat; }
   .jr-track { position: relative; height: 12px; }
@@ -673,7 +675,7 @@
   @media (prefers-reduced-motion: reduce) { .jr-me img, .jr-me::after { animation: none; } }
   .jr-msg { margin: 34px 0 0; font-size: 0.85em; color: #4B5E3A; }
   .jr-msg b { color: #2F3D22; }
-  @media (max-width: 640px) { .jr-scene { padding: 100px 24px 12px; } .jr-land { left: 24px; right: 24px; top: 14px; } .jr-stop b { display: none; } .jr-stop.first b, .jr-stop.last b { display: block; } .jr-isle { width: 84px; height: 44px; } .jr-ferry { display: none; } .jr-track::before, .jr-track::after { width: 20px; height: 14px; margin-top: -7px; } }
+  @media (max-width: 640px) { .jr-scene { padding: 100px 24px 12px; } .jr-land { left: 24px; right: 24px; top: 14px; } .jr-stop b { display: none; } .jr-stop.first b, .jr-stop.last b { display: block; } .jr-lm { display: none; } .jr-lm.next, .jr-lm.end { display: block; } .jr-lm.next { height: 50px; max-width: 76px; } .jr-ferry { display: none; } .jr-track::before, .jr-track::after { width: 20px; height: 14px; margin-top: -7px; } }
   .nat-kpis { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .nat-kpis div { background: var(--bg); border-radius: var(--r-sm); padding: 8px 12px; font-size: 0.88em; color: var(--muted); }
   .nat-kpis b { display: block; color: var(--ink); font-size: 1.25em; }
@@ -1263,7 +1265,9 @@ const JOURNEY = {
       return '<i class="jr-t ' + r[0] + '" style="left:calc(' + P(r[1]) + ' - ' + L + 'px);width:calc(' + P(r[2] - r[1]) + ' + ' + (L + Rr) + 'px);background-image:url(' + IMG + 'journey/terrain-' + r[0] + '.svg)"></i>'; }).join('') +
       // 아직 건너지 않은(또는 이미 건넌) 바닷길에는 작은 여객선
       R.map(function(c, i){ return i && c[2] && !(cur >= R[i - 1][1] * 1000 && cur < c[1] * 1000) ? '<i class="jr-ferry" style="left:' + P((R[i - 1][1] + c[1]) / 2) + ';background-image:url(' + IMG + 'journey/ferry.svg)"></i>' : ''; }).join('');
-    const isles = R.filter(function(s){ return s[0] === '제주'; }).map(function(s){ return '<i class="jr-isle" style="left:' + P(s[1]) + '"></i>'; }).join('');
+    // 도시마다 랜드마크 그림 (img/journey/lm-*.webp). 다음에 닿을 도시는 크게. 목록에 없는 출발 도시는 학교 그림
+    const LM = { '대전': 'daejeon', '서울': 'seoul', '춘천': 'chuncheon', '강릉': 'gangneung', '안동': 'andong', '포항': 'pohang', '부산': 'busan', '여수': 'yeosu', '제주': 'jeju', '목포': 'mokpo', '광주': 'gwangju', '전주': 'jeonju' };
+    const isles = R.map(function(s, i){ return '<img class="jr-lm' + (s[1] === next[1] ? ' next' : '') + (i === 0 || i === R.length - 1 ? ' end' : '') + '" src="' + IMG + 'journey/lm-' + (LM[s[0]] || 'school') + '.webp" style="left:' + P(s[1]) + '" alt="" loading="lazy">'; }).join('');
     const onSea = !!(next[2] && at !== next[0]);
     const kid = '<img src="' + IMG + 'journey/' + (onSea ? 'kid-boat' : 'kid') + '.webp" alt="">';
     return '<div class="jr-head"><div><span class="jr-tag" data-our="{our} 줄넘기 여행">' + (APP.ourLabel || '우리 반') + ' 줄넘기 여행</span><h2>국토 대장정 <small>' + c.start + ' 출발 · 약 ' + goalKm.toLocaleString() + 'km</small></h2></div>' +
