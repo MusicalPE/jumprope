@@ -58,7 +58,7 @@ with sync_playwright() as p:
     check('설치 신호 후: 버튼 켜짐', not pg.is_disabled('#installBtn'))
     pg.click('#installBtn'); pg.wait_for_timeout(300)
     check('누르면 설치 창 → 완료 안내', pg.evaluate('window._prompted===true') and '앱 아이콘을 만들었어요' in pg.text_content('#installMsg'), pg.text_content('#installMsg'))
-    check('새 탭에 NEW 표시', pg.locator('#adminNav .feat-new:visible').count()==3)
+    check('새 탭에 NEW 표시', pg.locator('#adminNav .feat-new:visible').count()==pg.locator('#adminNav .feat-new').count()>=3, pg.locator('#adminNav .feat-new:visible').count())
     # ── 급수 인증
     pg.click('#adminNav button[data-tab="levels"]'); pg.wait_for_timeout(800)
     check('열어 본 탭은 NEW 사라짐', not pg.is_visible('#adminNav .feat-new[data-new="levels"]') and pg.is_visible('#adminNav .feat-new[data-new="certs"]'))
@@ -166,7 +166,7 @@ with sync_playwright() as p:
     gopts=pg.eval_on_selector_all('#gradeSel option','e=>e.map(x=>x.value)')
     check('학년 고르기', '6' in gopts and '4' in gopts, str(gopts))
     pg.select_option('#gradeSel','6'); pg.wait_for_timeout(1500)
-    subs=pg.eval_on_selector_all('.card:last-of-type table tbody td .sub','e=>e.map(x=>x.textContent)')
+    subs=pg.eval_on_selector_all('table tbody td .sub','e=>e.map(x=>x.textContent)')   # 맨 아래에 표 없는 카드(한 번에 최고 연속)가 생겨서 표 전체에서 봄
     check('6학년만 보기', '6학년만' in pg.text_content('#heroSub') and subs and all(t=='6학년' for t in subs), str(subs[:8]))
     pg.screenshot(path=OUT+'/v22_board.png', full_page=True)
     bg=get(H+'/collector?api=board&grade=6')['result']
