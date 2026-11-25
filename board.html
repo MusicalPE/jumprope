@@ -322,38 +322,10 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     const xMap = function(x){ return X0 + (X1 - X0) * (x - 70) / 1060; };
     const arc = function(xa, xb, o){ let d = ''; for (let x = xa; x < xb; x += 6) d += (d ? 'L' : 'M') + x.toFixed(1) + ' ' + yAt(x, o).toFixed(1); return d + (d ? 'L' : 'M') + xb.toFixed(1) + ' ' + yAt(xb, o).toFixed(1); };
     const cur = ejState.cur, ai = ejState.ai, curKm = cur / 1000, xc = xOf(curKm);
-    // 땅: 대륙 모양을 얹지 않고, 실제 코스를 따라 "땅을 지나는 구간에는 땅, 배로 건너는 구간에는 바다" (EJ 의 4번째 값 1 = 그 도시까지 배로 감, 5번째 값 = 그 구간의 지형)
-    //   이어진 땅 구간을 한 덩어리로 그리고, 구간마다 지형 색(사막·초원·밀림·산…)을 옆으로 이어 칠함. 바닷길이 짧으면(지브롤터 등) 틈도 좁게
-    const TC = { p: '#8CC47A', g: '#A9CB7A', d: '#E9D59A', m: '#8DB07E', h: '#84C07A', j: '#5FA75C', v: '#C9CC7A', s: '#84C07A', '': '#84C07A' };
-    const yr = function(x){ return yAt(x, tr); }, nz = function(km, a, b){ return Math.sin(km / a) * .6 + Math.sin(km / b + 1.3) * .4; };
-    const runs = []; let ra = 0;
-    for (let i = 1; i <= EJ.length; i++) if (i === EJ.length || EJ[i][3]) { runs.push([ra, i - 1]); ra = i; }
-    let land = '', defs = '', deco = '';
-    runs.forEach(function(r, ri){ const a = r[0], b = r[1], xa = xOf(EJ_KM[a]), xb = xOf(EJ_KM[b]);
-      const gapL = a > 0 ? xa - xOf(EJ_KM[a - 1]) : 60, gapR = b < EJ.length - 1 ? xOf(EJ_KM[b + 1]) - xb : 60, base = (narrow ? 9 : 15);
-      const x0 = xa - Math.min(base, gapL * .34), x1 = xb + Math.min(base, gapR * .34), wd = Math.max(1, x1 - x0), eps = Math.min(.5, 12 / wd);
-      const kmOf = function(x){ return (x - X0) / (X1 - X0) * goalKm; }, f = function(u){ return Math.sqrt(Math.max(0, Math.min(1, u / eps, (1 - u) / eps))); };
-      const N = Math.max(8, Math.round(wd / 7)); let top = [], bot = [];
-      for (let n = 0; n <= N; n++) { const u = n / N, x = x0 + wd * u, km = kmOf(x), ff = f(u);
-        top.push([x, yr(x) - ff * (8 + 3 * nz(km, 610, 230)) * k]); bot.push([x, yr(x) + ff * (30 + 9 * nz(km, 880, 310) + (wd < 40 ? -8 : 0)) * k]); }
-      const d = 'M' + top.concat(bot.reverse()).map(function(q){ return q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join('L') + 'Z';
-      let stops = '';
-      if (a === b) stops = '<stop offset="0" stop-color="' + TC.h + '"/>';
-      else for (let i = a + 1; i <= b; i++) { const xm = (xOf(EJ_KM[i - 1]) + xOf(EJ_KM[i])) / 2; stops += '<stop offset="' + ((xm - x0) / wd).toFixed(3) + '" stop-color="' + (TC[EJ[i][4]] || TC.h) + '"/>'; }
-      defs += '<linearGradient id="ejL' + ri + '" gradientUnits="userSpaceOnUse" x1="' + x0.toFixed(1) + '" y1="0" x2="' + x1.toFixed(1) + '" y2="0">' + stops + '</linearGradient>';
-      land += '<path d="' + d + '" fill="url(#ejL' + ri + ')" stroke="#F3E3B3" stroke-width="3" stroke-linejoin="round" paint-order="stroke"/>';
-      // 지형 꾸밈: 산봉우리(m) · 밀림 나무(j) · 모래 언덕(d) · 풀밭 점(g·v)
-      for (let i = a + 1; i <= b; i++) { const t = EJ[i][4], xl = xOf(EJ_KM[i - 1]), xr = xOf(EJ_KM[i]), w = xr - xl; if (w < (narrow ? 26 : 18)) continue;
-        const cnt = Math.max(1, Math.min(narrow ? 2 : 4, Math.round(w / 34)));
-        for (let c = 0; c < cnt; c++) { const x = xl + w * (c + .5) / cnt + 3 * nz(EJ_KM[i] + c * 400, 130, 57), y = yr(x), h = (1 + .25 * nz(EJ_KM[i] * 3 + c * 911, 200, 77));
-          if (t === 'm') deco += '<path d="M' + (x - 9 * k * h).toFixed(1) + ' ' + (y - 6 * k).toFixed(1) + ' L' + x.toFixed(1) + ' ' + (y - 22 * k * h).toFixed(1) + ' L' + (x + 9 * k * h).toFixed(1) + ' ' + (y - 6 * k).toFixed(1) + ' Z" fill="#7C9C86" stroke="#F3E3B3" stroke-width="1"/><path d="M' + (x - 3.4 * k * h).toFixed(1) + ' ' + (y - 16 * k * h).toFixed(1) + ' L' + x.toFixed(1) + ' ' + (y - 22 * k * h).toFixed(1) + ' L' + (x + 3.4 * k * h).toFixed(1) + ' ' + (y - 16 * k * h).toFixed(1) + ' Z" fill="#fff"/>';
-          else if (t === 'j') deco += '<circle cx="' + (x - 4).toFixed(1) + '" cy="' + (y + 15 * k).toFixed(1) + '" r="' + (4.2 * k).toFixed(1) + '" fill="#3F8F4E"/><circle cx="' + (x + 3).toFixed(1) + '" cy="' + (y + 20 * k).toFixed(1) + '" r="' + (3.4 * k).toFixed(1) + '" fill="#4C9D58"/>';
-          else if (t === 'd') deco += '<path d="M' + (x - 8).toFixed(1) + ' ' + (y + 18 * k).toFixed(1) + ' q8 -7 16 0" fill="none" stroke="#D2B66E" stroke-width="1.6" stroke-linecap="round"/>';
-          else if (t === 'g' || t === 'v' || t === 'p') deco += '<path d="M' + (x - 3).toFixed(1) + ' ' + (y + 18 * k).toFixed(1) + ' l2 -5 l2 5 m2 0 l2 -4 l2 4" fill="none" stroke="' + (t === 'v' ? '#9A9C4E' : '#5E9E55') + '" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>';
-          else if (t === 'h') deco += '<circle cx="' + x.toFixed(1) + '" cy="' + (y + 17 * k).toFixed(1) + '" r="' + (3.6 * k).toFixed(1) + '" fill="#5FA75C"/>';
-        } }
-    });
-    land = '<defs>' + defs + '</defs>' + land + deco;
+    let land = '';
+    EJ_PLACE.forEach(function(p){ const x = xMap(p[1]), y = yAt(x, 0) + p[2] * k, ang = Math.atan2(yAt(x + 1, 0) - yAt(x - 1, 0), 2) * 180 / Math.PI, sx = p[3] * (narrow ? kx * 1.3 : kx), sy = p[4] * k * (narrow ? .8 : 1);
+      land += '<path d="' + ejSmooth(EJ_C[p[0]]) + '" transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + ang.toFixed(1) + ') scale(' + sx.toFixed(3) + ' ' + sy.toFixed(3) + ')" fill="url(#ejLand)" stroke="#F3E3B3" stroke-width="3" stroke-linejoin="round" paint-order="stroke" vector-effect="non-scaling-stroke"/>'; });
+    const hx = xOf(EJ_KM[24]) - 14 * kx; [[0, 0, 4], [9, 4, 3], [16, 9, 2.5]].forEach(function(h){ const x = hx + h[0] * kx; land += '<circle cx="' + x.toFixed(1) + '" cy="' + (yAt(x, 0) + (52 + h[1]) * k).toFixed(1) + '" r="' + h[2] + '" fill="#7DB86C" stroke="#F3E3B3" stroke-width="2"/>'; });
     const fs = narrow ? 12 : 14;
     let pins = '', lbls = '';
     EJ.forEach(function(c, i){ const x = xOf(EJ_KM[i]), y = yAt(x, tr), on = cur >= EJ_KM[i] * 1000, big = c[5];
@@ -368,7 +340,7 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
       '<text x="' + (right ? lx + ls : lx) + '" y="' + (ly + ls + (narrow ? 15 : 18)) + '" text-anchor="' + (right ? 'end' : 'start') + '" font-size="' + (narrow ? 11 : 13) + '" font-weight="800" fill="#14507F">' + (cur >= EJ_KM[ni] * 1000 ? '도착 · ' : '다음 · ') + EJ[ni][0] + '</text></g>' : '';
     el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">' +
       '<image href="' + EJ_IMG + 'journey/world-sea.webp" x="0" y="0" width="' + W + '" height="' + H + '" preserveAspectRatio="none"/>' +
-      land +
+      '<defs><linearGradient id="ejLand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#93C97F"/><stop offset="1" stop-color="#6FAE60"/></linearGradient></defs>' + land +
       '<path d="' + arc(X0, X1, tr) + '" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="5" stroke-dasharray="2 9" stroke-linecap="round"/>' +
       (xc > X0 + .5 ? '<path d="' + arc(X0, xc, tr) + '" fill="none" stroke="#F26A3D" stroke-width="6" stroke-linecap="round"/>' : '') +
       pins + lbls + boat +
