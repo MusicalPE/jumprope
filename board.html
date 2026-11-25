@@ -400,13 +400,17 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     const ni = Math.min(EJ.length - 1, ai + 1), ls = narrow ? 54 : 78, right = xc < W * .62, lx = right ? W - ls - (narrow ? 10 : 22) : (narrow ? 10 : 22), ly = narrow ? 6 : 10;
     const boat = EJ_LM[EJ[ni][0]] ? '<g class="ej-lm"><image href="' + EJ_IMG + 'journey/w-' + EJ_LM[EJ[ni][0]] + '.webp" x="' + lx + '" y="' + ly + '" width="' + ls + '" height="' + ls + '" preserveAspectRatio="xMidYMax meet"/>' +
       '<text x="' + (right ? lx + ls : lx) + '" y="' + (ly + ls + (narrow ? 15 : 18)) + '" text-anchor="' + (right ? 'end' : 'start') + '" font-size="' + (narrow ? 11 : 13) + '" font-weight="800" fill="#14507F">' + (cur >= EJ_KM[ni] * 1000 ? '도착 · ' : '다음 · ') + EJ[ni][0] + '</text></g>' : '';
+    // 대륙 아래 바다 꾸밈: 고래·돌고래·거북·물고기·배 (img/journey/sea-*.webp, dev/art/sea/make_sea.py) — [그림, 가로 위치(0~1), 수평선에서 아래로, 높이, 휴대폰에도]
+    const SEA = [['cargo', .13, 112, 46, 1], ['sail', .31, 104, 40, 0], ['dolphin', .46, 132, 38, 1], ['fish', .59, 128, 24, 0], ['turtle', .70, 116, 30, 1], ['whale', .88, 124, 42, 1]], SEA_R = { whale: 1.5, dolphin: 1.375, turtle: 1.43, fish: 1.64, cargo: 1.53, sail: .95 };
+    let seaDeco = ''; SEA.forEach(function(q){ if (narrow && !q[4]) return; const h = q[3] * k * (narrow ? 1.05 : 1), w = h * SEA_R[q[0]], x = X0 + (X1 - X0) * q[1], y = yAt(x, q[2] * k);
+      seaDeco += '<image href="' + EJ_IMG + 'journey/sea-' + q[0] + '.webp" x="' + (x - w / 2).toFixed(1) + '" y="' + (y - h).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" opacity=".95"/>'; });
     // 작은 지구본: 랜드마크 바로 안쪽(아이와 먼 쪽) 하늘에 (누르면 코스 지도)
     const gs = narrow ? 44 : 62, gx = right ? lx - gs - (narrow ? 8 : 14) : lx + ls + (narrow ? 8 : 14), gy = narrow ? 10 : 14, gp = ejPos(cur);
     const globe = '<defs><radialGradient id="ejGlobeShade" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#0B3E6B" stop-opacity=".45"/></radialGradient></defs>' +
       '<g class="ej-globe" transform="translate(' + gx + ' ' + gy + ')" role="button" aria-label="코스 지도 보기"><title>코스 지도 보기</title>' + ejGlobe(gs, gp[0], gp[1]) + '</g>';
     el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">' +
       '<image href="' + EJ_IMG + 'journey/world-sea.webp" x="0" y="0" width="' + W + '" height="' + H + '" preserveAspectRatio="none"/>' +
-      land +
+      land + seaDeco +
       '<path d="' + arc(X0, X1, tr) + '" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="5" stroke-dasharray="2 9" stroke-linecap="round"/>' +
       (xc > X0 + .5 ? '<path d="' + arc(X0, xc, tr) + '" fill="none" stroke="#F26A3D" stroke-width="6" stroke-linecap="round"/>' : '') +
       pins + lbls + boat + globe +
