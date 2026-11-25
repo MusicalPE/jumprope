@@ -5,14 +5,16 @@ import fs from 'fs'; import path from 'path'; import { createRequire } from 'mod
 const require = createRequire(process.cwd() + '/'); const topo = require('topojson-client'); const d3 = await import(require.resolve('d3-geo')); const d3p = await import(require.resolve('d3-geo-projection'));
 const OUT = process.argv[2]; const W = 1600, H = 893;
 const world = JSON.parse(fs.readFileSync(require.resolve('world-atlas/land-50m.json'))); const land0 = topo.feature(world, world.objects.land);
-// 남극은 빼고 (위도 -60 아래만 있는 덩어리)
-const land = { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'MultiPolygon', coordinates: (land0.features[0].geometry.coordinates).filter(poly => poly[0].some(([lo, la]) => la > -60)) } }] };
+// 남극은 빼고 (위도 -60 아래만 있는 덩어리), 작은 섬도 뺌 — 코스에 나오는 하와이·제주는 남김
+const near = (poly, lo0, lo1, la0, la1) => poly[0].some(([lo, la]) => lo >= lo0 && lo <= lo1 && la >= la0 && la <= la1);
+const keep = poly => (d3.geoArea({ type: 'Polygon', coordinates: poly }) > 1.2e-4) || near(poly, -161, -154, 18, 23) || near(poly, 126, 127.1, 33, 33.7);
+const land = { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'MultiPolygon', coordinates: (land0.features[0].geometry.coordinates).filter(poly => poly[0].some(([lo, la]) => la > -60) && keep(poly)) } }] };
 const proj = d3p.geoMiller().scale(W / (2 * Math.PI)).translate([W / 2, 0]); const top = proj([0, 84])[1]; proj.translate([W / 2, 22 - top]);
 const gp = d3.geoPath(proj); const P = (lon, lat) => proj([lon, lat]);
 let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const inLand = (lon, lat) => d3.geoContains(land, [lon, lat]);
 // 지형 얼룩 [경도, 위도, 반지름(도), 색]
-const SAND = '#E8D29A', DEEP = '#6FA557', PALE = '#D8EBCF', SOFT = '#A9CE84';
+const SAND = '#F4E6BC', DEEP = '#6FA557', PALE = '#D8EBCF', SOFT = '#A9CE84';
 const blobs = [];
 [[-8, 22, 9], [5, 24, 10], [18, 22, 10], [28, 24, 8], [45, 23, 8], [55, 30, 5], [71, 27, 3.5], [60, 42, 6], [66, 39, 4], [84, 40, 6.5], [98, 42, 7], [108, 42, 5.5], [88, 33, 5], [124, -24, 10], [135, -25, 9], [140, -30, 5],
  [-113, 34, 4.5], [-104, 30, 3.5], [-69, -24, 2.6], [-68, -43, 3.5], [20, -24, 5.5], [15, -22, 3]].forEach(b => blobs.push([...b, SAND, .95]));
@@ -47,7 +49,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" 
 <path d="${landD}" fill="none" stroke="#F6E8BF" stroke-width="7" stroke-linejoin="round"/>
 <path d="${landD}" fill="url(#lg)"/>
 <g clip-path="url(#lc)"><g filter="url(#soft)">${blobSvg}</g>${trees}</g>
-<path d="${landD}" fill="none" stroke="#6F925A" stroke-width="1.1" stroke-linejoin="round" opacity=".85"/>
+<path d="${landD}" fill="none" stroke="#4E7140" stroke-width="1.7" stroke-linejoin="round"/>
 ${deco}
 <rect width="${W}" height="${H}" filter="url(#paper)"/></svg>`;
 fs.writeFileSync(path.join(OUT, 'base.svg'), svg);
