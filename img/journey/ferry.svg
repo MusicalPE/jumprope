@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 300" width="700" height="300">
+  <defs>
+    <linearGradient id="hullGrad" x1="0" y1="155" x2="0" y2="245" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E8F1F8"/>
+    </linearGradient>
+    <linearGradient id="cabinGrad" x1="0" y1="98" x2="0" y2="165" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F1F6FA"/>
+    </linearGradient>
+    <linearGradient id="funnelGrad" x1="270" y1="54" x2="328" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF8359"/>
+      <stop offset="100%" stop-color="#E4572B"/>
+    </linearGradient>
+    <linearGradient id="waterGrad" x1="70" y1="238" x2="630" y2="238" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7DD3FC"/>
+      <stop offset="50%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+  </defs>
+  <g fill="#E6F4FC" opacity="0.9">
+    <circle cx="272" cy="48" r="14"/>
+    <circle cx="248" cy="38" r="18"/>
+    <circle cx="218" cy="33" r="13"/>
+  </g>
+  <path d="M 272,110 L 282,62 Q 284,56 290,56 L 315,56 Q 321,56 322,62 L 328,110 Z" fill="url(#funnelGrad)" stroke="#D9532A" stroke-width="1.5"/>
+  <rect x="278" y="65" width="44" height="9" rx="4.5" fill="#3B4D63"/>
+  <path d="M 184,164 L 204,112 Q 209,102 220,102 L 456,102 Q 470,102 478,114 L 506,164 Z" fill="url(#cabinGrad)" stroke="#CBD8E6" stroke-width="2"/>
+  <g fill="#A9E0F8" stroke="#7CC4E8" stroke-width="1.2">
+    <rect x="224" y="118" width="32" height="22" rx="7"/>
+    <rect x="268" y="118" width="32" height="22" rx="7"/>
+    <rect x="312" y="118" width="32" height="22" rx="7"/>
+    <rect x="356" y="118" width="32" height="22" rx="7"/>
+    <rect x="400" y="118" width="32" height="22" rx="7"/>
+    <path d="M 444,118 L 467,118 Q 474,118 478,125 L 484,140 L 444,140 Z"/>
+  </g>
+  <path d="M 114,162 L 592,162 Q 602,162 596,172 L 552,240 L 148,240 Q 132,240 126,222 L 108,172 Q 106,162 114,162 Z" fill="url(#hullGrad)" stroke="#C2D2E2" stroke-width="2"/>
+  <path d="M 116,188 L 586,188 L 575,207 L 122,207 Z" fill="#F26A3D"/>
+  <path d="M 130,224 L 562,224 L 552,240 L 148,240 Q 136,240 130,224 Z" fill="#3B4D63"/>
+  <g fill="#A9E0F8" stroke="#7CC4E8" stroke-width="1.2">
+    <circle cx="215" cy="175" r="6"/>
+    <circle cx="255" cy="175" r="6"/>
+    <circle cx="295" cy="175" r="6"/>
+    <circle cx="335" cy="175" r="6"/>
+    <circle cx="375" cy="175" r="6"/>
+    <circle cx="415" cy="175" r="6"/>
+    <circle cx="455" cy="175" r="6"/>
+  </g>
+  <rect x="70" y="238" width="560" height="12" rx="6" fill="url(#waterGrad)"/>
+  <rect x="105" y="235" width="490" height="5" rx="2.5" fill="#FFFFFF" opacity="0.9"/>
+  <path d="M 165,260 Q 215,254 265,260 M 345,262 Q 400,256 455,262" stroke="#A9E0F8" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg>

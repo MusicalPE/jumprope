@@ -224,7 +224,7 @@
     .dash-l.has-level .stat-card { padding-top: 10px; padding-bottom: 10px; }
     .dash-l.has-level .stat-value { font-size: 1.3em; }
     .dash-l.has-level .jr-scene { padding-top: 88px; }
-    .dash-l.has-level .jr-land { top: 26px; }
+    .dash-l.has-level .jr-land { top: 6px; }
     .dash-l.has-level #levelCard > h2:first-child { padding-top: 10px; padding-bottom: 10px; margin-bottom: 12px; }
   }
   /* 세로가 짧은 노트북(768~820px): 조금 더 촘촘하게 */
@@ -635,22 +635,20 @@
   .jr-num { color: var(--ink-2); } .jr-num b { font-size: 1.3em; color: var(--ink); }
   /* 국토 대장정 그림: 모래 언덕 + 무지개 줄넘기 줄 길 + 바닷길은 물 + 줄넘기 하는 아이 */
   .jr-scene { position: relative; margin: 10px -20px -20px; padding: 104px 38px 14px; background: linear-gradient(180deg, #fff 0, #F4F9EE 78px, #F4F9EE 110px, #E7F0D8 110px, #EEF4E2 100%); }
-  .jr-land { position: absolute; left: 38px; right: 38px; top: 40px; height: 70px; }
-  .jr-t { position: absolute; top: 0; bottom: 0; background-repeat: repeat-x; background-position: left bottom; background-size: 120px 100%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 72px, #000 calc(100% - 72px), transparent); mask-image: linear-gradient(90deg, transparent, #000 72px, #000 calc(100% - 72px), transparent); }
-  .jr-t.m { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpolygon points='0,70 0,40 18,20 34,36 52,8 72,34 90,18 108,32 120,24 120,70' fill='%23B9D6A8'/%3E%3Cpolygon points='45,17 52,8 59,17 55,15 52,19 48,15' fill='%23fff' opacity='.85'/%3E%3Cpolygon points='0,70 0,50 22,30 42,48 62,28 84,50 102,36 120,48 120,70' fill='%237DAF66'/%3E%3Cpolygon points='0,70 0,60 30,50 60,62 90,52 120,60 120,70' fill='%235E9850'/%3E%3C/svg%3E"); }
-  .jr-t.h { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 70 V44 Q20 26 40 42 T80 38 T120 42 V70Z' fill='%23B7D69C'/%3E%3Cpath d='M0 70 V54 Q30 40 60 52 T120 50 V70Z' fill='%238CBF72'/%3E%3Ccircle cx='26' cy='47' r='4' fill='%236FA85A'/%3E%3Ccircle cx='86' cy='45' r='4.5' fill='%236FA85A'/%3E%3C/svg%3E"); }
-  .jr-t.p { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 52 Q30 44 60 50 T120 48 V70 H0Z' fill='%23C9E0A2'/%3E%3Crect x='0' y='54' width='120' height='16' fill='%23DCEBAE'/%3E%3Crect x='0' y='56' width='120' height='2.4' fill='%23E8D47A'/%3E%3Crect x='0' y='61' width='120' height='2.4' fill='%23E8D47A'/%3E%3Crect x='0' y='66' width='120' height='2.4' fill='%23E8D47A'/%3E%3Crect x='34' y='44' width='1.6' height='8' fill='%238B6B4A'/%3E%3Ccircle cx='34.8' cy='43' r='4.6' fill='%237DB262'/%3E%3Crect x='94' y='46' width='1.6' height='7' fill='%238B6B4A'/%3E%3Ccircle cx='94.8' cy='45' r='4' fill='%237DB262'/%3E%3C/svg%3E"); }
-  .jr-t.b { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Crect y='34' width='120' height='16' fill='%239FDCF6'/%3E%3Cpath d='M0 38 Q10 35 20 38 T40 38 T60 38 T80 38 T100 38 T120 38' stroke='%23fff' stroke-width='1.2' fill='none' opacity='.7'/%3E%3Cpath d='M0 50 Q8 45 16 49 T32 48 T48 50 T64 47 T80 49 T96 48 T112 50 T120 49 V70 H0Z' fill='%23F2DFB0'/%3E%3Cpath d='M0 50 Q8 45 16 49 T32 48 T48 50 T64 47 T80 49 T96 48 T112 50 T120 49' stroke='%23fff' stroke-width='2' fill='none' opacity='.9'/%3E%3Crect x='35.2' y='44' width='1.2' height='14' fill='%238B6B4A'/%3E%3Cpath d='M27 46 Q36 36 45 46 Z' fill='%23F26A3D'/%3E%3Cpath d='M33 46 Q36 38 39 46 Z' fill='%23fff'/%3E%3Ccircle cx='88' cy='61' r='2.6' fill='%23F9A8D4'/%3E%3Ccircle cx='70' cy='64' r='1.2' fill='%23E7C98F'/%3E%3Ccircle cx='104' cy='58' r='1.2' fill='%23E7C98F'/%3E%3Ccircle cx='16' cy='62' r='1.2' fill='%23E7C98F'/%3E%3C/svg%3E"); }
+  .jr-land { position: absolute; left: 38px; right: 38px; top: 20px; height: 90px; }
+  /* 지형 띠(img/journey/terrain-*.svg): 높이에 맞춰 옆으로 이어 그림. 이웃 띠와는 양 끝 72px를 흐리게 겹쳐 넘기고, 띠마다 층 높이·색이 비슷해서 경계가 자연스럽게 섞임 (그림: dev/art/make_terrain.py) */
+  .jr-t { position: absolute; top: 0; bottom: 0; background-repeat: repeat-x; background-position: left bottom; background-size: auto 100%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 72px, #000 calc(100% - 72px), transparent); mask-image: linear-gradient(90deg, transparent, #000 72px, #000 calc(100% - 72px), transparent); }
+  .jr-ferry { position: absolute; bottom: 17px; width: 50px; height: 22px; margin-left: -25px; background: center / contain no-repeat; opacity: .92; }
   .jr-isle { position: absolute; bottom: -2px; width: 120px; height: 62px; transform: translateX(-50%); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 62'%3E%3Cellipse cx='60' cy='52' rx='58' ry='9' fill='%23F2DFB0'/%3E%3Cpath d='M6 52 Q30 34 50 24 Q60 12 70 24 Q90 34 114 52 Z' fill='%237DAF66'/%3E%3Cpath d='M50 24 Q60 12 70 24 Q64 21 60 25 Q56 21 50 24Z' fill='%235E9850'/%3E%3Cpath d='M22 52 Q40 40 60 42 Q80 40 98 52Z' fill='%239CC77F'/%3E%3Cellipse cx='60' cy='18.5' rx='5' ry='1.6' fill='%23B7DFF2'/%3E%3Crect x='93' y='38' width='1.6' height='12' fill='%238B6B4A' transform='rotate(8 94 44)'/%3E%3Cpath d='M95 38 q-6 -3 -10 1 M95 38 q6 -4 10 0 M95 38 q-2 -6 -7 -6 M95 38 q3 -6 8 -5' stroke='%234E9A45' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cpath d='M0 58 Q15 54 30 58 T60 58 T90 58 T120 58' stroke='%23fff' stroke-width='1.6' fill='none' opacity='.85'/%3E%3C/svg%3E") center bottom / contain no-repeat; }
-  .jr-t.s { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70' preserveAspectRatio='none'%3E%3Cpath d='M0 40 Q7.5 36 15 40 T30 40 T45 40 T60 40 T75 40 T90 40 T105 40 T120 40 V70 H0Z' fill='%23A9E0F8'/%3E%3Cpath d='M0 50 Q7.5 46 15 50 T30 50 T45 50 T60 50 T75 50 T90 50 T105 50 T120 50' stroke='%23fff' stroke-width='1.6' fill='none' opacity='.8'/%3E%3Cpath d='M0 60 Q7.5 56 15 60 T30 60 T45 60 T60 60 T75 60 T90 60 T105 60 T120 60' stroke='%23fff' stroke-width='1.6' fill='none' opacity='.65'/%3E%3C/svg%3E"); }
   .jr-track { position: relative; height: 12px; }
   .jr-rope { position: absolute; inset: 0; border-radius: 999px; background: repeating-linear-gradient(-60deg, rgba(255,255,255,.38) 0 2px, transparent 2px 6px), linear-gradient(90deg, #EF4444, #F97316, #EAB308, #22C55E, #06B6D4, #6366F1, #D946EF); box-shadow: 0 2px 0 rgba(110,70,30,.28), inset 0 -2px 0 rgba(0,0,0,.12); }
   .jr-rest { position: absolute; top: 0; bottom: 0; right: 0; border-radius: 0 999px 999px 0; background: rgba(247,236,220,.72); }
   .jr-sea { position: absolute; top: -9px; bottom: -9px; z-index: 1; border-radius: 10px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 30'%3E%3Cpath d='M0 15 Q7 9 14 15 T28 15' stroke='%23fff' stroke-width='2' fill='none' opacity='.85'/%3E%3C/svg%3E") repeat-x center / 24px 100%, linear-gradient(#93DBFB, #38BDF8); box-shadow: inset 0 0 0 2px rgba(255,255,255,.55), 0 2px 0 rgba(14,116,144,.25); }
   .jr-sea.later { filter: saturate(.55) brightness(1.08); }
   .jr-stop { position: absolute; top: 6px; transform: translateX(-50%); z-index: 2; }
-  .jr-stop i { display: block; width: 18px; height: 24px; margin-top: -26px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 31C12 31 2 19 2 11.5a10 10 0 0 1 20 0C22 19 12 31 12 31z' fill='%239CA3AF' stroke='%23fff' stroke-width='1.6'/%3E%3Ccircle cx='12' cy='11.5' r='4' fill='%23fff'/%3E%3C/svg%3E") center / contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
-  .jr-stop.on i { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 31C12 31 2 19 2 11.5a10 10 0 0 1 20 0C22 19 12 31 12 31z' fill='%23F26A3D' stroke='%23fff' stroke-width='1.6'/%3E%3Ccircle cx='12' cy='11.5' r='4' fill='%23fff'/%3E%3C/svg%3E"); }
+  .jr-stop i { display: block; width: 18px; height: 24px; margin-top: -26px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12c0 6.8 8.4 15.8 9.4 16.8.35.35.85.35 1.2 0C13.6 27.8 22 18.8 22 12 22 6.48 17.52 2 12 2Z' fill='%239CA3AF' stroke='%23fff' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='11.5' r='3.8' fill='%23fff'/%3E%3C/svg%3E") center / contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
+  .jr-stop.on i { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12c0 6.8 8.4 15.8 9.4 16.8.35.35.85.35 1.2 0C13.6 27.8 22 18.8 22 12 22 6.48 17.52 2 12 2Z' fill='%23F26A3D' stroke='%23fff' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='11.5' r='3.8' fill='%23fff'/%3E%3C/svg%3E"); }
+  .jr-stop.first i, .jr-stop.last.on i { width: 20px; height: 27px; margin-top: -29px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M11.5 8.5V1.8l7 2.4-7 2.4' fill='%23F26A3D' stroke='%23fff' stroke-width='1.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3Cpath d='M12 7.5c-4.8 0-8.7 3.9-8.7 8.7 0 5.9 7.3 13 8.15 13.85.3.3.8.3 1.1 0 .85-.85 8.15-7.95 8.15-13.85 0-4.8-3.9-8.7-8.7-8.7Z' fill='%23F26A3D' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='15.8' r='3.3' fill='%23fff'/%3E%3C/svg%3E"); }
   .jr-stop b { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-size: 0.74em; color: #7C8B6A; white-space: nowrap; font-weight: 700; }
   .jr-stop.on b { color: #2F3D22; }
   /* 출발 도시 바로 옆이라 이름이 겹치는 곳: 이름 없이 작은 동그라미만 */
@@ -659,8 +657,9 @@
   .jr-stop.near.on i { background: #F26A3D; }
   .jr-me { position: absolute; bottom: 2px; width: 64px; height: 102px; transform: translateX(-50%); z-index: 3; pointer-events: none; }
   .jr-me img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; animation: jrHop .9s ease-in-out infinite; filter: drop-shadow(0 1px 1.5px rgba(60,40,20,.28)); }
-  .jr-boat { position: absolute; left: 50%; bottom: -6px; width: 84px; height: 14px; margin-left: -42px; }
-  .jr-me.sea { bottom: 9px; }
+  .jr-me.sea { bottom: -2px; width: 74px; height: 88px; }
+  .jr-me.sea img { animation: jrBob 2.4s ease-in-out infinite; }
+  @keyframes jrBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-3px) rotate(1.5deg); } }
   .jr-me::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 30px; height: 7px; margin-left: -15px; border-radius: 50%; background: rgba(40,60,30,.22); animation: jrShadow .9s ease-in-out infinite; }
   .jr-me.sea::after { display: none; }
   @keyframes jrHop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
@@ -668,7 +667,7 @@
   @media (prefers-reduced-motion: reduce) { .jr-me img, .jr-me::after { animation: none; } }
   .jr-msg { margin: 34px 0 0; font-size: 0.85em; color: #4B5E3A; }
   .jr-msg b { color: #2F3D22; }
-  @media (max-width: 640px) { .jr-scene { padding: 100px 24px 12px; } .jr-land { left: 24px; right: 24px; top: 34px; } .jr-stop b { display: none; } .jr-stop.first b, .jr-stop.last b { display: block; } }
+  @media (max-width: 640px) { .jr-scene { padding: 100px 24px 12px; } .jr-land { left: 24px; right: 24px; top: 14px; } .jr-stop b { display: none; } .jr-stop.first b, .jr-stop.last b { display: block; } .jr-isle { width: 84px; height: 44px; } .jr-ferry { display: none; } }
   .nat-kpis { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .nat-kpis div { background: var(--bg); border-radius: var(--r-sm); padding: 8px 12px; font-size: 0.88em; color: var(--muted); }
   .nat-kpis b { display: block; color: var(--ink); font-size: 1.25em; }
@@ -1249,15 +1248,18 @@ const JOURNEY = {
     const pos = R.map(function(s){ return s[1] / goalKm * 100; }), shown = [0, R.length - 1], near = {};
     for (let i = 1; i < R.length - 1; i++) { if (shown.some(function(j){ return Math.abs(pos[i] - pos[j]) < 3.5; })) near[i] = 1; else shown.push(i); }
     const stops = R.map(function(s, i){ return '<span class="jr-stop' + (cur >= s[1] * 1000 ? ' on' : '') + (i === 0 ? ' first' : i === R.length - 1 ? ' last' : '') + (near[i] ? ' near' : '') + '" style="left:' + P(s[1]) + '" title="' + s[0] + '"><i></i><b>' + s[0] + '</b></span>'; }).join('');
+    const IMG = '../img/';
     const self = this, lon = function(n){ const x = self.city(n); return x ? x[2] : 127.5; };
     const runs = [];
     R.forEach(function(s, i){ if (!i) return; const a = R[i - 1], o = (lon(a[0]) + lon(s[0])) / 2, t = s[2] ? 's' : (a[0] + s[0] === '부산여수' || a[0] + s[0] === '여수부산') ? 'b' : o >= 128.3 ? 'm' : o < 127.4 ? 'p' : 'h';
       const r = runs[runs.length - 1]; if (r && r[0] === t) r[2] = s[1]; else runs.push([t, a[1], s[1]]); });
     const land = runs.map(function(r, i){ const L = i ? 40 : 44, Rr = i === runs.length - 1 ? 44 : 40;
-      return '<i class="jr-t ' + r[0] + '" style="left:calc(' + P(r[1]) + ' - ' + L + 'px);width:calc(' + P(r[2] - r[1]) + ' + ' + (L + Rr) + 'px)"></i>'; }).join('');
+      return '<i class="jr-t ' + r[0] + '" style="left:calc(' + P(r[1]) + ' - ' + L + 'px);width:calc(' + P(r[2] - r[1]) + ' + ' + (L + Rr) + 'px);background-image:url(' + IMG + 'journey/terrain-' + r[0] + '.svg)"></i>'; }).join('') +
+      // 아직 건너지 않은(또는 이미 건넌) 바닷길에는 작은 여객선
+      R.map(function(c, i){ return i && c[2] && !(cur >= R[i - 1][1] * 1000 && cur < c[1] * 1000) ? '<i class="jr-ferry" style="left:' + P((R[i - 1][1] + c[1]) / 2) + ';background-image:url(' + IMG + 'journey/ferry.svg)"></i>' : ''; }).join('');
     const isles = R.filter(function(s){ return s[0] === '제주'; }).map(function(s){ return '<i class="jr-isle" style="left:' + P(s[1]) + '"></i>'; }).join('');
     const onSea = !!(next[2] && at !== next[0]);
-    const kid = '<img src="' + '../img/journey-kid.webp" alt="">' + (onSea ? '<svg class="jr-boat" viewBox="0 0 70 12"><path d="M2 1 H68 L58 11 H12 Z" fill="#B45309" stroke="#7C2D12" stroke-width="1.2"/></svg>' : '');
+    const kid = '<img src="' + IMG + 'journey/' + (onSea ? 'kid-boat' : 'kid') + '.webp" alt="">';
     return '<div class="jr-head"><div><span class="jr-tag" data-our="{our} 줄넘기 여행">' + (APP.ourLabel || '우리 반') + ' 줄넘기 여행</span><h2>국토 대장정 <small>' + c.start + ' 출발 · 약 ' + goalKm.toLocaleString() + 'km</small></h2></div>' +
       '<div class="jr-num"><b class="mono">' + this.km(cur) + 'km</b> 왔어요' + (laps ? ' · <b>' + laps + '번</b> 완주!' : '') + '</div></div>' +
       '<div class="jr-scene"><div class="jr-land">' + land + isles + '</div><div class="jr-track"><div class="jr-rope"></div><div class="jr-rest" style="left:' + pct.toFixed(2) + '%"></div>' + seas + stops +
