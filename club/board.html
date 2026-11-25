@@ -401,7 +401,7 @@ function schHtml(v){ const esc = function(x){ return String(x).replace(/[&<>"]/g
     const boat = EJ_LM[EJ[ni][0]] ? '<g class="ej-lm"><image href="' + EJ_IMG + 'journey/w-' + EJ_LM[EJ[ni][0]] + '.webp" x="' + lx + '" y="' + ly + '" width="' + ls + '" height="' + ls + '" preserveAspectRatio="xMidYMax meet"/>' +
       '<text x="' + (right ? lx + ls : lx) + '" y="' + (ly + ls + (narrow ? 15 : 18)) + '" text-anchor="' + (right ? 'end' : 'start') + '" font-size="' + (narrow ? 11 : 13) + '" font-weight="800" fill="#14507F">' + (cur >= EJ_KM[ni] * 1000 ? '도착 · ' : '다음 · ') + EJ[ni][0] + '</text></g>' : '';
     // 대륙 아래 바다 꾸밈: 고래·돌고래·거북·물고기·배 (img/journey/sea-*.webp, dev/art/sea/make_sea.py) — [그림, 가로 위치(0~1), 수평선에서 아래로, 높이, 휴대폰에도]
-    const SEA = [['cargo', .13, 118, 48, 1], ['sail', .31, 108, 44, 0], ['dolphin', .46, 138, 50, 1], ['fish', .59, 132, 30, 0], ['turtle', .68, 120, 34, 1], ['whale', .9, 128, 44, 1]], SEA_R = { whale: 1.683, dolphin: 1.187, turtle: 1.97, fish: 1.763, cargo: 1.683, sail: 1.372 };
+    const SEA = [['cargo', .13, 112, 30, 1], ['sail', .31, 104, 28, 0], ['dolphin', .46, 128, 31, 1], ['fish', .59, 124, 19, 0], ['turtle', .70, 114, 21, 1], ['whale', .88, 122, 28, 1]], SEA_R = { whale: 1.683, dolphin: 1.187, turtle: 1.97, fish: 1.763, cargo: 1.683, sail: 1.372 };
     let seaDeco = ''; SEA.forEach(function(q){ if (narrow && !q[4]) return; const h = q[3] * k * (narrow ? 1.05 : 1), w = h * SEA_R[q[0]], x = X0 + (X1 - X0) * q[1], y = yAt(x, q[2] * k);
       seaDeco += '<image href="' + EJ_IMG + 'journey/sea-' + q[0] + '.webp" x="' + (x - w / 2).toFixed(1) + '" y="' + (y - h).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '"/>'; });
     // 작은 지구본: 랜드마크 바로 안쪽(아이와 먼 쪽) 하늘에 (누르면 코스 지도)
