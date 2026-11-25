@@ -9,6 +9,14 @@ def route(r):
     if 'qrcode' in u: return r.fulfill(path=V+'qrcode.js', content_type='application/javascript')
     if 'pretendard' in u: return r.fulfill(body='', content_type='text/css')
     return r.continue_()
+
+def skip_setup(pg):
+    """2.10.0: 1234 로 로그인하면 첫 설정 도우미(비밀번호 단계)로 감 → 이 시험은 비밀번호를 그대로 두고 원래 가려던 곳으로"""
+    import urllib.parse as _u
+    if 'page=setup' not in pg.url: return
+    q = dict(_u.parse_qsl(_u.urlparse(pg.url).query))
+    pg.goto(pg.url.split('&page=')[0] + '&page=' + q.get('next', 'admin') + '&token=' + _u.quote(q.get('token', ''))); pg.wait_for_timeout(2000)
+
 with sync_playwright() as p:
     b=p.chromium.launch(); ctx=b.new_context(viewport={'width':1150,'height':900}, device_scale_factor=1.5)
     ctx.route(re.compile(r'https://cdn\.jsdelivr\.net/.*'), route)
@@ -35,7 +43,7 @@ with sync_playwright() as p:
     print('학생 페이지:', pg.text_content('#pageTitle'), '| 행:', pg.locator('#dailyTable tbody tr').count())
     # 관리자
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
-    pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
+    pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000); skip_setup(pg)
     print('관리자 URL page=admin:', 'page=admin' in pg.url, '| 탭:', pg.eval_on_selector_all('#adminNav button','e=>e.map(x=>x.innerText.replace(/\\n/g," "))'))
     print('NEW 표시:', pg.is_visible('#updatesDot'))
     pg.click('#adminNav button[data-tab="basic"]'); pg.wait_for_timeout(300)

@@ -721,6 +721,14 @@
 .pbx b{font-size:18px;color:#E2513F} .pbx span{font-size:14px;color:#3B4252}
 .pbx.st{background:#E7F7F5;border-color:#BDE8E2} .pbx.st b{color:#14857A}
 .me-remember input{width:18px;height:18px;margin:0;accent-color:var(--accent,#f26b3a)}
+/* 첫 설정 도우미 (시트판 2.10.0 · 클라우드판과 같은 모양) */
+.jc-msg{padding:10px 12px;border-radius:10px;margin:10px 0;font-weight:700;font-size:.9em}.jc-ok{background:#DCFCE7;color:#14532D}.jc-err{background:#FEE2E2;color:#7F1D1D}.jc-warn{background:#FEF3C7;color:#78350F}
+.jc-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.jc-qr{background:#fff;padding:12px;border:1px solid var(--line);border-radius:14px;width:220px}.jc-qr svg{width:100%;height:auto;display:block}
+.jc-steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px;padding:0;list-style:none;font-size:.82em;font-weight:800}.jc-steps li{padding:5px 10px;border-radius:999px;background:var(--bg);color:#94A3B8;border:1px solid var(--line)}.jc-steps li.done{color:#15803D;background:#DCFCE7;border-color:#BBF7D0}.jc-steps li.now{color:#fff;background:var(--coral);border-color:var(--coral)}
+.jc-setup textarea{width:100%;min-height:150px;font-family:inherit;font-size:.95em;padding:10px;border:1px solid var(--line);border-radius:10px;box-sizing:border-box}.jc-setup .jc-nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;margin-top:18px}.jc-setup h2{margin:0 0 6px}
+.jc-setup .jc-opt{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;margin:8px 0;background:#fff}.jc-setup .jc-opt input[type=checkbox]{margin-top:4px;flex:0 0 auto}.jc-setup .jc-opt b{display:block}.jc-setup .jc-opt span{font-size:.88em;color:#64748B}
+@media print{.jc-noprint{display:none!important}}
 </style>
 <script>
 /* 학생 접속 주소 QR — 메인 화면 버튼·관리자 메뉴에서 같이 씀 (v1.6.1) */
@@ -811,7 +819,7 @@ const TEMPLATE_URL = 'https://docs.google.com/spreadsheets/d/1ItPU6WU1-buXQ_Cb9y
 // 넓은 PC 화면(두 칸 배치) — 넘나들면 그래프 비율을 바꿔 다시 그림
 const WIDE_MQ = window.matchMedia ? window.matchMedia('(min-width: 1000px)') : { matches: false };
 if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener('change', function(){ if (typeof barChartInstance !== 'undefined' && barChartInstance) { barChartInstance.options.maintainAspectRatio = !WIDE_MQ.matches; barChartInstance.resize(); barChartInstance.update('none'); } });
-const APP = { version: '2.9.2', requiredShell: 1, latestShell: 9, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
+const APP = { version: '2.10.0', requiredShell: 1, latestShell: 9, channel: /\/beta\/?/.test(location.pathname) ? 'beta' : 'stable', club: /\/club\//.test(location.pathname), q: {}, settings: {}, shell: {} };
 new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
 (function(){
   let s = APP.q.s || '';
@@ -1546,6 +1554,9 @@ document.addEventListener('DOMContentLoaded', function(){
 
 
 </template>
+<template id="v-setup">
+<div class="container jc-setup" id="setupRoot"><div class="loading">불러오는 중…</div></div>
+</template>
 <template id="v-adminLogin">
 <div class="container narrow">
   <div class="jrhelp-row"><a class="back-link" href="{{BASE}}">← 메인으로</a><button type="button" class="jrhelp-btn" data-help><span class="jrhelp-qm" aria-hidden="true">?</span>사용 안내</button></div>
@@ -1613,6 +1624,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <button type="button" data-tab="updates"><span class="ico"></span>업데이트 내역<span class="new-dot" id="updatesDot" style="display:none;">NEW</span></button>
       <div class="nav-sep"></div>
       <a class="nav-link" id="navApprovalLink" href="{{BASE}}&page=approval&token={{TOKEN}}" style="display:none;">기록 승인 →</a>
+      <a class="nav-link" href="{{BASE}}&page=setup&token={{TOKEN}}">첫 설정 도우미 →</a>
       <a class="nav-link" href="{{BASE}}">메인 화면 →</a>
       <button type="button" class="jrhelp-btn" data-help><span class="jrhelp-qm" aria-hidden="true">?</span>사용 안내</button>
     </nav>
@@ -2972,6 +2984,192 @@ function renderDailyTable(daily) {
 }
 
 },
+  "setup": function(){
+/* 첫 설정 도우미 (시트판 2.10.0) — 클라우드판 도우미와 같은 흐름. 껍데기에 이미 있는 기능만 씀 (껍데기 판 그대로)
+   어디까지 했는지는 EXTRA_SETTINGS.setup ('2'~'7' 또는 'done') */
+const token = APP.q.token || '', root = document.getElementById('setupRoot');
+const STEPS = ['비밀번호', '학생 등록', '기본 설정', '국토 대장정', '학생 QR', '전국 현황판', '끝'], LAST = STEPS.length;
+const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+const $ = function(id){ return document.getElementById(id); };
+const ADMIN = APP.base + '&page=admin&token=' + encodeURIComponent(token);
+let extra = {}, saved = 0;
+function msg(text, kind){ const el = $('jcSm'); if (el) el.innerHTML = text ? '<div class="jc-msg jc-' + (kind || 'ok') + '">' + esc(text) + '</div>' : ''; }
+function busy(b, on){ if (!b) return; b.disabled = on; if (on) { b.dataset.t = b.textContent; b.textContent = '잠시만요…'; } else if (b.dataset.t) b.textContent = b.dataset.t; }
+function errText(e){ const m = String((e && e.message) || e || ''); return m.indexOf('권한') >= 0 ? '로그인이 끝났어요. 관리자 로그인을 다시 해 주세요.' : (m || '저장하지 못했어요.'); }
+function mark(v){ if (extra.setup === 'done' || (v !== 'done' && Number(v) <= saved)) return Promise.resolve(); saved = v === 'done' ? LAST : Number(v); extra.setup = String(v); return rpc('setExtraSettings', [token, { setup: String(v) }]).catch(function(){}); }
+function go(to){ mark(to >= LAST ? 'done' : to).then(function(){ step(to); }); }
+function frame(n, title, sub, body, nextText, opt){
+  opt = opt || {};
+  root.innerHTML = '<h1>첫 설정 도우미</h1>' +
+    '<ol class="jc-steps jc-noprint">' + STEPS.map(function(t, i){ return '<li class="' + (i + 1 < n ? 'done' : i + 1 === n ? 'now' : '') + '">' + (i + 1) + ' ' + esc(t) + '</li>'; }).join('') + '</ol>' +
+    '<div class="card"><h2>' + esc(title) + '</h2><p class="hint" style="margin-top:0">' + sub + '</p>' + body + '<div id="jcSm"></div>' +
+    '<div class="jc-nav jc-noprint"><div class="jc-row">' + (n > 1 && !opt.noPrev ? '<button type="button" class="btn-outline" id="jcPrev">← 이전</button>' : '') + '</div>' +
+    '<div class="jc-row">' + (!opt.noSkip && n < LAST ? '<button type="button" class="btn-outline" id="jcSkip">나중에 하기</button>' : '') + (nextText ? '<button type="button" id="jcNext">' + esc(nextText) + '</button>' : '') + '</div></div></div>' +
+    (n < LAST && !opt.noSkip ? '<p class="hint jc-noprint" style="text-align:center">지금 안 해도 돼요. 모두 관리자 메뉴에서 언제든 바꿀 수 있어요. <a href="' + esc(ADMIN) + '">도우미 닫고 관리자 메뉴로</a></p>' : '');
+  window.scrollTo(0, 0);
+  if ($('jcPrev')) $('jcPrev').onclick = function(){ step(n - 1); };
+  if ($('jcSkip')) $('jcSkip').onclick = function(){ go(n + 1); };
+}
+function parseStudents(raw, have){
+  const out = [];
+  String(raw || '').split('\n').forEach(function(line){
+    const t = line.replace(/\r/g, ''); if (!t.trim()) return;
+    let p = t.split('\t'); if (p.length < 4) p = t.split(','); if (p.length < 4) p = t.trim().split(/\s+/);
+    p = p.map(function(x){ return x.trim(); }); [0, 1, 2].forEach(function(i){ if (p[i]) p[i] = p[i].replace(/^(\d+)\s*(학년|반|번)$/, '$1'); });
+    if (/^학년$|^grade$/i.test(p[0] || '')) return;
+    const r = { grade: p[0] || '', cls: p[1] || '', number: p[2] || '', name: p[3] || '', ok: true, why: '' }, k = [r.grade, r.cls, r.number, r.name].join('|');
+    if (p.length < 4 || !r.name) { r.ok = false; r.why = '학년·반·번호·이름 순서를 확인해 주세요'; }
+    else if (!r.grade || !r.cls) { r.ok = false; r.why = '학년 또는 반이 비었어요'; }
+    else if (have[k]) { r.ok = false; r.why = '이미 등록됨'; }
+    else if (out.some(function(o){ return o.ok && [o.grade, o.cls, o.number, o.name].join('|') === k; })) { r.ok = false; r.why = '붙여 넣은 내용 안에서 겹침'; }
+    out.push(r);
+  });
+  return out;
+}
+function step(n){
+  root.innerHTML = '<div class="loading">불러오는 중…</div>';
+  const fail = function(b, e){ busy(b, false); msg(errText(e), 'err'); };
+  if (n === 1) {
+    // 지금 비밀번호가 처음 그대로(1234)인지 확인 — 그렇다면 이 단계는 건너뛸 수 없음
+    return rpc('verifyAdminPassword', ['1234']).then(function(r){
+      const dflt = !!(r && r.ok);
+      if (!dflt) {
+        frame(1, '관리자 비밀번호', '관리자 비밀번호를 이미 바꿨어요. 바꾸려면 관리자 메뉴 → 비밀번호 · 초기화에서 할 수 있어요.', '<div class="jc-msg jc-ok">처음 비밀번호(1234)를 쓰고 있지 않아요.</div>', '다음');
+        $('jcNext').onclick = function(){ go(2); };
+        return;
+      }
+      frame(1, '관리자 비밀번호 바꾸기', '지금은 처음 비밀번호 <b>1234</b>예요. 프로그램 주소를 아는 사람은 누구나 관리자 화면에 들어올 수 있어서, 먼저 우리 반만 아는 비밀번호로 바꿔 주세요.',
+        '<label>새 비밀번호 (4자 이상) <input type="password" id="jcPw1" autocomplete="new-password"></label><label>새 비밀번호 한 번 더 <input type="password" id="jcPw2" autocomplete="new-password"></label>' +
+        '<p class="hint">학생이 짐작하기 어려운 것으로 정해 주세요. 잊었을 때 되돌리는 방법은 사용 안내에 있어요.</p>', '바꾸고 다음', { noSkip: true, noPrev: true });
+      $('jcNext').onclick = function(){
+        const a = $('jcPw1').value.trim(), b2 = $('jcPw2').value.trim(), b = $('jcNext');
+        if (a.length < 4) return msg('새 비밀번호는 4자 이상으로 넣어 주세요.', 'err');
+        if (a === '1234') return msg('1234가 아닌 다른 비밀번호로 정해 주세요.', 'err');
+        if (a !== b2) return msg('두 칸의 비밀번호가 달라요.', 'err');
+        busy(b, true);
+        rpc('changeAdminPassword', [token, a]).then(function(r){
+          if (!r || r.ok === false) throw new Error((r && r.message) || '비밀번호를 바꾸지 못했어요.');
+          // 처음 쓰는 학교(학생 없음 · 도우미를 한 번도 안 함)면 도우미를 이어서, 쓰던 학교면 원래 가려던 곳으로
+          return rpc('getAllStudents', [token]).then(function(list){
+            const fresh = !(list && list.length) && !extra.setup;
+            if (fresh || APP.q.step !== '1' || !APP.q.next) return go(2);
+            location.href = APP.base + '&page=' + encodeURIComponent(APP.q.next) + '&token=' + encodeURIComponent(token);
+          });
+        }).catch(function(e){ fail(b, e); });
+      };
+    }).catch(function(e){ root.innerHTML = '<div class="card"><div class="jc-msg jc-err">' + esc(errText(e)) + '</div></div>'; });
+  }
+  if (n === 2) {
+    return rpc('getAllStudents', [token]).then(function(cur){
+      const have = {}; (cur || []).forEach(function(x){ have[[x.grade, x.cls, x.number == null ? '' : x.number, x.name].map(function(v){ return String(v).trim(); }).join('|')] = 1; });
+      frame(2, '학생 등록', '엑셀이나 한글 표에서 <b>학년 · 반 · 번호 · 이름</b> 네 칸을 그대로 복사해 붙여 넣어요. 한 줄에 한 명이에요.' + (cur && cur.length ? ' 지금 ' + cur.length + '명이 등록되어 있어요.' : ''),
+        '<textarea id="jcSt" placeholder="6\t1\t1\t김하늘\n6\t1\t2\t박준우\n6\t1\t3\t한소율"></textarea><div class="jc-row" style="margin-top:8px"><button type="button" class="btn-outline" id="jcEx">예시 넣어 보기</button><span class="hint" id="jcCnt" style="margin:0"></span></div><div id="jcBad"></div>' +
+        '<p class="hint">학생 비밀번호는 모두 <b>1234</b>로 시작해요. 학생이 자기 화면에서 바꿀 수 있고, 관리자 메뉴 → 학생 관리에서 선생님이 정해 줄 수도 있어요.</p>', '등록하고 다음');
+      let rows = [];
+      const draw = function(){ rows = parseStudents($('jcSt').value, have); const ok = rows.filter(function(r){ return r.ok; }), bad = rows.filter(function(r){ return !r.ok; });
+        $('jcCnt').textContent = rows.length ? ok.length + '명 등록 예정' + (bad.length ? ' · ' + bad.length + '줄 제외' : '') : '';
+        $('jcBad').innerHTML = bad.length ? '<div class="jc-msg jc-warn">' + bad.slice(0, 5).map(function(r){ return esc([r.grade, r.cls, r.number, r.name].filter(Boolean).join(' ') + ' — ' + r.why); }).join('<br>') + (bad.length > 5 ? '<br>… 외 ' + (bad.length - 5) + '줄' : '') + '</div>' : '';
+        $('jcNext').textContent = ok.length ? ok.length + '명 등록하고 다음' : (cur && cur.length ? '다음' : '등록하고 다음'); };
+      $('jcSt').oninput = function(){ msg(''); draw(); }; draw();
+      $('jcEx').onclick = function(){ $('jcSt').value = '6\t1\t1\t김하늘\n6\t1\t2\t박준우\n6\t1\t3\t한소율'; draw(); };
+      $('jcNext').onclick = function(){ const ok = rows.filter(function(r){ return r.ok; }), b = $('jcNext');
+        if (!ok.length) { if (cur && cur.length && !$('jcSt').value.trim()) return go(3); return msg('등록할 학생이 없어요. 붙여 넣은 내용을 확인하거나 [나중에 하기]를 눌러 주세요.', 'err'); }
+        busy(b, true); rpc('addStudentsBulk', [token, ok.map(function(r){ return { grade: r.grade, cls: r.cls, number: r.number, name: r.name }; })]).then(function(){ go(3); }).catch(function(e){ fail(b, e); }); };
+    });
+  }
+  if (n === 3) {
+    return Promise.all([rpc('getAppSettingsPublic'), rpc('getDailyGoal'), rpc('getCameraSettingsAdmin', [token]).catch(function(){ return null; })]).then(function(r){
+      const app = r[0] || {}, goal = r[1], cam0 = r[2], first = saved < 3, cam = cam0 && first ? Object.assign({}, cam0, { enabled: true, autoApprove: true }) : cam0;   // 처음 지날 때는 권장값(카메라 켬 · 바로 인정)
+      frame(3, '기본 설정', '권장하는 값으로 맞춰 두었어요. 그대로 [저장하고 다음]을 눌러도 돼요.',
+        '<label class="jc-opt"><input type="checkbox" id="jcAp"' + (app.approvalOn || first ? ' checked' : '') + '><div><b>승인 절차 켜기 (권장)</b><span>학생이 손으로 넣은 기록은 선생님이 승인해야 반영돼요. 전국 현황판에 참여하려면 켜져 있어야 해요.</span></div></label>' +
+        (cam ? '<label class="jc-opt"><input type="checkbox" id="jcCam"' + (cam.enabled ? ' checked' : '') + '><div><b>카메라 판정기 쓰기 (권장)</b><span>학생 기기의 카메라가 실제로 뛴 횟수를 세어 줘요. 영상은 저장하거나 보내지 않아요.</span></div></label>' +
+        '<label class="jc-opt"><input type="checkbox" id="jcAuto"' + (cam.autoApprove ? ' checked' : '') + '><div><b>카메라로 센 기록은 바로 인정</b><span>카메라가 센 기록은 승인을 기다리지 않고 바로 들어가요.</span></div></label>' : '') +
+        '<label>하루 목표 횟수 (학생 한 명) <input type="number" id="jcGoal" min="1" max="100000" value="' + esc(goal && goal.goal != null ? goal.goal : (goal || 100)) + '" style="max-width:160px"></label>', '저장하고 다음');
+      const sync = function(){ if ($('jcAuto')) $('jcAuto').disabled = !$('jcCam').checked; }; if ($('jcCam')) $('jcCam').onchange = sync; sync();
+      $('jcNext').onclick = function(){ const b = $('jcNext'), g = Math.round(Number($('jcGoal').value));
+        if (!(g >= 1)) return msg('하루 목표는 1 이상의 숫자로 넣어 주세요.', 'err');
+        busy(b, true);
+        rpc('setAppSettings', [token, { approvalOn: $('jcAp').checked }]).then(function(r){ if (r && r.settings) APP.settings = Object.assign(APP.settings || {}, r.settings); return rpc('setDailyGoal', [token, g]); })
+          .then(function(){ return cam ? rpc('setCameraSettings', [token, Object.assign({}, cam, { enabled: $('jcCam').checked, autoApprove: $('jcCam').checked && $('jcAuto').checked })]) : null; })
+          .then(function(r){ if (r && r.ok === false) throw new Error(r.message || '카메라 설정을 저장하지 못했어요.'); go(4); })
+          .catch(function(e){ fail(b, e); }); };
+    });
+  }
+  if (n === 4) {
+    const J = typeof JOURNEY !== 'undefined' ? JOURNEY : null;
+    if (!J) return go(5);
+    return Promise.all([rpc('getExtraSettings'), rpc('getStudentsSummary')]).then(function(r){
+      const ex = r[0] || {}, total = ((r[1] && r[1].list) || []).reduce(function(a, x){ return a + (Number(x.total) || 0); }, 0), had = !!ex.journey;
+      const start = had ? J.cfg(ex).start : '대전', on = had ? !!ex.journey.on : true;
+      frame(4, '국토 대장정', '우리 반이 뛴 줄넘기를 <b>1회 = 1m</b>로 바꿔 나라를 한 바퀴 도는 여행이에요. 출발 도시에서 떠나 다시 돌아와요.',
+        '<label class="jc-opt"><input type="checkbox" id="jcJr"' + (on ? ' checked' : '') + '><div><b>메인 화면에 보이기 (권장)</b><span>학생들이 함께 얼마나 왔는지 메인 화면에서 봐요.</span></div></label>' +
+        '<label style="max-width:320px">출발 도시 <select id="jcJs">' + J.options(start) + '</select></label>' + (had ? '' : '<p class="hint">우리 학교가 있는 도시로 골라 주세요.</p>') +
+        '<div class="card jr-card" id="jcJp" style="margin-top:12px"></div>', '저장하고 다음');
+      const draw = function(){ $('jcJp').innerHTML = J.html(total, { journey: { on: true, start: $('jcJs').value, base: J.cfg(ex).base } }); $('jcJp').style.display = $('jcJr').checked ? '' : 'none'; };
+      $('jcJs').onchange = draw; $('jcJr').onchange = draw; draw();
+      $('jcNext').onclick = function(){ const b = $('jcNext'); busy(b, true);
+        rpc('setExtraSettings', [token, { journey: { on: $('jcJr').checked, start: $('jcJs').value, base: J.cfg(ex).base } }]).then(function(r){ if (r && r.ok === false) throw new Error(r.message || '저장하지 못했어요.'); go(5); }).catch(function(e){ fail(b, e); }); };
+    });
+  }
+  if (n === 5) {
+    const link = APP.base;
+    frame(5, '학생 접속 QR', '학생은 이 QR을 찍으면 바로 기록 화면이 열려요. 교실에 붙여 두거나 큰 화면에 띄워 주세요.',
+      '<div class="jc-row" style="align-items:flex-start;gap:20px"><div class="jc-qr">' + JRQR.svg(link) + '</div><div style="flex:1;min-width:220px">' +
+      '<div class="jc-msg jc-warn" style="margin-top:0">이 주소를 아는 사람은 학생 명단과 기록을 볼 수 있어요. 학급 알림장·단체방처럼 반 밖에서도 보이는 곳에는 올리지 말고, 교실 안에서만 나눠 주세요.</div>' +
+      '<div class="jc-row jc-noprint"><button type="button" class="btn-outline" onclick="window.print()">인쇄</button><button type="button" class="btn-outline" id="jcCp">주소 복사</button></div></div></div>' +
+      '<p class="hint jc-noprint">메인 화면의 [접속 QR]을 눌러도 같은 QR이 크게 떠요.</p>', '다음', { noSkip: true });
+    $('jcCp').onclick = function(){ JRQR.copy(link, $('jcCp')); };
+    $('jcNext').onclick = function(){ go(6); };
+    return;
+  }
+  if (n === 6) {
+    return Promise.all([NAT.load(), rpc('getAppSettingsPublic')]).then(function(r){
+      if (!NAT.collector) return go(7);
+      const app = r[1] || {}, nat = NAT.cfg || {}, apOn = !!app.approvalOn, on = NAT.active(), pre = on || (apOn && !nat.key), ct = NAT.contact();
+      frame(6, '전국 현황판 Jump Earth!', '여러 학교가 뛴 횟수를 모아 함께 지구를 도는 현황판이에요.',
+        '<label class="jc-opt"><input type="checkbox" id="jcNat"' + (pre ? ' checked' : '') + (apOn ? '' : ' disabled') + '><div><b>참여하기 (권장)</b><span>학생 이름은 김*늘처럼 가려서 보내요. 반·번호와 비밀번호는 보내지 않아요.</span></div></label>' +
+        '<div id="jcNatBox"><label>학교 이름 <input id="jcNm" maxlength="40" placeholder="지역 두 글자 + 학교 이름 (예: 서울 햇살초등학교)" value="' + esc(nat.name || '') + '"></label>' +
+        '<label class="jc-opt"><input type="checkbox" id="jcShow"' + (nat.showName || !on ? ' checked' : '') + '><div><b>학교 이름 보이기 (권장)</b><span>끄면 이름 없이 숫자만 올라가요.</span></div></label>' +
+        '<div class="jc-row" style="align-items:flex-end;margin-top:10px"><label style="flex:1;min-width:140px;margin:0">담당 교사 <input id="jcTn" maxlength="30" value="' + esc(ct.teacher || '') + '"></label><label style="flex:2;min-width:200px;margin:0">연락처 (선택) <input id="jcTc" maxlength="80" value="' + esc(ct.contact || '') + '"></label></div><p class="hint">담당 교사와 연락처는 운영자만 봐요. 현황판에는 나오지 않아요.</p></div>' +
+        (apOn ? '' : '<div class="jc-msg jc-warn">승인 절차가 꺼져 있어서 참여할 수 없어요. <a href="#" id="jcBack3">기본 설정으로 돌아가 승인 절차를 켜 주세요.</a></div>'), '저장하고 다음');
+      if ($('jcBack3')) $('jcBack3').onclick = function(e){ e.preventDefault(); step(3); };
+      const sync = function(){ $('jcNatBox').style.display = $('jcNat').checked ? '' : 'none'; }; $('jcNat').onchange = sync; sync();
+      $('jcNext').onclick = function(){ const b = $('jcNext'), want = $('jcNat').checked && apOn, name = $('jcNm').value.trim(), tn = $('jcTn').value.trim(), tc = $('jcTc').value.trim();
+        if (!want) { if (on) { msg('이미 참여 중이에요. 참여를 끄는 것은 관리자 메뉴 → Jump Earth! 전국에서 해 주세요(끄면 현황판 기록이 지워져요).', 'warn'); $('jcNat').checked = true; sync(); return; } return go(7); }
+        if (!name) { msg('학교 이름을 넣어 주세요.', 'err'); $('jcNm').focus(); return; }
+        if (!tn) { msg('담당 교사 이름을 넣어 주세요.', 'err'); $('jcTn').focus(); return; }
+        if (NAT.moved()) { msg('이 시트는 다른 시트에서 복사했거나 새로 배포한 것 같아요. 관리자 메뉴 → Jump Earth! 전국에서 참여 번호를 먼저 정해 주세요.', 'warn'); return; }
+        NAT.contact({ teacher: tn, contact: tc });
+        const next = { on: true, key: nat.key || NAT.newKey(), name: name, showName: $('jcShow').checked, shell: NAT.deployId() };
+        busy(b, true);
+        rpc('setExtraSettings', [token, { nat: next }]).then(function(r){
+          if (!r || r.ok === false) throw new Error((r && r.message) || '저장하지 못했어요.');
+          NAT.cfg = (r.settings && r.settings.nat) || next;
+          return NAT.syncAll(token, true).catch(function(){});   // 처음 보내기 (실패해도 다음 기록 때 다시 보냄)
+        }).then(function(){ go(7); }).catch(function(e){ fail(b, e); }); };
+    });
+  }
+  return Promise.all([rpc('getAllStudents', [token]), rpc('getAppSettingsPublic'), rpc('getExtraSettingsAdmin', [token])]).then(function(r){
+    const nS = (r[0] || []).length, app = r[1] || {}, ex = r[2] || {}, natOn = !!(ex.nat && ex.nat.on && ex.nat.key);
+    frame(LAST, '준비가 끝났어요', '이제 학생들과 뛰어 보세요.',
+      '<ul style="margin:0 0 12px;padding-left:20px;line-height:1.9"><li>학생 ' + (nS ? '<b>' + nS + '명</b> 등록' : '아직 없음 — <a href="#" data-to="2">학생 등록하기</a>') + '</li><li>승인 절차 <b>' + (app.approvalOn ? '켜짐' : '꺼짐') + '</b></li><li>전국 현황판 <b>' + (natOn ? '참여 중' : '참여 안 함') + '</b>' + (natOn ? '' : ' — <a href="#" data-to="6">참여하기</a>') + '</li><li>국토 대장정 <b>' + (ex.journey && ex.journey.on ? esc(ex.journey.start || '대전') + ' 출발' : '안 씀') + '</b></li></ul>' +
+      '<div class="jc-row"><button type="button" id="jcHome">메인 화면 열기</button><a class="btn-outline" href="' + esc(ADMIN) + '">관리자 메뉴</a><a class="btn-outline" href="#" data-to="5">학생 QR 다시 보기</a></div>' +
+      '<p class="hint" style="margin-top:14px">더 해 볼 것: 메인 화면의 <b>점프 Live</b>(반 전체가 함께 뛰고 결과를 한 번에 보기), 관리자 메뉴의 <b>급수 인증</b>과 <b>줄넘기 종류</b>.</p>', '');
+    $('jcHome').onclick = function(){ location.href = APP.base; };
+    root.querySelectorAll('[data-to]').forEach(function(a){ a.onclick = function(e){ e.preventDefault(); step(Number(a.dataset.to)); }; });
+    mark('done');
+  });
+}
+if (!token) { location.replace(APP.base + '&page=adminLogin&next=setup'); return; }
+rpc('getExtraSettingsAdmin', [token]).then(function(x){
+  extra = x || {}; saved = extra.setup === 'done' ? LAST : (Number(extra.setup) || 0);
+  const want = Number(APP.q.step) || 0;
+  step(want >= 1 && want <= LAST ? want : (extra.setup === 'done' ? LAST : Math.max(1, saved || 1)));
+}).catch(function(e){
+  if (String(e && e.message || e).indexOf('권한') >= 0) return location.replace(APP.base + '&page=adminLogin&next=setup');
+  root.innerHTML = '<div class="card"><div class="jc-msg jc-err">' + esc(errText(e)) + '</div></div>';
+});
+  },
   "adminLogin": function(){
 const baseUrl = APP.base;
 const nextPage = APP.q.next || "admin";
@@ -3005,6 +3203,8 @@ document.getElementById('loginForm').addEventListener('submit', function(e){
       try {
         localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({ token: res.token, ts: Date.now() }));
       } catch (e) { /* 저장 실패해도 로그인 자체는 진행 */ }
+      // 처음 비밀번호(1234) 그대로면 첫 설정 도우미의 비밀번호 단계부터 (새 학교는 도우미가 이어지고, 쓰던 학교는 비밀번호만 바꾸고 원래 가려던 곳으로)
+      if (pw === '1234' && !APP.demo && !window.JRCLOUD) { window.top.location.href = baseUrl + '&page=setup&step=1&next=' + encodeURIComponent(nextPage) + '&token=' + res.token; return; }
       window.top.location.href = baseUrl + '&page=' + nextPage + '&token=' + res.token;
     } else {
       document.getElementById('msg').textContent = res.message;

@@ -34,12 +34,20 @@ sk=rpc('getStreakSummaryPublic')['list']; top=sk[0]
 other=[x for x in studs if x['id']!=top['id']][0]
 for k in range(top['streak']): rpc('addRecord', other['id'], (datetime.date.today()-datetime.timedelta(days=k)).isoformat(), 5, '10:00', '모아뛰기')
 TOP_NAMES=[x['name'] for x in rpc('getStreakSummaryPublic')['list'] if x['streak']==top['streak']]
+
+def skip_setup(pg):
+    """2.10.0: 1234 로 로그인하면 첫 설정 도우미(비밀번호 단계)로 감 → 이 시험은 비밀번호를 그대로 두고 원래 가려던 곳으로"""
+    import urllib.parse as _u
+    if 'page=setup' not in pg.url: return
+    q = dict(_u.parse_qsl(_u.urlparse(pg.url).query))
+    pg.goto(pg.url.split('&page=')[0] + '&page=' + q.get('next', 'admin') + '&token=' + _u.quote(q.get('token', ''))); pg.wait_for_timeout(2000)
+
 with sync_playwright() as p:
     b=p.chromium.launch(); ctx=b.new_context(viewport={'width':1150,'height':900}, device_scale_factor=1.5)
     ctx.route(re.compile(r'https://cdn\.jsdelivr\.net/.*'), route)
     pg=ctx.new_page(); pg.set_default_timeout(8000); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('dialog', lambda d: d.accept())
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
-    pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
+    pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000); skip_setup(pg)
     # 바탕화면 앱 아이콘: 앱 정보 파일·아이콘, 설치 버튼(브라우저 신호를 흉내 내어)
     man=get(H+'/jumprope/'+CH+'manifest.webmanifest')
     icons_ok=all(urllib.request.urlopen(H+'/jumprope/'+CH+i['src']).status==200 for i in man['icons'])
@@ -127,7 +135,7 @@ with sync_playwright() as p:
     pg.screenshot(path=OUT+'/v22_main.png', full_page=True)
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
     if pg.is_visible('#pw'):
-        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
+        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000); skip_setup(pg)
     pg.click('#adminNav button[data-tab="levels"]'); pg.wait_for_timeout(800)
     check('메인 표시 기본 켜짐', pg.is_checked('#lvMain'))
     pg.uncheck('#lvMain'); pg.wait_for_timeout(1000)
@@ -141,7 +149,7 @@ with sync_playwright() as p:
     for c_ in (11, 12, 13, 14): rpc('addRecord', studs[1]['id'], datetime.date.today().isoformat(), c_, '10:00', '모아뛰기')
     pg.goto(APPU+'&page=adminLogin&next=approval'); pg.wait_for_timeout(1200)
     if pg.is_visible('#pw'):
-        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2500)
+        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2500); skip_setup(pg)
     check('승인 대기 4건 + 모두 승인 버튼', pg.locator('#pendingTable tbody tr').count()==4 and pg.is_visible('#approveAllBtn'), pg.text_content('#pendingCount'))
     pg.click('#pendingTable tbody tr:first-child button[data-action="approve"]'); pg.wait_for_timeout(150)
     check('누르는 즉시 승인됨 표시', '승인됨' in pg.text_content('#pendingTable tbody tr:first-child') and '(3건)' in pg.text_content('#pendingCount'), pg.text_content('#pendingCount'))

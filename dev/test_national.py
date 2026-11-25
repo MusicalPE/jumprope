@@ -21,6 +21,14 @@ def check(label, cond, extra=''):
     global ok
     ok = ok and bool(cond)
     print(('✔' if cond else '✘'), label, extra)
+
+def skip_setup(pg):
+    """2.10.0: 1234 로 로그인하면 첫 설정 도우미(비밀번호 단계)로 감 → 이 시험은 비밀번호를 그대로 두고 원래 가려던 곳으로"""
+    import urllib.parse as _u
+    if 'page=setup' not in pg.url: return
+    q = dict(_u.parse_qsl(_u.urlparse(pg.url).query))
+    pg.goto(pg.url.split('&page=')[0] + '&page=' + q.get('next', 'admin') + '&token=' + _u.quote(q.get('token', ''))); pg.wait_for_timeout(2000)
+
 with sync_playwright() as p:
     b=p.chromium.launch(); ctx=b.new_context(viewport={'width':1150,'height':900}, device_scale_factor=1.5)
     ctx.route(re.compile(r'https://cdn\.jsdelivr\.net/.*'), route)
@@ -29,7 +37,7 @@ with sync_playwright() as p:
     check('참여 전: 현황판 버튼 숨김', not pg.is_visible('#navBoard'))
     # 관리자 → 전국 현황판 탭 → 참여 켜기
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
-    pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
+    pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000); skip_setup(pg)
     pg.click('#adminNav button[data-tab="national"]'); pg.wait_for_timeout(500)
     pg.check('#natOn'); pg.click('#saveNatBtn'); pg.wait_for_timeout(300)
     check('학교 이름 없으면 저장 막힘', '학교 이름' in pg.text_content('#natMsg'), pg.text_content('#natMsg'))
@@ -62,7 +70,7 @@ with sync_playwright() as p:
     check('승인 전 기록은 현황판에 안 감 (+0)', after==before, f'{before} → {after}')
     pg.click('#navApproval'); pg.wait_for_timeout(2000)
     if pg.is_visible('#pw'):
-        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
+        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000); skip_setup(pg)
     pg.click('#pendingTable tbody tr:first-child button[data-action="approve"]'); pg.wait_for_timeout(5000)
     after=sum(r[2] for r in col_state()['daily'] if r[0]==pid)
     check('승인하면 현황판 반영 (+500)', after-before==500, f'{before} → {after}')
@@ -113,7 +121,7 @@ with sync_playwright() as p:
     urllib.request.urlopen(urllib.request.Request(EXEC, data=json.dumps({'fn':'setExtraSettings','args':[tok,{'nat':nat}]}).encode(), headers={'Content-Type':'text/plain'})).read()
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
     if pg.is_visible('#pw'):
-        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
+        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000); skip_setup(pg)
     pg.click('#adminNav button[data-tab="national"]'); pg.wait_for_timeout(1500)
     check('주소 다르면 경고', pg.is_visible('#natMovedWarn'))
     before=[r[0] for r in col_state()['schools']]
@@ -126,7 +134,7 @@ with sync_playwright() as p:
     # 참여 끄기 → 기록 삭제
     pg.goto(APPU+'&page=adminLogin&next=admin'); pg.wait_for_timeout(1200)
     if pg.is_visible('#pw'):
-        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000)
+        pg.fill('#pw','1234'); pg.click('#loginForm button[type=submit]'); pg.wait_for_timeout(2000); skip_setup(pg)
     pg.click('#adminNav button[data-tab="basic"]'); pg.wait_for_timeout(800)
     pg.uncheck('#approvalOn'); pg.click('#saveApprovalBtn'); pg.wait_for_timeout(2500)
     st=col_state()
