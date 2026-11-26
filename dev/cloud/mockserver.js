@@ -75,7 +75,7 @@ function rules(op, p, auth, raw, after, before, st) {
     if (op === 'get') return isMember(s);
     if (op === 'list') return isAdmin();
     if (op === 'update') {
-      if (!isMember(s) || after.owner !== before.owner) return false;
+      if (!isMember(s) || (after.owner !== before.owner && !(isOwner(s) && !!g('spaces/' + s + '/members/' + after.owner)))) return false;   // 주인 넘기기: 지금 주인만, 공간의 선생님에게만
       if (!isOwner(s) && JSON.stringify(after.crypto) !== JSON.stringify(before.crypto)) return false;
       return isAdmin() || !changed(after, before, ['name', 'code', 'gate']);
     }

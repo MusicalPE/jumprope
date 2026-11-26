@@ -9,7 +9,7 @@ import { sha256Bytes, Sheet } from './gasfake.js';
 import * as L from './lite.js';
 import { SCHOOL_SEARCH_URL } from '../firebase-config.js';
 
-const CLOUD_VERSION = '3.1.1';   // 점퍼스 3.0.0 — 화면에는 '클라우드판'이라 하지 않고 점퍼스 3 으로 부름 (시트로 쓰는 2.x 와 구분)
+const CLOUD_VERSION = '3.2.0';   // 점퍼스 3.0.0 — 화면에는 '클라우드판'이라 하지 않고 점퍼스 3 으로 부름 (시트로 쓰는 2.x 와 구분)
 const APPV = window.APP, SID = APPV.shellUrl || '';
 const BASE = location.origin + location.pathname;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -786,7 +786,7 @@ async function spacePage() {
     '<p class="hint">QR이 밖으로 퍼졌다면 새 QR을 만들어요. 예전 QR로는 더 이상 기록을 넣을 수 없어요.</p><div id="jcQm"></div></div></div></div>' +
     '<div class="card"><h2>학교 이름</h2>' + (admin ? '<label>현황판과 화면에 보이는 이름 (운영자만 고칠 수 있어요 — 가입 관리의 학교 목록에 있는 이름과 똑같이 적으면 그 학교로 묶여요) <input id="jcNm" maxlength="40" value="' + esc(S.pub.name) + '"></label><button type="button" id="jcNmSave">저장</button><div id="jcNmM"></div>'
       : '<p style="margin:0 0 6px;font-weight:800">' + esc(S.pub.name) + '</p><p class="hint">학교 이름은 학교 목록에서 고른 이름 그대로예요. 바꿔야 하면 운영자에게 알려 주세요.</p>') + '</div>' +
-    '<div class="card"><h2>함께 쓰는 선생님</h2><div id="jcMl" class="hint">불러오는 중…</div><p class="hint">초대 코드를 만들어 함께 쓸 선생님께 알려 주세요(7일 동안 쓸 수 있어요). 학생 이름을 열려면 <b>공간 비밀번호</b>도 함께 알려 주셔야 해요.</p><button type="button" id="jcInvMk">초대 코드 만들기</button><div id="jcCode"></div><div id="jcTm"></div></div>' +
+    '<div class="card"><h2>함께 쓰는 선생님</h2><div id="jcMl" class="hint">불러오는 중…</div><p class="hint">초대 코드를 만들어 함께 쓸 선생님께 알려 주세요(7일 동안 쓸 수 있어요). 학생 이름을 열려면 <b>공간 비밀번호</b>도 함께 알려 주셔야 해요.</p><button type="button" id="jcInvMk">초대 코드 만들기</button><div id="jcCode"></div><div id="jcOwn"></div><div id="jcTm"></div>' + (owner ? '<p class="hint">학교를 옮기게 되면 남는 선생님 옆의 [주인 넘기기]로 이 공간을 넘겨 주세요. 학생 명단·기록·전국 현황판 기록이 그대로 이어져요.</p>' : '') + '</div>' +
     '<div class="card"><h2>기록 내려받기</h2><p class="hint" style="margin-top:0">학생 명단·모든 기록·급수 인증을 이 컴퓨터로 내려받아요. 파일 안의 이름은 암호화되지 않으니 잘 보관해 주세요.</p>' +
     '<div class="jc-row"><button type="button" id="jcXlsx">엑셀 파일로 받기</button><button type="button" class="btn-outline" id="jcBak">백업 파일로 받기</button></div><p class="hint">엑셀 파일은 보고 정리하는 용도, 백업 파일(.json)은 이 공간이나 새 공간에 다시 넣을 때 써요.</p><div id="jcExM"></div></div>' +
     '<div class="card"><h2>기록 옮겨 오기</h2>' +
@@ -798,7 +798,7 @@ async function spacePage() {
     '<div class="card"><h2>공간 비밀번호 · 복구 코드</h2>' + (owner ?
       '<label>지금 비밀번호 (또는 복구 코드) <input id="jcCur" type="password" autocomplete="current-password"></label><label>새 비밀번호 (8자 이상, 비워 두면 그대로) <input id="jcNp" type="password" autocomplete="new-password"></label>' +
       '<label class="jc-chk"><input type="checkbox" id="jcNr"> 복구 코드도 새로 만들기 (예전 코드는 못 쓰게 돼요)</label><button type="button" id="jcKeyGo">바꾸기</button><div id="jcKm"></div>'
-      : '<p class="hint">비밀번호와 복구 코드는 공간을 만든 선생님만 바꿀 수 있어요.</p>') +
+      : '<p class="hint">비밀번호와 복구 코드는 공간의 주인 선생님만 바꿀 수 있어요.</p>') +
     '<p class="hint" style="margin-top:16px">이 기기는 공간 열쇠를 기억하고 있어요. 공용 컴퓨터라면 잊게 해 주세요.</p><div class="jc-row"><button type="button" class="btn-outline" id="jcForget">이 기기에서 열쇠 잊기</button><button type="button" class="btn-outline" id="jcOut">로그아웃</button></div></div>' +
     '<div class="card"><h2>점프 Live</h2><p class="hint" style="margin-top:0">' + (S.flags && S.flags.live === true ? '이 공간은 <b>전용 점프 라이브</b>(실시간 · 스마트 줄넘기 허브)와 점프 Live (Lite)를 모두 쓸 수 있어요.' : '이 공간은 <b>점프 Live (Lite)</b>를 쓸 수 있어요. 학생 기기가 3초쯤마다 횟수를 보내는 방식이에요.') + ' 관리자 메뉴의 <b>점프 Live</b>에서 열어요.</p><p class="hint">공간 주소: <code>' + esc(SID) + '</code></p></div>' +
     (owner ? '<div class="card"><h2>공간 삭제</h2><p class="hint" style="margin-top:0">이 공간의 학생 명단·기록·급수·설정을 모두 지워요. <b>되돌릴 수 없어요.</b> 남길 기록이 있으면 먼저 위에서 백업 파일을 받아 두세요.</p>' +
@@ -825,7 +825,35 @@ async function spacePage() {
   };
   try {
     const ms = await fb.list('spaces/' + SID + '/members');
-    $('#jcMl').innerHTML = '<table>' + ms.map((m) => '<tr><td>' + esc(m.data.name || '이름 없음') + (m.id === S.user.uid ? ' (나)' : '') + '</td><td>' + (m.data.role === 'owner' ? '만든 선생님' : '선생님') + '</td><td style="text-align:right">' + (owner && m.id !== S.user.uid ? '<button type="button" class="jc-danger" data-rm="' + esc(m.id) + '">빼기</button>' : '') + '</td></tr>').join('') + '</table>';
+    $('#jcMl').innerHTML = '<table>' + ms.map((m) => '<tr><td>' + esc(m.data.name || '이름 없음') + (m.id === S.user.uid ? ' (나)' : '') + '</td><td>' + (m.data.role === 'owner' ? '주인' : '함께 쓰는 선생님') + '</td><td style="text-align:right">' + (!owner && m.id === S.user.uid ? '<button type="button" class="jc-danger" id="jcLeave">이 공간에서 나가기</button>' : '') + (owner && m.id !== S.user.uid ? '<button type="button" class="btn-outline" data-own="' + esc(m.id) + '" data-nm="' + esc(m.data.name || '이름 없음') + '">주인 넘기기</button> <button type="button" class="jc-danger" data-rm="' + esc(m.id) + '">빼기</button>' : '') + '</td></tr>').join('') + '</table>';
+    // 주인 넘기기 (3.2.0): 학교를 옮기는 선생님이 남는 선생님에게. 명단·기록·현황판 참여 번호는 그대로
+    $$('[data-own]').forEach((b) => { b.onclick = () => {
+      const nm = b.dataset.nm, to = b.dataset.own;
+      $('#jcOwn').innerHTML = '<div class="jc-msg jc-warn" style="margin-top:12px"><b>' + esc(nm) + '</b> 선생님께 이 공간의 주인을 넘길까요? 넘기면 공간 비밀번호 바꾸기·공간 삭제·선생님 빼기는 새 주인만 할 수 있고, 나는 함께 쓰는 선생님으로 남아요. 학생 명단·기록·전국 현황판 기록은 그대로예요.</div>' +
+        '<label>확인을 위해 학교 이름을 그대로 적어 주세요 (' + esc(S.pub.name) + ') <input id="jcOwnNm" autocomplete="off"></label><div class="jc-row"><button type="button" id="jcOwnGo">주인 넘기기</button><button type="button" class="btn-outline" id="jcOwnNo">취소</button></div><div id="jcOwnM"></div>';
+      $('#jcOwnNo').onclick = () => { $('#jcOwn').innerHTML = ''; };
+      $('#jcOwnGo').onclick = async (e) => {
+        if ($('#jcOwnNm').value.trim() !== String(S.pub.name).trim()) return msg('#jcOwnM', '학교 이름이 같지 않아요. "' + S.pub.name + '" 을(를) 그대로 적어 주세요.', 'err');
+        busy(e.target, true);
+        try {
+          // 한 번에: 선생님 표시(역할) 둘 + 공간 주인. 규칙은 묶기 전 상태(내가 주인)로 판단함
+          await fb.batch([['update', 'spaces/' + SID + '/members/' + S.user.uid, { role: 'teacher' }], ['update', 'spaces/' + SID + '/members/' + to, { role: 'owner' }], ['update', 'spaces/' + SID, { owner: to }]]);
+          S.space.owner = to; spacePage();
+          setTimeout(() => msg('#jcTm', nm + ' 선생님이 새 주인이 되었어요. 학교를 옮기시면 목록의 내 이름 옆 [이 공간에서 나가기]를 눌러 주세요. 새 주인 선생님은 관리자 메뉴 → Jump Earth! 전국의 담당 교사도 바꿔 주세요.', 'ok'), 400);
+        } catch (err) { busy(e.target, false); msg('#jcOwnM', fb.errText(err), 'err'); }
+      };
+      $('#jcOwnNm').focus();
+    }; });
+    if ($('#jcLeave')) $('#jcLeave').onclick = async (e) => {
+      if (!window.confirm('이 공간에서 나갈까요? 다시 들어오려면 새 초대 코드가 필요해요. 학생 명단과 기록은 공간에 그대로 남아요.')) return;
+      busy(e.target, true);
+      try {
+        await fb.del('spaces/' + SID + '/members/' + S.user.uid);
+        try { await fb.update('users/' + S.user.uid, { ['spaces.' + SID]: fb.DEL }); } catch (er) {}
+        try { await C.forgetKey(SID); } catch (er) {}
+        location.href = BASE;
+      } catch (err) { busy(e.target, false); msg('#jcTm', fb.errText(err), 'err'); }
+    };
     $$('[data-rm]').forEach((b) => { b.onclick = async () => { if (!window.confirm('이 선생님을 공간에서 뺄까요?')) return; busy(b, true); try { await fb.del('spaces/' + SID + '/members/' + b.dataset.rm); spacePage(); } catch (e) { busy(b, false); msg('#jcTm', fb.errText(e), 'err'); } }; });
   } catch (e) { $('#jcMl').textContent = fb.errText(e); }
   $('#jcInvMk').onclick = async (e) => {

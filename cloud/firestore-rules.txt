@@ -66,8 +66,10 @@ service cloud.firestore {
       allow get: if isMember(s);
       allow list: if isAdmin();   // 운영자 화면의 학교별 공간 수
       // 선생님은 쓰기표만 바꿀 수 있고, 주인·잠금 열쇠는 주인만. 학교 이름은 운영자만
+      // 주인 넘기기(3.2.0): 지금 주인만, 이 공간의 선생님(members)에게만
       allow update: if isMember(s)
-        && request.resource.data.owner == resource.data.owner
+        && (request.resource.data.owner == resource.data.owner
+            || (isOwner(s) && exists(/databases/$(database)/documents/spaces/$(s)/members/$(request.resource.data.owner))))
         && (isOwner(s) || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['owner', 'crypto']))
         && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['name', 'code', 'gate']));
       allow delete: if isOwner(s);

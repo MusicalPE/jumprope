@@ -154,7 +154,7 @@ with sync_playwright() as p:
     check('두 번째 선생님: 이름 보임', any('김하늘' in o for o in t2.eval_on_selector_all('#nameSelect option', 'o=>o.map(x=>x.textContent)')))
     check('규칙: 두 번째 선생님은 잠금 상자 못 고침', try_js(t2, "fb.update('spaces/" + sid + "',{crypto:{wrap:1}})") == 'permission-denied')
     t2.goto(APP + '?s=' + sid + '&page=space'); t2.wait_for_selector('#jcForget')
-    check('두 번째 선생님은 비밀번호 못 바꿈', '만든 선생님만' in t2.inner_text('body'))
+    check('두 번째 선생님은 비밀번호 못 바꿈', '주인 선생님만' in t2.inner_text('body'))
     # ---------- 10. 새 QR → 예전 QR 로는 못 넣음 ----------
     t.click('#jcRot'); t.wait_for_timeout(2500); t.wait_for_selector('#jcCp'); t.click('#jcCp'); t.wait_for_timeout(300)
     link2 = t.evaluate('navigator.clipboard.readText()')
@@ -264,6 +264,27 @@ with sync_playwright() as p:
     # ---------- 화면 ----------
     main(s); s.screenshot(path=HERE + '/cloud_phone.png', full_page=True)
     main(t); t.screenshot(path=HERE + '/cloud_pc.png', full_page=True)
+    # ---------- 13. 주인 넘기기 · 나가기 (3.2.0) ----------
+    check('규칙: 주인 아닌 선생님은 주인을 못 바꿈', try_js(t2, "fb.update('spaces/" + sid + "',{owner:'teacher2'})") == 'permission-denied')
+    check('규칙: 공간 선생님이 아닌 사람에게는 못 넘김', try_js(t, "fb.update('spaces/" + sid + "',{owner:'stranger'})") == 'permission-denied')
+    t.goto(APP + '?s=' + sid + '&page=space'); t.wait_for_selector('[data-own]')
+    check('주인 화면: 함께 쓰는 선생님 옆에 [주인 넘기기]', t.locator('[data-own]').count() == 1 and t.locator('#jcLeave').count() == 0)
+    t.click('[data-own]'); t.wait_for_selector('#jcOwnNm'); t.fill('#jcOwnNm', '다른학교'); t.click('#jcOwnGo'); t.wait_for_timeout(400)
+    check('학교 이름이 다르면 안 넘김', '같지 않아요' in t.inner_text('#jcOwnM') and dump()['spaces/' + sid]['owner'] == 'teacher1')
+    pname = dump()['spaces/' + sid + '/meta/pub']['name']
+    t.fill('#jcOwnNm', ''); t.locator('#jcMl').scroll_into_view_if_needed(); t.wait_for_timeout(200); t.locator('#jcMl').locator('xpath=..').screenshot(path=HERE + '/owner_pc.png')
+    t.fill('#jcOwnNm', pname); t.click('#jcOwnGo'); t.wait_for_timeout(2500)
+    d = dump()
+    check('주인 넘기기: 공간 주인 · 역할이 바뀜', d['spaces/' + sid]['owner'] == 'teacher2' and d['spaces/' + sid + '/members/teacher2']['role'] == 'owner' and d['spaces/' + sid + '/members/teacher1']['role'] == 'teacher', str(d['spaces/' + sid]['owner']))
+    check('넘긴 뒤 원래 주인 화면: 넘기기 단추 없음 · 나가기 있음', t.locator('[data-own]').count() == 0 and t.locator('#jcLeave').count() == 1 and '새 주인' in t.inner_text('#jcTm'), t.inner_text('#jcTm')[:80])
+    t2.goto(APP + '?s=' + sid + '&page=space'); t2.wait_for_selector('#jcMl table')
+    check('새 주인 화면: 비밀번호 바꾸기 · 공간 삭제 · 주인 넘기기 단추', t2.locator('#jcCur').count() == 1 and t2.locator('#jcDelGo').count() == 1 and t2.locator('[data-own]').count() == 1)
+    check('규칙: 원래 주인은 이제 잠금 상자 못 고침', try_js(t, "fb.update('spaces/" + sid + "',{crypto:{wrap:1}})") == 'permission-denied')
+    t.click('#jcLeave'); t.wait_for_timeout(2500)
+    d = dump()
+    check('나가기: 선생님 목록·내 공간 목록에서 빠짐', 'spaces/' + sid + '/members/teacher1' not in d and sid not in ((d.get('users/teacher1') or {}).get('spaces') or {}), t.url)
+    main(t2)
+    check('새 주인: 학생·기록 그대로', t2.text_content('#statStudents').strip() == '3')
     allerr = terr + serr + t2err + t3err + jerr
     check('JS 에러 없음', not allerr, str(allerr[:3]))
 print('결과:', '모두 통과' if ok else '실패 있음')
