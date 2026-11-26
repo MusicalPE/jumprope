@@ -827,6 +827,11 @@ new URLSearchParams(location.search).forEach(function(v, k){ APP.q[k] = v; });
   APP.demo = s === 'demo' || 'demo' in APP.q;
   if (APP.demo) s = 'demo';
   else try { if (s) localStorage.setItem('jr_shell', s); else s = localStorage.getItem('jr_shell') || ''; } catch (e) {}
+  // 앱 아이콘(시작 주소 ./)으로 열었는데 주소에 학교가 없고, 마지막으로 연 학교(jr_home)가 점퍼스 3 공간이면 그 공간으로 (클라우드판은 앱으로 열었을 때만)
+  if (!APP.demo && !APP.club && !APP.q.s && (!/\/cloud\//.test(location.pathname) || APP.q.app === '1')) try {
+    const h = localStorage.getItem('jr_home') || '';
+    if (h.indexOf(location.origin) === 0 && /\/cloud\/\?s=/.test(h)) { APP.leaving = true; location.replace(h); return; }
+  } catch (e) {}
   if (!APP.demo && s) try { localStorage.setItem('jr_home', location.origin + location.pathname + '?s=' + encodeURIComponent(s)); } catch (e) {}   // 현황판·기록실의 [우리 학교]가 돌아올 곳 (마지막으로 연 학교)
   APP.shellUrl = s;
   APP.base = location.origin + location.pathname + '?s=' + encodeURIComponent(s);
@@ -1319,6 +1324,7 @@ function showSetup(msg){
     (msg ? '<div class="warn-box">' + msg + '</div>' : '') +
     '<p class="hint" style="margin-top:0;">학교 시트 웹앱 주소(<code>https://script.google.com/macros/s/…/exec</code>)를 붙여넣으세요. 배포 주소를 브라우저로 열면 나오는 "프로그램 열기" 버튼으로 들어와도 됩니다.</p>' +
     '<div class="tip-box" style="margin:0 0 14px;padding:12px 14px;border-radius:12px;background:var(--bg);font-size:14px;line-height:1.6;"><b>처음 설치하시나요?</b><br>① <a href="' + TEMPLATE_URL + '" target="_blank" rel="noopener"><b>견본 시트 사본 만들기</b></a> → ② 사본에서 확장 프로그램 → Apps Script → <b>배포 → 새 배포 → 웹 앱</b>(실행: 나 · 액세스: <b>모든 사용자</b>) → ③ 나온 주소를 여기에 붙여넣기<br>▶ <a href="' + INSTALL_VIDEO + '" target="_blank" rel="noopener"><b>설치 영상 보기 (1분)</b></a></div>' +
+    (APP.club ? '' : '<p class="hint" style="margin:0 0 14px;">시트 없이 구글 로그인으로 쓰는 <b>점퍼스 3</b>을 쓰고 있다면 <a href="cloud/"><b>점퍼스 3 열기</b></a></p>') +
     '<label>학교 시트 웹앱 주소 <input id="setupUrl" placeholder="https://script.google.com/macros/s/…/exec" value="' + (APP.shellUrl || '').replace(/"/g, '&quot;') + '"></label>' +
     '<button type="button" id="setupGo">연결하기</button></div></div>';
   document.getElementById('setupGo').onclick = function(){
@@ -1328,6 +1334,7 @@ function showSetup(msg){
   };
 }
 document.addEventListener('DOMContentLoaded', function(){
+  if (APP.leaving) return;   // 점퍼스 3 공간으로 넘어가는 중
   if (!APP.shellUrl) return showSetup('');
   document.getElementById('app').innerHTML = '<div class="loading">학교 기록을 불러오는 중…<div id="bootSlow" class="hint" style="display:none;margin-top:10px;"></div></div>';
   /* 구글 시트가 늦게 답할 때: 8초 뒤 안내, 25초 뒤 다시 시도 버튼 */
