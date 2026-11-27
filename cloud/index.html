@@ -1011,6 +1011,18 @@ const NAT = {
   moved: function(){ return !!(this.cfg && this.cfg.on && this.cfg.shell && this.cfg.shell !== this.deployId()); },
   /* 전국 현황판은 승인 절차가 켜진 학교만 보고 (학생이 마구 넣은 숫자가 바로 순위에 오르지 않게) */
   approvalOk: function(){ return !!(APP.settings && APP.settings.approvalOn); },
+  /* 학교 이름 규칙(schoolname.js · 점퍼스 3과 같게): 띄어쓰기 없이, 맨 앞 도 이름은 떼고, 지역이 겹치면 한 번만
+     "전주 전주초등학교" → 전주초등학교 · "전북 무주초등학교" → 무주초등학교 · "전주 서곡초등학교" → 전주서곡초등학교 (클럽판은 그대로) */
+  ruleName: function(n){
+    n = String(n == null ? '' : n).replace(/\s+/g, '');
+    if (APP.club || !n) return n;
+    n = n.replace(/초교?$/, '초등학교');
+    const DO = ['경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
+    for (let i = 0; i < DO.length; i++) { const d = DO[i]; if (n.indexOf(d) !== 0 || n.length <= d.length + 3) continue; const rest = n.slice(d.length);
+      if (!/^사대부/.test(rest) && !/^(여자)?(초등|중|고등)학교$/.test(rest) && !/^(고성|광주)/.test(rest)) n = rest; break; }
+    for (let L = 3; L >= 2; L--) { const r = n.slice(0, L); if (/^[가-힣]+$/.test(r) && n.slice(L).indexOf(r) === 0 && n.length - L >= r.length + 3) { n = n.slice(L); break; } }
+    return n;
+  },
   mask: function(n){
     const c = Array.from(String(n == null ? '' : n).trim());
     if (c.length <= 1) return c.join('');
@@ -1848,7 +1860,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <div id="natNoCollector" class="warn-box" style="display:none;">전국 현황판 수집 주소가 아직 준비되지 않았어요. 준비되면 여기서 바로 켤 수 있습니다.</div>
       <label class="nat-box"><input type="checkbox" id="natOn"><span><b>점퍼스(전국 현황판)에 참여하기</b> — 우리 학교의 날짜별 줄넘기 합계를 현황판에 보내요. 다른 학교(체육교사 보조 프로그램 학교 포함)와 함께 겨뤄요.</span></label>
       <div class="nat-reg">
-        <label>학교 이름 <span class="req">*</span><input id="natName" maxlength="40" placeholder="지역 두 글자 + 학교 이름 (예: 서울 햇살초등학교)"></label>
+        <label>학교 이름 <span class="req">*</span><input id="natName" maxlength="40" placeholder="시·군 이름 + 학교 이름 (예: 전주서곡초등학교 · 전주초등학교)"></label>
         <label>담당 교사 <span class="req">*</span><input id="natTeacher" maxlength="30" placeholder="예: 홍길동"></label>
         <label>연락처 (선택 사항 — 비워도 돼요)<input id="natContact" maxlength="80" placeholder="전화·이메일 (현황판 문제가 있을 때만 연락)"></label>
       </div>
@@ -3143,13 +3155,13 @@ function step(n){
       const app = r[1] || {}, nat = NAT.cfg || {}, apOn = !!app.approvalOn, on = NAT.active(), pre = on || (apOn && !nat.key), ct = NAT.contact();
       frame(6, '전국 현황판 Jump Earth!', '여러 학교가 뛴 횟수를 모아 함께 지구를 도는 현황판이에요.',
         '<label class="jc-opt"><input type="checkbox" id="jcNat"' + (pre ? ' checked' : '') + (apOn ? '' : ' disabled') + '><div><b>참여하기 (권장)</b><span>학생 이름은 김*늘처럼 가려서 보내요. 반·번호와 비밀번호는 보내지 않아요.</span></div></label>' +
-        '<div id="jcNatBox"><label>학교 이름 <input id="jcNm" maxlength="40" placeholder="지역 두 글자 + 학교 이름 (예: 서울 햇살초등학교)" value="' + esc(nat.name || '') + '"></label>' +
+        '<div id="jcNatBox"><label>학교 이름 <input id="jcNm" maxlength="40" placeholder="시·군 이름 + 학교 이름 (예: 전주서곡초등학교 · 전주초등학교)" value="' + esc(nat.name || '') + '"></label>' +
         '<label class="jc-opt"><input type="checkbox" id="jcShow"' + (nat.showName || !on ? ' checked' : '') + '><div><b>학교 이름 보이기 (권장)</b><span>끄면 이름 없이 숫자만 올라가요.</span></div></label>' +
         '<div class="jc-row" style="align-items:flex-end;margin-top:10px"><label style="flex:1;min-width:140px;margin:0">담당 교사 <input id="jcTn" maxlength="30" value="' + esc(ct.teacher || '') + '"></label><label style="flex:2;min-width:200px;margin:0">연락처 (선택) <input id="jcTc" maxlength="80" value="' + esc(ct.contact || '') + '"></label></div><p class="hint">담당 교사와 연락처는 운영자만 봐요. 현황판에는 나오지 않아요.</p></div>' +
         (apOn ? '' : '<div class="jc-msg jc-warn">승인 절차가 꺼져 있어서 참여할 수 없어요. <a href="#" id="jcBack3">기본 설정으로 돌아가 승인 절차를 켜 주세요.</a></div>'), '저장하고 다음');
       if ($('jcBack3')) $('jcBack3').onclick = function(e){ e.preventDefault(); step(3); };
       const sync = function(){ $('jcNatBox').style.display = $('jcNat').checked ? '' : 'none'; }; $('jcNat').onchange = sync; sync();
-      $('jcNext').onclick = function(){ const b = $('jcNext'), want = $('jcNat').checked && apOn, name = $('jcNm').value.trim(), tn = $('jcTn').value.trim(), tc = $('jcTc').value.trim();
+      $('jcNext').onclick = function(){ const b = $('jcNext'), want = $('jcNat').checked && apOn, name = NAT.ruleName($('jcNm').value.trim()), tn = $('jcTn').value.trim(), tc = $('jcTc').value.trim();
         if (!want) { if (on) { msg('이미 참여 중이에요. 참여를 끄는 것은 관리자 메뉴 → Jump Earth! 전국에서 해 주세요(끄면 현황판 기록이 지워져요).', 'warn'); $('jcNat').checked = true; sync(); return; } return go(7); }
         if (!name) { msg('학교 이름을 넣어 주세요.', 'err'); $('jcNm').focus(); return; }
         if (!tn) { msg('담당 교사 이름을 넣어 주세요.', 'err'); $('jcTn').focus(); return; }
@@ -4418,7 +4430,8 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
     rekey(false);
   });
   $('saveNatBtn').addEventListener('click', function(){
-    const on = $('natOn').checked, showName = $('natShowName').checked, name = $('natName').value.trim();
+    const on = $('natOn').checked, showName = $('natShowName').checked, name = NAT.ruleName($('natName').value.trim());
+    $('natName').value = name;
     const teacher = $('natTeacher').value.trim(), contact = $('natContact').value.trim();
     if (on && !name) { msg.textContent = '학교 이름을 넣어 주세요. (현황판에 이름을 숨기려면 "학교 이름 공개"를 끄면 돼요)'; $('natName').focus(); return; }
     if (on && !teacher) { msg.textContent = '담당 교사 이름을 넣어 주세요.'; $('natTeacher').focus(); return; }
@@ -4452,6 +4465,8 @@ document.getElementById('saveApprovalBtn').addEventListener('click', function(){
   NAT.refreshUI = fill;
   NAT.load().then(function(){
     // 2.2.2 전에 참여한 학교: 지금 주소를 기록해 둠 (이후 복사본을 알아챌 수 있게)
+    // 2.10.1: 예전에 "전주 전주초등학교"처럼 적은 이름을 규칙대로 (점퍼스 3 공간과 현황판에서 한 학교로 묶이게)
+    if (NAT.cfg && NAT.cfg.key && NAT.cfg.name && NAT.ruleName(NAT.cfg.name) !== NAT.cfg.name) rpc('setExtraSettings', [token, { nat: Object.assign({}, NAT.cfg, { name: NAT.ruleName(NAT.cfg.name) }) }]).then(function(r){ if (r && r.ok && r.settings) { NAT.cfg = r.settings.nat || NAT.cfg; fill(); sync(true); } }).catch(function(){});
     if (NAT.cfg && NAT.cfg.on && NAT.cfg.key && !NAT.cfg.shell) rpc('setExtraSettings', [token, { nat: Object.assign({}, NAT.cfg, { shell: NAT.deployId() }) }]).then(function(r){ if (r && r.ok && r.settings) NAT.cfg = r.settings.nat || NAT.cfg; }).catch(function(){});
     fill(); return sync(false);
   });

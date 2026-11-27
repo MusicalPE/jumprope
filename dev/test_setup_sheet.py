@@ -93,7 +93,7 @@ with sync_playwright() as p:
         pg.fill('#jcTn', '김선생'); pg.click('#jcNext'); pg.wait_for_timeout(5000)
         ex = call('getExtraSettingsAdmin', tok) or {}
         nat = ex.get('nat') or {}
-        check('전국 현황판 참여 저장', nat.get('on') is True and bool(nat.get('key')) and nat.get('name') == '수원 햇살초등학교', nat)
+        check('전국 현황판 참여 저장', nat.get('on') is True and bool(nat.get('key')) and nat.get('name') == '수원햇살초등학교', nat)
         check('7단계 끝', step_now(pg).startswith('7'), step_now(pg))
         txt = pg.text_content('.card') or ''
         check('요약: 학생 3명 · 참여 중 · 전주 출발', '3명' in txt and '참여 중' in txt and '전주 출발' in txt, txt[:200])
