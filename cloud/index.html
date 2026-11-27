@@ -2,6 +2,7 @@
 <!-- dev/make_cloud.py 가 index.html 에서 만든 파일 — 직접 고치지 말 것 -->
 <html lang="ko">
 <head>
+<script>if (/\/cloud$/.test(location.pathname)) location.replace(location.pathname + '/' + location.search + location.hash);   // …/cloud 로 열면 …/cloud/ 로 (아래 base 가 맞게)</script>
 <base href="../">
 <meta charset="utf-8">
 <script>

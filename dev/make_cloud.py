@@ -25,7 +25,7 @@ write('js/gasfake.js', '// dev/make_cloud.py 가 demo.js 에서 떼어 온 파�
 
 # ---- 화면 ----
 s = read('index.html')
-s = must(s, '<head>', '<head>\n<base href="../">')
+s = must(s, '<head>', '<head>\n<script>if (/\\/cloud$/.test(location.pathname)) location.replace(location.pathname + \'/\' + location.search + location.hash);   // …/cloud 로 열면 …/cloud/ 로 (아래 base 가 맞게)</script>\n<base href="../">')
 s = must(s, "club: /\\/club\\//.test(location.pathname),", "club: false, cloud: true,")
 s = must(s, "  else try { if (s) localStorage.setItem('jr_shell', s); else s = localStorage.getItem('jr_shell') || ''; } catch (e) {}\n", "  // 클라우드판: 주소에 공간이 없으면 [내 공간] 화면 (지난 공간으로 저절로 가지 않음)\n")
 s = must(s, "  if (APP.demo) return demoRpc(fn, args);\n", "  if (APP.demo) return demoRpc(fn, args);\n  return window.JRCLOUD.call(fn, args);   // 클라우드판: 학교 시트 대신 파이어베이스\n")

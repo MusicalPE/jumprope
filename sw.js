@@ -10,6 +10,8 @@ self.addEventListener('fetch', function (e) {
   // 화면(html)과 바뀌는 파일은 브라우저가 10분쯤 들고 있는 사본을 쓰지 않고 늘 새로 확인 — 올린 판이 바로 보이게
   var fresh = req.mode === 'navigate' || /\.(html|js|json)$/.test(u.pathname) || /\/$/.test(u.pathname);
   e.respondWith(fetch(fresh ? new Request(req.url, { cache: 'no-cache', credentials: 'same-origin' }) : req).then(function (r) {
+    // 주소 끝에 / 가 없을 때(…/cloud) GitHub 가 …/cloud/ 로 넘겨 줌 → 넘겨받은 응답을 화면에 그대로 주면 크롬이 막으니, 브라우저가 새 주소로 가게 함
+    if (r.redirected && req.mode === 'navigate') return Response.redirect(r.url, 302);
     if (r.ok && !/\.json$/.test(u.pathname)) { var copy = r.clone(); caches.open(C).then(function (c) { c.put(req, copy); }); }
     return r;
   }).catch(function () {
